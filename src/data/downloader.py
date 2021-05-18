@@ -67,19 +67,17 @@ class OpenAQDownloader:
         stations = self.get_stations_in_city()
         # First of all, we check if any of the stations match the
         # exact location of the point of interest
-        if len(stations[stations['is_in_location']==True]):
-            station = stations[stations['is_in_location']==True].iloc[0]
+        if len(stations[stations['is_in_location']]):
+            station = stations[stations['is_in_location']].iloc[0]
         # If not, we calculate the distances to that point
         else:
             distances = []
             for station in stations.iterrows():
                 station = station[1]
-                station_lat = round(station['coordinates.latitude'], 2)
-                station_lon = round(station['coordinates.longitude'], 2)
                 distance = get_distance_between_two_points_on_earth(
-                    station_lat,
+                    station['coordinates.latitude'],
                     self.loc.latitude,
-                    station_lon,
+                    station['coordinates.longitude'],
                     self.loc.longitude
                 )
                 distances.append(distance)
@@ -97,9 +95,9 @@ class OpenAQDownloader:
         stations = self.api.locations(city=self.loc.city, df=True)
         is_in_location = []
         for station in stations.iterrows():
-            station_loc = station[1][coord_labels].values
-            loc = (self.loc.lat, self.loc.lon)
-            if np.allclose(station_loc, loc, tolerance=tol):
+            station_loc = station[1][coord_labels].astype(float)
+            loc = np.array([self.loc.latitude, self.loc.longitude])
+            if not np.allclose(station_loc, loc, atol=tol):
                 print('The OpenAQ station coordinates do not match'
                       ' with the location of interest coordinates')
                 is_in_location.append(False)
