@@ -123,7 +123,7 @@ class OpenAQDownloader:
         )
         return output_path
 
-    def get_data(self, station: str) -> pd.DataFrame:
+    def get_data(self, station: pd.Series) -> pd.DataFrame:
         """
         This methods retrieves data from the OpenAQ platform in pd.DataFrame 
         format. The specific self.time_range, given by the user, is selected 
