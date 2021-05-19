@@ -187,6 +187,8 @@ class OpenAQDownloader:
         dict_metadata = {
             'variable': self.variable,
             'units': np.unique(data['unit'].values),
+            'latitude_openaq': np.unique(data['coordinates.latitude'].values),
+            'longitude_openaq': np.unique(data['coordinates.longitude'].values),
             'total_values': len(data),
             'initial_time': data.index.values[0],
             'final_time': data.index.values[-1],
@@ -217,3 +219,4 @@ def get_distance_between_two_points_on_earth(
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     return distance
+
