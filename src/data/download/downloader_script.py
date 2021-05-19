@@ -2,6 +2,7 @@ from pathlib import Path
 from downloader import Location, OpenAQDownloader
 
 import pandas as pd
+import logging
 
 
 def download_openaq_data_from_csv_with_locations_info(
@@ -30,13 +31,27 @@ def download_openaq_data_from_csv_with_locations_info(
             location[1]['latitude'],
             location[1]['longitude']
         )
+        logging.info(f"Starting process for location of"
+                     f" interest {str(loc)}")
         downloader = OpenAQDownloader(
             loc,
             output_dir,
             variable,
         )
         try:
-            downloader.run()
-        except:
+            output_path, output_path_metadata = downloader.run()
+        except Exception as ex:
+            logging.error(str(ex))
             continue
+
+
+if __name__ == '__main__':
+    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
+    download_openaq_data_from_csv_with_locations_info(
+        Path('../../../data/external/stations.csv'),
+        Path('../../../data/raw/observations/'),
+        'o3'
+    )
 

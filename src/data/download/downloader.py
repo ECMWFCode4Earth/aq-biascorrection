@@ -7,7 +7,10 @@ import pandas as pd
 import numpy as np
 import os
 import openaq
+import logging
+import warnings
 
+warnings.filterwarnings("ignore")
 
 tol = 1e-3
 
@@ -57,7 +60,7 @@ class OpenAQDownloader:
             raise NotImplementedError(f"The variable {variable} do"
                                       f" not correspond to any known one")
 
-    def run(self) -> str:
+    def run(self) -> (Path, Path):
         """
         Main method to download data from OpenAQ.
         """
@@ -68,7 +71,9 @@ class OpenAQDownloader:
         self.save_data_and_metadata(data,
                                     output_path_data,
                                     output_path_metadata)
-        return f"Data has been correctly downloaded in {str(output_path_data)}"
+        logging.info(f"Data has been correctly downloaded"
+                     f" in {str(output_path_data)}")
+        return output_path_data, output_path_metadata
 
     def get_closest_station_to_location(self) -> pd.Series:
         """
@@ -109,10 +114,12 @@ class OpenAQDownloader:
             station_loc = station[1][coord_labels].astype(float)
             loc = np.array([self.location.latitude, self.location.longitude])
             if not np.allclose(station_loc, loc, atol=tol):
-                print('The OpenAQ station coordinates do not match'
-                      ' with the location of interest coordinates')
+                logging.info('The OpenAQ station coordinates do not match'
+                             ' with the location of interest coordinates')
                 is_in_location.append(False)
             else:
+                logging.info('The OpenAQ station coordinates match'
+                             ' with the location of interest coordinates')
                 is_in_location.append(True)
         stations['is_in_location'] = is_in_location
         return stations
