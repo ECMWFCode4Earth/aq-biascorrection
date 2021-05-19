@@ -23,11 +23,14 @@ class Location:
     country: str
     latitude: float
     longitude: float
+    distance: float = 0.0
 
     def __str__(self):
         return f'Location(location_id={self.location_id}, ' \
                f'city={self.city}, country={self.country}, ' \
-               f'latitude={self.latitude}, and longitude={self.longitude})'
+               f'latitude={self.latitude}, longitude={self.longitude}, ' \
+               f'with a distance to the nearest OpenAQ ' \
+               f'station of {self.distance} km)'
     
 
 class OpenAQDownloader:
@@ -90,6 +93,7 @@ class OpenAQDownloader:
                 distances.append(distance)
             stations['distance'] = distances
             station = stations.iloc[stations['distance'].idxmax()]
+            self.location.distance = round(station.distance, 2)
         self.check_variable_in_station(station)
         return station
 
@@ -213,4 +217,3 @@ def get_distance_between_two_points_on_earth(
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     return distance
-
