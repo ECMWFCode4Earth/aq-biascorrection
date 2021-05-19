@@ -19,7 +19,6 @@ class FileProvider:
     clobber: bool = False
     copy_not_link: bool = False
 
-
     def get_files(self) -> NoReturn:
         with self._get_fabric_connection() as conn:
             for filename in self.filenames:
@@ -68,7 +67,7 @@ class FileProvider:
 def get_remote_file(
         filename: str,
         localdir: str,
-        cache_dir = Path("/tmp/aq_biascorrection_test_files"),
+        cache_dir: Path = Path("/tmp/aq_biascorrection_test_files"),
         remote_path: str = "testfiles/aq-biascorrection",
         clobber: bool = False,
         copy_not_link: bool = False

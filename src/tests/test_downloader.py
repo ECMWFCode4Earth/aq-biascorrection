@@ -1,4 +1,4 @@
-from src.data.downloader import Location, OpenAQDownloader
+from src.data.download.downloader import Location, OpenAQDownloader
 from src.tests.file_provider import get_remote_file
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import tempfile
 
 
 class TestDownloaderAQ:
-    def test_download_aq():
+    def test_download_aq(self):
         tempdir = tempfile.mkdtemp()
         get_remote_file("dubai", tempdir)
 
