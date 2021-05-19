@@ -48,7 +48,7 @@ class OpenAQDownloader:
             variable: str,
             time_range: Dict[str, str] = None
     ):
-        self.api = openaq.OpenAQ()
+        self.api = openaq.OpenAQ(version='v2')
         if time_range is None:
             time_range = dict(start='2019-01-01', end='2021-03-31')
         self.location = location
@@ -99,6 +99,8 @@ class OpenAQDownloader:
             stations['distance'] = distances
             station = stations.iloc[stations['distance'].idxmax()]
             self.location.distance = round(station.distance, 2)
+        logging.info(f'Nearest station is located at'
+                     f' {self.location.distance} km')
         self.check_variable_in_station(station)
         return station
 
@@ -108,18 +110,18 @@ class OpenAQDownloader:
         where the location of interest is located.
         """
         coord_labels = ['coordinates.latitude', 'coordinates.longitude']
-        stations = self.api.locations(city=self.location.city, df=True)
+        stations = self.api.locations(
+            parameter=self.variable,
+            coordinates=f"{self.location.latitude},"
+                        f"{self.location.longitude}",
+            nearest=4, radius=100000, df=True)
         is_in_location = []
         for station in stations.iterrows():
             station_loc = station[1][coord_labels].astype(float)
             loc = np.array([self.location.latitude, self.location.longitude])
             if not np.allclose(station_loc, loc, atol=tol):
-                logging.info('The OpenAQ station coordinates do not match'
-                             ' with the location of interest coordinates')
                 is_in_location.append(False)
             else:
-                logging.info('The OpenAQ station coordinates match'
-                             ' with the location of interest coordinates')
                 is_in_location.append(True)
         stations['is_in_location'] = is_in_location
         return stations
@@ -149,8 +151,9 @@ class OpenAQDownloader:
         as NaN).
         """
         data = self.api.measurements(
-            city=station['city'],
-            location=station['location'],
+            coordinates=f"{station['coordinates.latitude']},"
+                        f"{station['coordinates.longitude']}",
+            nearest=1,
             parameter=self.variable,
             limit=100000,
             df=True)
@@ -170,7 +173,7 @@ class OpenAQDownloader:
         This method checks whether the stations has available data for the
         variable of interest
         """
-        if self.variable not in station['parameters']:
+        if self.variable not in [x['parameter'] for x in station['parameters']]:
             raise Exception('The variable intended to download is not'
                             ' available for the nearest / exact location')
 
