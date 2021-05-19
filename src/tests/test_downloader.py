@@ -1,6 +1,5 @@
 from src.data.download.downloader import Location, OpenAQDownloader
 from src.tests.file_provider import get_remote_file
-from pathlib import Path
 
 import tempfile
 import filecmp
