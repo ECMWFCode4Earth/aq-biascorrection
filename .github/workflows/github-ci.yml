@@ -11,8 +11,8 @@ on:
       - main
 
 jobs:
-  test:
-    name: CI workflow
+  setup:
+    name: Project Set up
     runs-on: ubuntu-latest
 
     steps:
@@ -35,6 +35,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        
+  test:
+    needs: setup
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
     - name: Run tox
       run: |
         tox .
