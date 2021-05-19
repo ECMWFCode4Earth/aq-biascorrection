@@ -35,5 +35,8 @@ def download_openaq_data_from_csv_with_locations_info(
             output_dir,
             variable,
         )
-        downloader.run()
+        try:
+            downloader.run()
+        except:
+            continue
 
