@@ -23,6 +23,11 @@ class Location:
     country: str
     latitude: float
     longitude: float
+
+    def __str__(self):
+        return f'Location(location_id={self.location_id}, ' \
+               f'city={self.city}, country={self.country}, ' \
+               f'latitude={self.latitude}, and longitude={self.longitude})'
     
 
 class OpenAQDownloader:
@@ -40,7 +45,7 @@ class OpenAQDownloader:
         self.api = openaq.OpenAQ()
         if time_range is None:
             time_range = dict(start='2019-01-01', end='2021-03-31')
-        self.loc = location
+        self.location = location
         self.time_range = time_range
         self.output_dir = output_dir
         if variable in ['o3', 'no2', 'so2', 'pm10', 'pm25']:
@@ -57,7 +62,9 @@ class OpenAQDownloader:
         output_path_metadata = self.get_output_path(is_metadata=True)
         station = self.get_closest_station_to_location()
         data = self.get_data(station)
-        self.save_data_and_metadata(data, output_path_data, output_path_metadata)
+        self.save_data_and_metadata(data,
+                                    output_path_data,
+                                    output_path_metadata)
         return f"Data has been correctly downloaded in {str(output_path_data)}"
 
     def get_closest_station_to_location(self) -> pd.Series:
@@ -76,9 +83,9 @@ class OpenAQDownloader:
                 station = station[1]
                 distance = get_distance_between_two_points_on_earth(
                     station['coordinates.latitude'],
-                    self.loc.latitude,
+                    self.location.latitude,
                     station['coordinates.longitude'],
-                    self.loc.longitude
+                    self.location.longitude
                 )
                 distances.append(distance)
             stations['distance'] = distances
@@ -92,11 +99,11 @@ class OpenAQDownloader:
         where the location of interest is located.
         """
         coord_labels = ['coordinates.latitude', 'coordinates.longitude']
-        stations = self.api.locations(city=self.loc.city, df=True)
+        stations = self.api.locations(city=self.location.city, df=True)
         is_in_location = []
         for station in stations.iterrows():
             station_loc = station[1][coord_labels].astype(float)
-            loc = np.array([self.loc.latitude, self.loc.longitude])
+            loc = np.array([self.location.latitude, self.location.longitude])
             if not np.allclose(station_loc, loc, atol=tol):
                 print('The OpenAQ station coordinates do not match'
                       ' with the location of interest coordinates')
@@ -110,11 +117,11 @@ class OpenAQDownloader:
         """
         Method to get the output paths where the data and metadata are stored.
         """
-        city = self.loc.city.lower()
-        station_id = self.loc.location_id.lower()
+        city = self.location.city.lower()
+        station_id = self.location.location_id.lower()
         variable = self.variable
         time_range = '_'.join(self.time_range.values()).replace('-', '')
-        ext = '_metadata.txt' if is_metadata else '.csv'
+        ext = '_metadata.csv' if is_metadata else '.csv'
         output_path = Path(
             self.output_dir,
             city,
@@ -165,19 +172,24 @@ class OpenAQDownloader:
         """
         This function saves the data (.csv format) or the metadata (.txt format)
         """
+        # Directory initialization if they do not exist
         if not output_path_data.parent.exists():
             os.makedirs(output_path_data.parent, exist_ok=True)
         if not output_path_metadata.parent.exists():
             os.makedirs(output_path_metadata.parent, exist_ok=True)
+        # Store data in [datetime, value] format
         data['value'].to_csv(output_path_data)
-        metadata = f"For the parameter {self.variable} in units of " \
-                   f"{np.unique(data['unit'].values)}, there is a total of " \
-                   f"{len(data)} values ranging from {data.index.values[0]} " \
-                   f"to {data.index.values[-1]}. All of them with a value " \
-                   f"equal or above 0."
-        with open(output_path_metadata, 'w') as f:
-            f.write(metadata)
-            f.close()
+        # Store metadata in [variable, units,
+        dict_metadata = {
+            'variable': self.variable,
+            'units': np.unique(data['unit'].values),
+            'total_values': len(data),
+            'initial_time': data.index.values[0],
+            'final_time': data.index.values[-1],
+            'location_obj': str(self.location)
+        }
+        metadata = pd.DataFrame(dict_metadata)
+        metadata.to_csv(output_path_metadata)
 
 
 def get_distance_between_two_points_on_earth(
@@ -201,3 +213,4 @@ def get_distance_between_two_points_on_earth(
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     return distance
+
