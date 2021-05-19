@@ -79,7 +79,7 @@ class OpenAQDownloader:
         """
         Method to check which station is closer to the point of interest.
         """
-        stations = self.get_stations_in_city()
+        stations = self.get_closest_stations_to_location()
         # First of all, we check if any of the stations match the
         # exact location of the point of interest
         if len(stations[stations['is_in_location']]):
@@ -104,7 +104,7 @@ class OpenAQDownloader:
         self.check_variable_in_station(station)
         return station
 
-    def get_stations_in_city(self) -> pd.DataFrame:
+    def get_closest_stations_to_location(self) -> pd.DataFrame:
         """
         Method to check whether there are stations or not in the city
         where the location of interest is located.
