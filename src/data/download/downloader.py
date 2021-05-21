@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import os
 import openaq
+import datetime
 import logging
 import warnings
 
@@ -59,15 +60,16 @@ class OpenAQDownloader:
         else:
             raise NotImplementedError(f"The variable {variable} do"
                                       f" not correspond to any known one")
+        self.downloaded_time_range = {}
 
     def run(self) -> (Path, Path):
         """
         Main method to download data from OpenAQ.
         """
-        output_path_data = self.get_output_path()
-        output_path_metadata = self.get_output_path(is_metadata=True)
         station = self.get_closest_station_to_location()
         data = self.get_data(station)
+        output_path_data = self.get_output_path()
+        output_path_metadata = self.get_output_path(is_metadata=True)
         self.save_data_and_metadata(data,
                                     output_path_data,
                                     output_path_metadata)
@@ -80,6 +82,10 @@ class OpenAQDownloader:
         Method to check which station is closer to the point of interest.
         """
         stations = self.get_closest_stations_to_location()
+        if len(stations) == 0:
+            raise Exception('There are no stations next to'
+                            ' this location in OpenAQ for the'
+                            ' variable of interest')
         # First of all, we check if any of the stations match the
         # exact location of the point of interest
         if len(stations[stations['is_in_location']]):
@@ -133,7 +139,9 @@ class OpenAQDownloader:
         city = self.location.city.lower()
         station_id = self.location.location_id.lower()
         variable = self.variable
-        time_range = '_'.join(self.time_range.values()).replace('-', '')
+        time_range = '_'.join(
+            self.downloaded_time_range.values()
+        ).replace('-', '')
         ext = '_metadata.csv' if is_metadata else '.csv'
         output_path = Path(
             self.output_dir,
@@ -151,22 +159,22 @@ class OpenAQDownloader:
         as NaN).
         """
         data = self.api.measurements(
-            coordinates=f"{station['coordinates.latitude']},"
-                        f"{station['coordinates.longitude']}",
-            nearest=1,
+            city=station['city'],
+            location=station['name'],
             parameter=self.variable,
-            limit=100000,
+            limit=10000,
+            value_from=0,
+            date_from=self.time_range['start'],
+            date_to=self.time_range['end'],
+            index='utc',
             df=True)
-        data_in_time = data[
-            (data['date.utc'] > self.time_range['start']) & 
-            (data['date.utc'] <= self.time_range['end'])
-        ]
-        # The date.utc columns is set as index in order to have always the
-        # same time reference
-        data_in_time.reset_index(inplace=True)
-        data_in_time.set_index('date.utc', inplace=True)
-        data_in_time = data_in_time[data_in_time['value'] >= 0]
-        return data_in_time
+        self.downloaded_time_range['start'] = datetime.datetime.strftime(
+            pd.to_datetime(data.index.values[0]),
+            '%Y%m%d')
+        self.downloaded_time_range['end'] = datetime.datetime.strftime(
+            pd.to_datetime(data.index.values[-1]),
+            '%Y%m%d')
+        return data
 
     def check_variable_in_station(self, station: pd.Series):
         """
