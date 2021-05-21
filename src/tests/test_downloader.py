@@ -24,7 +24,7 @@ def test_download_aq():
     OpenAQDownloader(loc, tempdir + "/downloaded", 'o3').run() 
     
     assert filecmp.dircmp(tempdir + "/downloaded", tempdir)
-    assert filecmp.dircmp(f"{tempdir}/downloaded/{data_filename}", 
+    assert filecmp.cmp(f"{tempdir}/downloaded/{data_filename}", 
                             f"{tempdir}/{data_filename}")
-    assert filecmp.dircmp(f"{tempdir}/downloaded/{metadata_filename}", 
+    assert filecmp.cmp(f"{tempdir}/downloaded/{metadata_filename}", 
                             f"{tempdir}/{metadata_filename}")
