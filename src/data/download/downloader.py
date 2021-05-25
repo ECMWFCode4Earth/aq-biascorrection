@@ -91,30 +91,31 @@ class OpenAQDownloader:
         Method to check which station is closer to the point of interest.
         """
         stations = self._get_closest_stations_to_location()
-        if len(stations) == 0:
-            raise Exception('There are no stations next to'
-                            ' this location in OpenAQ for the'
-                            ' variable of interest')
-        if len(stations[stations['sensorType'] == 'reference grade']) >= 1:
-            stations = stations[stations['sensorType'] == 'reference grade']
-        # First of all, we check if any of the stations match the
-        # exact location of the point of interest
-        if len(stations[stations['is_in_location']]):
-            station = stations[stations['is_in_location']].iloc[0]
         # If not, we calculate the distances to that point
-        else:
-            distances = []
-            for station in stations.iterrows():
-                station = station[1]
-                distance = get_distance_between_two_points_on_earth(
-                    station['coordinates.latitude'],
-                    self.location.latitude,
-                    station['coordinates.longitude'],
-                    self.location.longitude
-                )
-                distances.append(distance)
-            stations['distance'] = distances
-            stations = stations.sort_values('distance')
+        distances = []
+        is_in_temporal_range = []
+        for station in stations.iterrows():
+            station = station[1]
+            distance = get_distance_between_two_points_on_earth(
+                station['coordinates.latitude'],
+                self.location.latitude,
+                station['coordinates.longitude'],
+                self.location.longitude
+            )
+            distances.append(distance)
+            if pd.to_datetime(
+                    self.time_range['start']
+            ) >= station['firstUpdated'].tz_convert(None) and\
+                    pd.to_datetime(
+                        self.time_range['end']
+                    ) <= station['lastUpdated'].tz_convert(None):
+                is_in_temporal_range.append(1)
+            else:
+                is_in_temporal_range.append(0)
+        stations['distance'] = distances
+        stations['is_in_temporal_range'] = is_in_temporal_range
+        stations = stations.sort_values('distance')
+        stations = stations.sort_values('is_in_temporal_range', ascending=False)
         return stations
 
     def _get_closest_stations_to_location(self) -> pd.DataFrame:
@@ -122,21 +123,19 @@ class OpenAQDownloader:
         Method to check whether there are stations or not in the city
         where the location of interest is located.
         """
-        coord_labels = ['coordinates.latitude', 'coordinates.longitude']
         stations = self.api.locations(
             parameter=self.variable,
             coordinates=f"{self.location.latitude},"
                         f"{self.location.longitude}",
             nearest=4, radius=100000, df=True)
-        is_in_location = []
-        for station in stations.iterrows():
-            station_loc = station[1][coord_labels].astype(float)
-            loc = np.array([self.location.latitude, self.location.longitude])
-            if not np.allclose(station_loc, loc, atol=tol):
-                is_in_location.append(False)
-            else:
-                is_in_location.append(True)
-        stations['is_in_location'] = is_in_location
+
+        if len(stations) == 0:
+            raise Exception('There are no stations next to'
+                            ' this location in OpenAQ for the'
+                            ' variable of interest')
+
+        if len(stations[stations['sensorType'] == 'reference grade']) >= 1:
+            stations = stations[stations['sensorType'] == 'reference grade']
         return stations
 
     def get_output_path(self, is_metadata: bool = False):
