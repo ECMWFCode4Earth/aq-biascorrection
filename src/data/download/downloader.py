@@ -66,10 +66,19 @@ class OpenAQDownloader:
         """
         Main method to download data from OpenAQ.
         """
-        station = self.get_closest_station_to_location()
-        data = self.get_data(station)
+        stations = self.get_closest_stations_to_location()
+        data = pd.DataFrame()
+        for station in stations.iterrows():
+            try:
+                data = self.get_data(station[1])
+                self.location.distance = station[1]['distance']
+                break
+            except Exception as ex:
+                continue
         output_path_data = self.get_output_path()
         output_path_metadata = self.get_output_path(is_metadata=True)
+        logging.info(f'Nearest station is located at'
+                     f' {self.location.distance} km')
         self.save_data_and_metadata(data,
                                     output_path_data,
                                     output_path_metadata)
@@ -77,15 +86,17 @@ class OpenAQDownloader:
                      f" in {str(output_path_data)}")
         return output_path_data, output_path_metadata
 
-    def get_closest_station_to_location(self) -> pd.Series:
+    def get_closest_stations_to_location(self) -> pd.DataFrame:
         """
         Method to check which station is closer to the point of interest.
         """
-        stations = self.get_closest_stations_to_location()
+        stations = self._get_closest_stations_to_location()
         if len(stations) == 0:
             raise Exception('There are no stations next to'
                             ' this location in OpenAQ for the'
                             ' variable of interest')
+        if len(stations[stations['sensorType'] == 'reference grade']) >= 1:
+            stations = stations[stations['sensorType'] == 'reference grade']
         # First of all, we check if any of the stations match the
         # exact location of the point of interest
         if len(stations[stations['is_in_location']]):
@@ -103,14 +114,10 @@ class OpenAQDownloader:
                 )
                 distances.append(distance)
             stations['distance'] = distances
-            station = stations.iloc[stations['distance'].idxmax()]
-            self.location.distance = round(station.distance, 2)
-        logging.info(f'Nearest station is located at'
-                     f' {self.location.distance} km')
-        self.check_variable_in_station(station)
-        return station
+            stations = stations.sort_values('distance')
+        return stations
 
-    def get_closest_stations_to_location(self) -> pd.DataFrame:
+    def _get_closest_stations_to_location(self) -> pd.DataFrame:
         """
         Method to check whether there are stations or not in the city
         where the location of interest is located.
@@ -136,7 +143,8 @@ class OpenAQDownloader:
         """
         Method to get the output paths where the data and metadata are stored.
         """
-        city = self.location.city.lower()
+        city = self.location.city.lower().replace(' ', '_')
+        country = self.location.country.lower().replace(' ', '_')
         station_id = self.location.location_id.lower()
         variable = self.variable
         time_range = '_'.join(
@@ -145,9 +153,11 @@ class OpenAQDownloader:
         ext = '_metadata.csv' if is_metadata else '.csv'
         output_path = Path(
             self.output_dir,
+            country,
             city,
             station_id,
-            f"{variable}_{city}_{station_id}_{time_range}{ext}"
+            variable,
+            f"{variable}_{country}_{city}_{station_id}_{time_range}{ext}"
         )
         return output_path
 
@@ -158,16 +168,21 @@ class OpenAQDownloader:
         afterwards. It also takes out every value under 0 (which are considered 
         as NaN).
         """
-        data = self.api.measurements(
-            city=station['city'],
-            location=station['name'],
-            parameter=self.variable,
-            limit=10000,
-            value_from=0,
-            date_from=self.time_range['start'],
-            date_to=self.time_range['end'],
-            index='utc',
-            df=True)
+        self.check_variable_in_station(station)
+        try:
+            data = self.api.measurements(
+                location_id=station['id'],
+                parameter=self.variable,
+                limit=10000,
+                value_from=0,
+                date_from=self.time_range['start'],
+                date_to=self.time_range['end'],
+                index='utc',
+                df=True)
+        except Exception as ex:
+            raise Exception('There is no data in the time range considered for'
+                            ' this location of interest')
+        data = data.sort_index()
         self.downloaded_time_range['start'] = datetime.datetime.strftime(
             pd.to_datetime(data.index.values[0]),
             '%Y%m%d')
@@ -210,7 +225,7 @@ class OpenAQDownloader:
             'total_values': len(data),
             'initial_time': data.index.values[0],
             'final_time': data.index.values[-1],
-            'location_obj': str(self.location)
+            'distance': self.location.distance
         }
         metadata = pd.DataFrame(dict_metadata)
         metadata.to_csv(output_path_metadata)
