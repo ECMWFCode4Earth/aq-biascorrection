@@ -1,4 +1,7 @@
 from pathlib import Path
+
+import numpy as np
+
 from downloader import Location, OpenAQDownloader
 
 import pandas as pd
@@ -23,6 +26,8 @@ def download_openaq_data_from_csv_with_locations_info(
     data at the output directory (given as an argument)
     """
     locations_df = pd.read_csv(csv_path)
+    number_of_successful_locations = 0
+    distances = []
     for location in locations_df.iterrows():
         loc = Location(
             location[1]['id'],
@@ -40,9 +45,16 @@ def download_openaq_data_from_csv_with_locations_info(
         )
         try:
             output_path, output_path_metadata = downloader.run()
+            number_of_successful_locations += 1
+            metadata = pd.read_csv(output_path_metadata)
+            distances.append(metadata['distance'].values[0])
         except Exception as ex:
             logging.error(str(ex))
+            distances.append(np.nan)
             continue
+    logging.info(f'The number of locations which has been correctly downloaded'
+                 f' is {number_of_successful_locations} out of'
+                 f' {len(locations_df)} for variable {variable}')
 
 
 if __name__ == '__main__':
@@ -52,6 +64,6 @@ if __name__ == '__main__':
     download_openaq_data_from_csv_with_locations_info(
         Path('../../../data/external/stations.csv'),
         Path('../../../data/raw/observations/'),
-        'o3'
+        'pm25'
     )
 
