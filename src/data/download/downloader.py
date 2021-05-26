@@ -69,14 +69,7 @@ class OpenAQDownloader:
         Main method for the OpenAQDownloader class.
         """
         stations = self.get_closest_stations_to_location()
-        data = pd.DataFrame()
-        for station in stations.iterrows():
-            try:
-                data = self.get_data(station[1])
-                self.location.distance = station[1]['distance']
-                break
-            except Exception as ex:
-                continue
+        data = self.get_data(stations)
         output_path_data = self.get_output_path()
         output_path_metadata = self.get_output_path(is_metadata=True)
         logging.info(f'Nearest station is located at'
@@ -117,10 +110,31 @@ class OpenAQDownloader:
                         self.time_range['end']
                     ) <= station['lastUpdated'].tz_convert(None):
                 is_in_temporal_range.append(1)
+            elif pd.to_datetime(
+                    self.time_range['end']
+            ) < station['firstUpdated'].tz_convert(None):
+                is_in_temporal_range.append(-1)
             else:
-                is_in_temporal_range.append(0)
+                openaq_dates = pd.date_range(
+                    station['firstUpdated'].tz_convert(None),
+                    station['lastUpdated'].tz_convert(None),
+                    freq='H'
+                )
+                user_dates = pd.date_range(
+                    pd.to_datetime(self.time_range['start']),
+                    pd.to_datetime(self.time_range['end']),
+                    freq='H'
+                )
+                freq_of_user_in_openaq_dates = 0
+                for user_date in user_dates:
+                    if user_date in openaq_dates:
+                        freq_of_user_in_openaq_dates += 1
+                is_in_temporal_range.append(
+                    freq_of_user_in_openaq_dates / len(user_dates)
+                )
         stations['distance'] = distances
         stations['is_in_temporal_range'] = is_in_temporal_range
+        stations = stations[stations['is_in_temporal_range'] != -1]
         stations = stations.sort_values('distance')
         stations = stations.sort_values('is_in_temporal_range',
                                         ascending=False)
@@ -174,7 +188,22 @@ class OpenAQDownloader:
         )
         return output_path
 
-    def get_data(self, station: pd.Series) -> pd.DataFrame:
+    def get_data(self, stations: pd.DataFrame) -> pd.DataFrame:
+        data = pd.DataFrame()
+        for station in stations.iterrows():
+            try:
+                data = self._get_data(station[1])
+                self.location.distance = station[1]['distance']
+                break
+            except Exception as ex:
+                continue
+
+        if len(data) == 0:
+            raise Exception('Not data was retrieved')
+
+        return data
+
+    def _get_data(self, station: pd.Series) -> pd.DataFrame:
         """
         This methods retrieves data from the OpenAQ platform in pd.DataFrame 
         format.
@@ -222,8 +251,6 @@ class OpenAQDownloader:
         This function saves the data (.csv format) and
         the metadata (.txt format)
         """
-        if len(data) == 0:
-            raise Exception('Not data was retrieved')
 
         # Directory initialization if they do not exist
         if not output_path_data.parent.exists():
