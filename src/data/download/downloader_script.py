@@ -62,8 +62,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
     download_openaq_data_from_csv_with_locations_info(
-        Path('../../../data/external/stations_processed.csv'),
+        Path('../../../data/external/stations.csv'),
         Path('../../../data/raw/observations/'),
-        'o3'
+        'pm25'
     )
 

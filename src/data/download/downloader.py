@@ -39,8 +39,10 @@ class Location:
 
 class OpenAQDownloader:
     """
-    Class to download data from the OpenAQ platform
-    for a specific location of interest
+    Class to download data from the OpenAQ platform for a specific location
+    of interest.
+    It downloads the nearest station with the highest number of measurements
+    in the time_range given by the user.
     """
     def __init__(
             self,
@@ -64,7 +66,7 @@ class OpenAQDownloader:
 
     def run(self) -> (Path, Path):
         """
-        Main method to download data from OpenAQ.
+        Main method for the OpenAQDownloader class.
         """
         stations = self.get_closest_stations_to_location()
         data = pd.DataFrame()
@@ -88,7 +90,12 @@ class OpenAQDownloader:
 
     def get_closest_stations_to_location(self) -> pd.DataFrame:
         """
-        Method to check which station is closer to the point of interest.
+        Method to return the stations within 100km of the location of interest.
+        It returns a pd.DataFrame with two new columns: distance, which
+        corresponds with the distance of the location of interest to the OpenAQ
+        station, and is_in_temporal_range, which determines whether the
+        measurements made by the OpenAQ station are entirely in the time_range
+        given by the user.
         """
         stations = self._get_closest_stations_to_location()
         # If not, we calculate the distances to that point
@@ -115,25 +122,32 @@ class OpenAQDownloader:
         stations['distance'] = distances
         stations['is_in_temporal_range'] = is_in_temporal_range
         stations = stations.sort_values('distance')
-        stations = stations.sort_values('is_in_temporal_range', ascending=False)
+        stations = stations.sort_values('is_in_temporal_range',
+                                        ascending=False)
         return stations
 
     def _get_closest_stations_to_location(self) -> pd.DataFrame:
         """
-        Method to check whether there are stations or not in the city
-        where the location of interest is located.
+        Method to check which stations are within 100km of the location of
+        interest. If there are stations with the 'sensorType' parameter equal
+        to 'reference grade' they are chosen over the 'low-cost sensor' class.
+        If no stations are retrieved, an exception is thrown.
         """
+        # Command to retrieve the stations within 100km for the variable and
+        # location of interest
         stations = self.api.locations(
             parameter=self.variable,
             coordinates=f"{self.location.latitude},"
                         f"{self.location.longitude}",
-            nearest=4, radius=100000, df=True)
+            radius=100000, df=True)
 
+        # Throw an exception if not stations are retrieved
         if len(stations) == 0:
             raise Exception('There are no stations next to'
                             ' this location in OpenAQ for the'
                             ' variable of interest')
 
+        # Preference of 'reference grade' sensor types over 'low-cost'
         if len(stations[stations['sensorType'] == 'reference grade']) >= 1:
             stations = stations[stations['sensorType'] == 'reference grade']
         return stations
@@ -163,9 +177,7 @@ class OpenAQDownloader:
     def get_data(self, station: pd.Series) -> pd.DataFrame:
         """
         This methods retrieves data from the OpenAQ platform in pd.DataFrame 
-        format. The specific self.time_range, given by the user, is selected 
-        afterwards. It also takes out every value under 0 (which are considered 
-        as NaN).
+        format.
         """
         self.check_variable_in_station(station)
         try:
@@ -181,6 +193,7 @@ class OpenAQDownloader:
         except Exception as ex:
             raise Exception('There is no data in the time range considered for'
                             ' this location of interest')
+
         data = data.sort_index()
         self.downloaded_time_range['start'] = datetime.datetime.strftime(
             pd.to_datetime(data.index.values[0]),
@@ -206,8 +219,12 @@ class OpenAQDownloader:
             output_path_metadata: Path
     ):
         """
-        This function saves the data (.csv format) or the metadata (.txt format)
+        This function saves the data (.csv format) and
+        the metadata (.txt format)
         """
+        if len(data) == 0:
+            raise Exception('Not data was retrieved')
+
         # Directory initialization if they do not exist
         if not output_path_data.parent.exists():
             os.makedirs(output_path_data.parent, exist_ok=True)
@@ -215,7 +232,7 @@ class OpenAQDownloader:
             os.makedirs(output_path_metadata.parent, exist_ok=True)
         # Store data in [datetime, value] format
         data['value'].to_csv(output_path_data)
-        # Store metadata in [variable, units,
+        # Store metadata
         dict_metadata = {
             'variable': self.variable,
             'units': np.unique(data['unit'].values),
