@@ -1,4 +1,5 @@
-from src.data.download.downloader import Location, OpenAQDownloader
+from src.data.download.downloader import OpenAQDownloader
+from src.data.utils import Location
 from src.tests.file_provider import get_remote_file
 
 import tempfile

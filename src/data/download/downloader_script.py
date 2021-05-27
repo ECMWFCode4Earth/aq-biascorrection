@@ -1,8 +1,7 @@
 from pathlib import Path
 
-import numpy as np
-
-from downloader import Location, OpenAQDownloader
+from .downloader import OpenAQDownloader
+from ..utils import Location
 
 import pandas as pd
 import logging

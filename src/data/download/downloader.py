@@ -1,7 +1,7 @@
 from pathlib import Path
-from dataclasses import dataclass
 from typing import Dict
 from math import sin, cos, sqrt, atan2, radians
+from ..utils import Location
 
 import pandas as pd
 import numpy as np
@@ -12,27 +12,6 @@ import logging
 import warnings
 
 warnings.filterwarnings("ignore")
-
-
-@dataclass
-class Location:
-    """
-    Class to define specific location of interest
-    with its correspondent attributes
-    """
-    location_id: str
-    city: str
-    country: str
-    latitude: float
-    longitude: float
-    distance: float = 0.0
-
-    def __str__(self):
-        return f'Location(location_id={self.location_id}, ' \
-               f'city={self.city}, country={self.country}, ' \
-               f'latitude={self.latitude}, longitude={self.longitude}, ' \
-               f'with a distance to the nearest OpenAQ ' \
-               f'station of {self.distance} km)'
     
 
 class OpenAQDownloader:
@@ -52,7 +31,7 @@ class OpenAQDownloader:
         self.units = None
         self.api = openaq.OpenAQ(version='v2')
         if time_range is None:
-            time_range = dict(start='2019-01-01', end='2021-03-31')
+            time_range = dict(start='2019-06-01', end='2021-03-31')
         self.location = location
         self.time_range = time_range
         self.output_dir = output_dir
@@ -72,8 +51,8 @@ class OpenAQDownloader:
         output_path_data = self.get_output_path()
         logging.info(f'Nearest station is located at'
                      f' {self.location.distance} km')
-        self.save_data_and_metadata(data,
-                                    output_path_data)
+        self.save_data(data,
+                       output_path_data)
         logging.info(f"Data has been correctly downloaded"
                      f" in {str(output_path_data)}")
         return output_path_data
@@ -195,12 +174,15 @@ class OpenAQDownloader:
 
     def get_data(self, stations: pd.DataFrame) -> pd.DataFrame:
         data = pd.DataFrame()
+        stations_downloaded = 0
         for station in stations.iterrows():
             try:
                 data = self._get_data(station[1])
                 self.location.distance = station[1]['distance']
                 self.units = station[1]['parameters'][0]['unit']
-                break
+                stations_downloaded += 1
+                if stations_downloaded == 5:
+                    break
             except Exception as ex:
                 continue
 
@@ -247,7 +229,7 @@ class OpenAQDownloader:
             raise Exception('The variable intended to download is not'
                             ' available for the nearest / exact location')
 
-    def save_data_and_metadata(
+    def save_data(
             self,
             data: pd.DataFrame,
             output_path_data: Path
