@@ -13,8 +13,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-tol = 1e-3
-
 
 @dataclass
 class Location:
@@ -51,6 +49,7 @@ class OpenAQDownloader:
             variable: str,
             time_range: Dict[str, str] = None
     ):
+        self.units = None
         self.api = openaq.OpenAQ(version='v2')
         if time_range is None:
             time_range = dict(start='2019-01-01', end='2021-03-31')
@@ -64,22 +63,20 @@ class OpenAQDownloader:
                                       f" not correspond to any known one")
         self.downloaded_time_range = {}
 
-    def run(self) -> (Path, Path):
+    def run(self) -> Path:
         """
         Main method for the OpenAQDownloader class.
         """
         stations = self.get_closest_stations_to_location()
         data = self.get_data(stations)
         output_path_data = self.get_output_path()
-        output_path_metadata = self.get_output_path(is_metadata=True)
         logging.info(f'Nearest station is located at'
                      f' {self.location.distance} km')
         self.save_data_and_metadata(data,
-                                    output_path_data,
-                                    output_path_metadata)
+                                    output_path_data)
         logging.info(f"Data has been correctly downloaded"
                      f" in {str(output_path_data)}")
-        return output_path_data, output_path_metadata
+        return output_path_data
 
     def get_closest_stations_to_location(self) -> pd.DataFrame:
         """
@@ -116,8 +113,12 @@ class OpenAQDownloader:
                 is_in_temporal_range.append(-1)
             else:
                 openaq_dates = pd.date_range(
-                    station['firstUpdated'].tz_convert(None),
-                    station['lastUpdated'].tz_convert(None),
+                    datetime.datetime.strftime(
+                        station['firstUpdated'].tz_convert(None), '%Y-%m-%d'
+                    ),
+                    datetime.datetime.strftime(
+                        station['lastUpdated'].tz_convert(None), '%Y-%m-%d'
+                    ),
                     freq='H'
                 )
                 user_dates = pd.date_range(
@@ -135,9 +136,13 @@ class OpenAQDownloader:
         stations['distance'] = distances
         stations['is_in_temporal_range'] = is_in_temporal_range
         stations = stations[stations['is_in_temporal_range'] != -1]
-        stations = stations.sort_values('distance')
-        stations = stations.sort_values('is_in_temporal_range',
-                                        ascending=False)
+        stations[
+            'combination_dist_and_is_in_temporal_range'
+        ] = stations['distance'] / stations['is_in_temporal_range']
+        stations = stations.sort_values(
+            'combination_dist_and_is_in_temporal_range',
+            ascending=True
+        )
         return stations
 
     def _get_closest_stations_to_location(self) -> pd.DataFrame:
@@ -166,7 +171,7 @@ class OpenAQDownloader:
             stations = stations[stations['sensorType'] == 'reference grade']
         return stations
 
-    def get_output_path(self, is_metadata: bool = False):
+    def get_output_path(self) -> Path:
         """
         Method to get the output paths where the data and metadata are stored.
         """
@@ -177,7 +182,7 @@ class OpenAQDownloader:
         time_range = '_'.join(
             self.downloaded_time_range.values()
         ).replace('-', '')
-        ext = '_metadata.csv' if is_metadata else '.csv'
+        ext = '.nc'
         output_path = Path(
             self.output_dir,
             country,
@@ -194,6 +199,7 @@ class OpenAQDownloader:
             try:
                 data = self._get_data(station[1])
                 self.location.distance = station[1]['distance']
+                self.units = station[1]['parameters'][0]['unit']
                 break
             except Exception as ex:
                 continue
@@ -244,34 +250,72 @@ class OpenAQDownloader:
     def save_data_and_metadata(
             self,
             data: pd.DataFrame,
-            output_path_data: Path,
-            output_path_metadata: Path
+            output_path_data: Path
     ):
         """
-        This function saves the data (.csv format) and
-        the metadata (.txt format)
+        This function saves the data in netcdf format
         """
 
         # Directory initialization if they do not exist
         if not output_path_data.parent.exists():
             os.makedirs(output_path_data.parent, exist_ok=True)
-        if not output_path_metadata.parent.exists():
-            os.makedirs(output_path_metadata.parent, exist_ok=True)
-        # Store data in [datetime, value] format
-        data['value'].to_csv(output_path_data)
-        # Store metadata
-        dict_metadata = {
-            'variable': self.variable,
-            'units': np.unique(data['unit'].values),
-            'latitude_openaq': np.unique(data['coordinates.latitude'].values),
-            'longitude_openaq': np.unique(data['coordinates.longitude'].values),
-            'total_values': len(data),
-            'initial_time': data.index.values[0],
-            'final_time': data.index.values[-1],
-            'distance': self.location.distance
+        xr_ds = data['value'].to_xarray().rename(
+            {'date.utc': 'time'}
+        ).to_dataset(
+            name=self.variable
+        )
+        xr_ds['time'] = pd.to_datetime(xr_ds.time.values)
+        xr_ds['station_id'] = self.location.location_id
+        xr_ds = xr_ds.set_coords('station_id')
+        xr_ds = xr_ds.expand_dims('station_id')
+        xr_ds['x'] = np.unique(data['coordinates.longitude'].values)
+        xr_ds = xr_ds.set_coords('x')
+        xr_ds['y'] = np.unique(data['coordinates.latitude'].values)
+        xr_ds = xr_ds.set_coords('y')
+        xr_ds['_x'] = self.location.longitude
+        xr_ds = xr_ds.set_coords('_x')
+        xr_ds['_y'] = self.location.latitude
+        xr_ds = xr_ds.set_coords('_y')
+        xr_ds['distance'] = self.location.distance
+        xr_ds = xr_ds.set_coords('distance')
+
+        xr_ds.y.attrs['units'] = 'degrees_north'
+        xr_ds.y.attrs['long_name'] = 'Latitude'
+        xr_ds.y.attrs['standard_name'] = 'latitude'
+
+        xr_ds.x.attrs['units'] = 'degrees_east'
+        xr_ds.x.attrs['long_name'] = 'Longitude'
+        xr_ds.x.attrs['standard_name'] = 'longitude'
+
+        xr_ds.distance.attrs['units'] = 'km'
+        xr_ds.distance.attrs['long_name'] = 'Distance'
+        xr_ds.distance.attrs['standard_name'] = 'distance'
+
+        xr_ds['_y'].attrs['units'] = 'degrees_north'
+        xr_ds['_y'].attrs['long_name'] = 'Latitude of the location of interest'
+        xr_ds['_y'].attrs['standard_name'] = 'latitude_interest'
+
+        xr_ds['_x'].attrs['units'] = 'degrees_east'
+        xr_ds['_x'].attrs['long_name'] = 'Longitude of the location of interest'
+        xr_ds['_x'].attrs['standard_name'] = 'longitude_interest'
+
+        xr_ds.station_id.attrs['long_name'] = 'station name'
+        xr_ds.station_id.attrs['cf_role'] = 'timeseries_id'
+
+        long_name = {
+            'no2': 'Nitrogen dioxide',
+            'o3': 'Ozone',
+            'pm25': 'Particulate matter (PM2.5)'
         }
-        metadata = pd.DataFrame(dict_metadata)
-        metadata.to_csv(output_path_metadata)
+        xr_ds[self.variable].attrs['units'] = self.units
+        xr_ds[self.variable].attrs['standard_name'] = self.variable
+        xr_ds[self.variable].attrs['long_name'] = long_name[self.variable]
+
+        xr_ds.attrs['featureType'] = "timeSeries"
+        xr_ds.attrs['Conventions'] = "CF-1.4"
+
+        # Store data in netCDF format
+        xr_ds.to_netcdf(output_path_data)
 
 
 def get_distance_between_two_points_on_earth(

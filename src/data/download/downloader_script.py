@@ -27,7 +27,6 @@ def download_openaq_data_from_csv_with_locations_info(
     """
     locations_df = pd.read_csv(csv_path)
     number_of_successful_locations = 0
-    distances = []
     for location in locations_df.iterrows():
         loc = Location(
             location[1]['id'],
@@ -44,13 +43,10 @@ def download_openaq_data_from_csv_with_locations_info(
             variable,
         )
         try:
-            output_path, output_path_metadata = downloader.run()
+            output_path = downloader.run()
             number_of_successful_locations += 1
-            metadata = pd.read_csv(output_path_metadata)
-            distances.append(metadata['distance'].values[0])
         except Exception as ex:
             logging.error(str(ex))
-            distances.append(np.nan)
             continue
     logging.info(f'The number of locations which has been correctly downloaded'
                  f' is {number_of_successful_locations} out of'
