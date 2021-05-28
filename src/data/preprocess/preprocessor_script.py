@@ -25,11 +25,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-locations", '--locations_csv_path',
-    help="Path to the file where the locations of interest are defined"
-)
-
-parser.add_argument(
     "-period", '--time_period',
     default=None,
     help="Period of time in which to process the CAMS data"
