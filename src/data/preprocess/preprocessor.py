@@ -2,33 +2,13 @@ from pathlib import Path
 from src.data.utils import Location
 from typing import Dict
 
-
 import pandas as pd
 import xarray as xr
 
 import datetime
 import logging
 import glob
-
-
-variables_dict = {
-    "10u": "10 metre U wind component",
-    "10v": "10 metre V wind component",
-    "2d": "2 metre dewpoint temperature",
-    "2t": "2 metre temperature",
-    "blh": "Boundary layer height",
-    "dsrp": "Direct solar radiation",
-    "go3conc": "GEMS Ozone",
-    "msl": "Mean sea level pressure",
-    "no2conc": "Nitrogen dioxide",
-    "pm10": "Particulate matter d < 10 um",
-    "pm2p5": "Particulate matter d < 2.5 um",
-    "so2conc": "Sulphur dioxide",
-    "tcc": "Total cloud cover",
-    "tp": "Total precipitation",
-    "uvb": "Downward UV radiation at the surface",
-    "z": "Geopotential"
-}
+import concurrent.futures
 
 
 class CAMSProcessor:
@@ -39,7 +19,7 @@ class CAMSProcessor:
     def __init__(
             self,
             input_dir: Path,
-            location: Location,
+            locations_csv: Path,
             variable: str,
             output_dir: Path,
             time_range: Dict[str, str] = None
@@ -55,27 +35,32 @@ class CAMSProcessor:
         else:
             raise NotImplementedError(f"The variable {variable} do"
                                       f" not correspond to any known one")
-        self.location = location
+        self.locations_df = pd.read_csv(locations_csv)
         self.output_dir = output_dir
 
     def run(self):
         initialization_times = self.get_initialization_times()
-        total_data = []
-        for initialization_time in initialization_times:
-            try:
-                paths_for_forecast = self.get_paths_for_forecasted_variables(
-                    initialization_time
-                )
-                data = self.get_data(paths_for_forecast)
-                total_data.append(data)
-            except Exception as ex:
-                logging.error(ex)
-        total_data = xr.concat(total_data, dim='time')
-        output_path = self.get_output_path()
-        self.save_data(total_data, output_path)
+        total_data = self.get_data_for_all_times_and_locations(
+            initialization_times
+        )
+        for location in self.locations_df.iterrows():
+            loc = Location(
+                location[1]['id'],
+                location[1]['city'],
+                location[1]['country'],
+                location[1]['latitude'],
+                location[1]['longitude']
+            )
+            output_path_location = self.get_output_path(loc)
+            data_location = total_data.sel(station_id=loc.location_id)
+            data_location.to_netcdf(output_path_location)
         return total_data
 
-    def get_initialization_times(self):
+    def get_initialization_times(self) -> list:
+        """
+        Get all the initialization times (days) in the range defined by the
+        time_range argument of the CAMSPreprocessor class
+        """
         initialization_times = pd.date_range(
             self.time_range['start'],
             self.time_range['end'],
@@ -86,10 +71,42 @@ class CAMSProcessor:
         ) for time in initialization_times]
         return initialization_times
 
+    def get_data_for_all_times_and_locations(
+            self,
+            initialization_times) -> xr.Dataset:
+        total_data = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_entry = {
+                executor.submit(
+                    self.get_data_for_initialization_time,
+                    init_time
+                ): init_time for init_time in initialization_times}
+            for future in concurrent.futures.as_completed(future_to_entry):
+                data_for_init_time = future.result()
+                total_data.append(data_for_init_time)
+        total_data = xr.concat(total_data, dim='time')
+        return total_data
+
+    def get_data_for_initialization_time(self, initialization_time):
+        logging.info(f'Getting data for initialization time'
+                     f' {initialization_time}')
+        try:
+            paths_for_forecast = self.get_paths_for_forecasted_variables(
+                initialization_time
+            )
+            data = self.get_data(paths_for_forecast)
+            return data
+        except Exception as ex:
+            logging.error(ex)
+            return None
+
     def get_paths_for_forecasted_variables(
             self,
             initialization_time: str
     ) -> list:
+        """
+        Get all the paths associated with an initialization_time sorted by name
+        """
         ext = '.nc'
         input_path_pattern = Path(
             self.input_dir,
@@ -106,24 +123,45 @@ class CAMSProcessor:
         return paths
 
     def get_data(self, paths_for_forecast):
+        """
+        Get the data of the CAMS model for the specific location defined by the
+        location argument of the CAMSPreprocessor class
+        """
         data = xr.open_mfdataset(paths_for_forecast,
                                  concat_dim='time',
                                  preprocess=self.filter_location)
         return data
 
-    def filter_location(self, data):
-        data_location = data.sel(latitude=self.location.latitude,
-                                 longitude=self.location.longitude,
-                                 method='nearest')
-        return data_location
+    def filter_location(self, data: xr.Dataset) -> xr.Dataset:
+        """
+        Filter method to use in xr.open_mfdataset
+        """
+        data_for_stations = []
+        for location in self.locations_df.iterrows():
+            loc = Location(
+                location[1]['id'],
+                location[1]['city'],
+                location[1]['country'],
+                location[1]['latitude'],
+                location[1]['longitude']
+            )
+            data_location = data.sel(latitude=loc.latitude,
+                                     longitude=loc.longitude,
+                                     method='nearest')
+            data_location['station_id'] = loc.location_id
+            data_location = data_location.set_coords('station_id')
+            data_location = data_location.expand_dims('station_id')
+            data_for_stations.append(data_location)
+        data = xr.concat(data_for_stations, dim='station_id')
+        return data
 
-    def get_output_path(self) -> Path:
+    def get_output_path(self, location) -> Path:
         """
-        Method to get the output paths where the data and metadata are stored.
+        Method to get the output path where the data is stored.
         """
-        city = self.location.city.lower().replace(' ', '_')
-        country = self.location.country.lower().replace(' ', '_')
-        station_id = self.location.location_id.lower()
+        city = location.city.lower().replace(' ', '-')
+        country = location.country.lower().replace(' ', '-')
+        station_id = location.location_id.lower()
         variable = self.variable
         time_range = '_'.join(
             self.time_range.values()
@@ -139,5 +177,4 @@ class CAMSProcessor:
         )
         return output_path
 
-    def save_data(self, data, output_path):
-        pass
+

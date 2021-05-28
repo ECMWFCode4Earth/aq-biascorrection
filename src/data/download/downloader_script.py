@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from .downloader import OpenAQDownloader
-from ..utils import Location
+from src.data.download.downloader import OpenAQDownloader
+from src.data.utils import Location
 
 import pandas as pd
 import logging
@@ -21,7 +21,7 @@ def download_openaq_data_from_csv_with_locations_info(
     ............................................................
 
     For each of the rows of the csv file, it runs the OpenAQDownloader
-    for the respective varaible / location combination and  stores the
+    for the respective variable / location combination and  stores the
     data at the output directory (given as an argument)
     """
     locations_df = pd.read_csv(csv_path)
@@ -56,9 +56,10 @@ if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
-    download_openaq_data_from_csv_with_locations_info(
-        Path('../../../data/external/stations.csv'),
-        Path('../../../data/raw/observations/'),
-        'pm25'
-    )
+    for variable in ['o3', 'no2', 'pm25']:
+        download_openaq_data_from_csv_with_locations_info(
+            Path('../../../data/external/stations.csv'),
+            Path('../../../data/processed/observations/'),
+            variable
+        )
 

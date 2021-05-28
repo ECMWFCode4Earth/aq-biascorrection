@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 from math import sin, cos, sqrt, atan2, radians
-from ..utils import Location
+from src.data.utils import Location
 
 import pandas as pd
 import numpy as np
+import xarray as xr
 import os
 import openaq
 import datetime
@@ -46,15 +47,18 @@ class OpenAQDownloader:
         """
         Main method for the OpenAQDownloader class.
         """
-        stations = self.get_closest_stations_to_location()
-        data = self.get_data(stations)
         output_path_data = self.get_output_path()
-        logging.info(f'Nearest station is located at'
-                     f' {self.location.distance} km')
-        self.save_data(data,
-                       output_path_data)
-        logging.info(f"Data has been correctly downloaded"
-                     f" in {str(output_path_data)}")
+        if not output_path_data.exists():
+            stations = self.get_closest_stations_to_location()
+            datasets = self.get_data(stations)
+            output_path_data = self.get_output_path()
+            self.save_data(datasets,
+                           output_path_data)
+            logging.info(f"Data has been correctly downloaded"
+                         f" in {str(output_path_data)}")
+        else:
+            logging.info(f"Data already exists"
+                         f" in {str(output_path_data)}")
         return output_path_data
 
     def get_closest_stations_to_location(self) -> pd.DataFrame:
@@ -152,14 +156,14 @@ class OpenAQDownloader:
 
     def get_output_path(self) -> Path:
         """
-        Method to get the output paths where the data and metadata are stored.
+        Method to get the output path where the data is stored.
         """
-        city = self.location.city.lower().replace(' ', '_')
-        country = self.location.country.lower().replace(' ', '_')
+        city = self.location.city.lower().replace(' ', '-')
+        country = self.location.country.lower().replace(' ', '-')
         station_id = self.location.location_id.lower()
         variable = self.variable
         time_range = '_'.join(
-            self.downloaded_time_range.values()
+            self.time_range.values()
         ).replace('-', '')
         ext = '.nc'
         output_path = Path(
@@ -172,26 +176,25 @@ class OpenAQDownloader:
         )
         return output_path
 
-    def get_data(self, stations: pd.DataFrame) -> pd.DataFrame:
-        data = pd.DataFrame()
+    def get_data(self, stations: pd.DataFrame) -> List[xr.Dataset]:
         stations_downloaded = 0
+        xr_datasets = []
         for station in stations.iterrows():
             try:
-                data = self._get_data(station[1])
-                self.location.distance = station[1]['distance']
-                self.units = station[1]['parameters'][0]['unit']
+                xr_data = self._get_data(station[1])
+                xr_datasets.append(xr_data)
                 stations_downloaded += 1
                 if stations_downloaded == 5:
                     break
             except Exception as ex:
                 continue
 
-        if len(data) == 0:
+        if len(xr_datasets) == 0:
             raise Exception('Not data was retrieved')
 
-        return data
+        return xr_datasets
 
-    def _get_data(self, station: pd.Series) -> pd.DataFrame:
+    def _get_data(self, station: pd.Series) -> xr.Dataset:
         """
         This methods retrieves data from the OpenAQ platform in pd.DataFrame 
         format.
@@ -212,13 +215,11 @@ class OpenAQDownloader:
                             ' this location of interest')
 
         data = data.sort_index()
-        self.downloaded_time_range['start'] = datetime.datetime.strftime(
-            pd.to_datetime(data.index.values[0]),
-            '%Y%m%d')
-        self.downloaded_time_range['end'] = datetime.datetime.strftime(
-            pd.to_datetime(data.index.values[-1]),
-            '%Y%m%d')
-        return data
+        xr_data = self.create_xarray_dataset_with_attrs(
+            data,
+            station
+        )
+        return xr_data
 
     def check_variable_in_station(self, station: pd.Series):
         """
@@ -231,7 +232,7 @@ class OpenAQDownloader:
 
     def save_data(
             self,
-            data: pd.DataFrame,
+            datasets: List[xr.Dataset],
             output_path_data: Path
     ):
         """
@@ -241,24 +242,30 @@ class OpenAQDownloader:
         # Directory initialization if they do not exist
         if not output_path_data.parent.exists():
             os.makedirs(output_path_data.parent, exist_ok=True)
+        data = xr.concat(datasets, dim='station_id')
+        data.to_netcdf(output_path_data)
+
+    def create_xarray_dataset_with_attrs(self,
+                                         data: pd.DataFrame,
+                                         station: pd.Series) -> xr.Dataset:
         xr_ds = data['value'].to_xarray().rename(
             {'date.utc': 'time'}
         ).to_dataset(
             name=self.variable
         )
         xr_ds['time'] = pd.to_datetime(xr_ds.time.values)
-        xr_ds['station_id'] = self.location.location_id
+        xr_ds['station_id'] = station['id']
         xr_ds = xr_ds.set_coords('station_id')
         xr_ds = xr_ds.expand_dims('station_id')
-        xr_ds['x'] = np.unique(data['coordinates.longitude'].values)
+        xr_ds['x'] = station['coordinates.longitude']
         xr_ds = xr_ds.set_coords('x')
-        xr_ds['y'] = np.unique(data['coordinates.latitude'].values)
+        xr_ds['y'] = station['coordinates.latitude']
         xr_ds = xr_ds.set_coords('y')
         xr_ds['_x'] = self.location.longitude
         xr_ds = xr_ds.set_coords('_x')
         xr_ds['_y'] = self.location.latitude
         xr_ds = xr_ds.set_coords('_y')
-        xr_ds['distance'] = self.location.distance
+        xr_ds['distance'] = station['distance']
         xr_ds = xr_ds.set_coords('distance')
 
         xr_ds.y.attrs['units'] = 'degrees_north'
@@ -289,15 +296,13 @@ class OpenAQDownloader:
             'o3': 'Ozone',
             'pm25': 'Particulate matter (PM2.5)'
         }
-        xr_ds[self.variable].attrs['units'] = self.units
+        xr_ds[self.variable].attrs['units'] = station['parameters'][0]['unit']
         xr_ds[self.variable].attrs['standard_name'] = self.variable
         xr_ds[self.variable].attrs['long_name'] = long_name[self.variable]
 
         xr_ds.attrs['featureType'] = "timeSeries"
         xr_ds.attrs['Conventions'] = "CF-1.4"
-
-        # Store data in netCDF format
-        xr_ds.to_netcdf(output_path_data)
+        return xr_ds
 
 
 def get_distance_between_two_points_on_earth(
