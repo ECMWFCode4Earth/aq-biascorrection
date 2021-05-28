@@ -25,6 +25,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-locations", '--locations_csv_path',
+    help="Path to the file where the locations of interest are defined"
+)
+
+parser.add_argument(
     "-period", '--time_period',
     default=None,
     help="Period of time in which to process the CAMS data"
@@ -37,7 +42,6 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 CAMSProcessor(
     Path(args.input_dir),
     Path(args.locations_csv_path),
-    args.variable,
     Path(args.output_dir),
-    None
+    args.time_period
 ).run()

@@ -20,7 +20,6 @@ class CAMSProcessor:
             self,
             input_dir: Path,
             locations_csv: Path,
-            variable: str,
             output_dir: Path,
             time_range: Dict[str, str] = None
     ):
@@ -30,11 +29,6 @@ class CAMSProcessor:
         else:
             self.time_range = time_range
 
-        if variable in ['o3', 'no2', 'so2', 'pm10', 'pm25']:
-            self.variable = variable
-        else:
-            raise NotImplementedError(f"The variable {variable} do"
-                                      f" not correspond to any known one")
         self.locations_df = pd.read_csv(locations_csv)
         self.output_dir = output_dir
 
@@ -162,7 +156,6 @@ class CAMSProcessor:
         city = location.city.lower().replace(' ', '-')
         country = location.country.lower().replace(' ', '-')
         station_id = location.location_id.lower()
-        variable = self.variable
         time_range = '_'.join(
             self.time_range.values()
         ).replace('-', '')
@@ -172,8 +165,7 @@ class CAMSProcessor:
             country,
             city,
             station_id,
-            variable,
-            f"cams_{variable}_{country}_{city}_{station_id}_{time_range}{ext}"
+            f"cams_{country}_{city}_{station_id}_{time_range}{ext}"
         )
         return output_path
 
