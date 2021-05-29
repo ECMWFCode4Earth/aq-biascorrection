@@ -1,6 +1,7 @@
 from pathlib import Path
 from src.data.utils import Location
-from typing import Dict
+from typing import Dict, List
+from dask import distributed
 
 import pandas as pd
 import xarray as xr
@@ -32,12 +33,17 @@ class CAMSProcessor:
         self.locations_df = pd.read_csv(locations_csv)
         self.output_dir = output_dir
 
-    def run(self):
+    def run(self) -> str:
+        """
+        Main method to run the CAMSProcessor steps
+        """
         initialization_times = self.get_initialization_times()
         total_data = self.get_data_for_all_times_and_locations(
             initialization_times
         )
+        # We get the data for all initialization_times and locations
         for location in self.locations_df.iterrows():
+            # Write one netcdf for each location of interest
             loc = Location(
                 location[1]['id'],
                 location[1]['city'],
@@ -48,9 +54,9 @@ class CAMSProcessor:
             output_path_location = self.get_output_path(loc)
             data_location = total_data.sel(station_id=loc.location_id)
             data_location.to_netcdf(output_path_location)
-        return total_data
+        return 'Data has been processed successfully'
 
-    def get_initialization_times(self) -> list:
+    def get_initialization_times(self) -> list[str]:
         """
         Get all the initialization times (days) in the range defined by the
         time_range argument of the CAMSPreprocessor class
@@ -67,9 +73,13 @@ class CAMSProcessor:
 
     def get_data_for_all_times_and_locations(
             self,
-            initialization_times) -> xr.Dataset:
+            initialization_times: List[str]) -> xr.Dataset:
+        """
+        Get the data for the whole time_range defined as an argument and all
+        the locations of interest given in the .csv file concatenated
+        """
         total_data = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             future_to_entry = {
                 executor.submit(
                     self.get_data_for_initialization_time,
@@ -82,6 +92,10 @@ class CAMSProcessor:
         return total_data
 
     def get_data_for_initialization_time(self, initialization_time):
+        """
+        Get the data for one initialization_time of all the different locations
+        of interest given in the .csv file
+        """
         logging.info(f'Getting data for initialization time'
                      f' {initialization_time}')
         try:
@@ -97,7 +111,7 @@ class CAMSProcessor:
     def get_paths_for_forecasted_variables(
             self,
             initialization_time: str
-    ) -> list:
+    ) -> List[Path]:
         """
         Get all the paths associated with an initialization_time sorted by name
         """
@@ -116,10 +130,10 @@ class CAMSProcessor:
         paths.sort()
         return paths
 
-    def get_data(self, paths_for_forecast):
+    def get_data(self, paths_for_forecast) -> xr.Dataset:
         """
-        Get the data of the CAMS model for the specific location defined by the
-        location argument of the CAMSPreprocessor class
+        Get the data of the CAMS model for every location defined in the
+        .csv which gathers the locations of interest
         """
         data = xr.open_mfdataset(paths_for_forecast,
                                  concat_dim='time',

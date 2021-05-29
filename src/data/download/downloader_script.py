@@ -5,6 +5,7 @@ from src.data.utils import Location
 
 import pandas as pd
 import logging
+import argparse
 
 
 def download_openaq_data_from_csv_with_locations_info(
@@ -52,14 +53,33 @@ def download_openaq_data_from_csv_with_locations_info(
                  f' {len(locations_df)} for variable {variable}')
 
 
-if __name__ == '__main__':
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
+parser = argparse.ArgumentParser(
+    prog='OpenAQDownloader',
+)
 
-    for variable in ['o3', 'no2', 'pm25']:
-        download_openaq_data_from_csv_with_locations_info(
-            Path('../../../data/external/stations.csv'),
-            Path('../../../data/processed/observations/'),
-            variable
-        )
+parser.add_argument(
+    "-output", '--output_dir',
+    help="Output directory where to store the data to"
+)
+
+parser.add_argument(
+    "-locations", '--locations_csv_path',
+    help="Path to the file where the locations of interest are defined"
+)
+
+parser.add_argument(
+    "-var", '--variable',
+    default=None,
+    help="Variable to which to download the OpenAQ data"
+)
+
+args = parser.parse_args()
+log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+
+download_openaq_data_from_csv_with_locations_info(
+    Path(args.locations_csv_path),
+    Path(args.output_dir),
+    args.variable
+)
 

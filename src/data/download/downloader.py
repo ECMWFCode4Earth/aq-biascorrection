@@ -4,7 +4,6 @@ from math import sin, cos, sqrt, atan2, radians
 from src.data.utils import Location
 
 import pandas as pd
-import numpy as np
 import xarray as xr
 import os
 import openaq
