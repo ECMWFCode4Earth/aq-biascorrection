@@ -15,6 +15,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-intermediary", '--intermediary_dir',
+    help="Intermediary directory where to store the temporal data"
+)
+
+parser.add_argument(
     "-output", '--output_dir',
     help="Output directory where to store the data to"
 )
@@ -36,6 +41,7 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 
 CAMSProcessor(
     Path(args.input_dir),
+    Path(args.intermediary_dir),
     Path(args.locations_csv_path),
     Path(args.output_dir),
     args.time_period

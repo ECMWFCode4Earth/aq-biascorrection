@@ -10,6 +10,13 @@ import datetime
 import logging
 import glob
 import concurrent.futures
+import os
+
+
+def remove_intermediary_paths(intermediary_paths: List[Path]):
+    for path in intermediary_paths:
+        if path.exists():
+            os.remove(path)
 
 
 class CAMSProcessor:
@@ -20,11 +27,13 @@ class CAMSProcessor:
     def __init__(
             self,
             input_dir: Path,
+            intermediary_dir: Path,
             locations_csv: Path,
             output_dir: Path,
             time_range: Dict[str, str] = None
     ):
         self.input_dir = input_dir
+        self.intermediary_dir = intermediary_dir
         if time_range is None:
             self.time_range = dict(start='2019-06-01', end='2021-03-31')
         else:
@@ -38,7 +47,7 @@ class CAMSProcessor:
         Main method to run the CAMSProcessor steps
         """
         initialization_times = self.get_initialization_times()
-        total_data = self.get_data_for_all_times_and_locations(
+        total_data, intermediary_paths = self.get_total_data(
             initialization_times
         )
         # We get the data for all initialization_times and locations
@@ -54,6 +63,7 @@ class CAMSProcessor:
             output_path_location = self.get_output_path(loc)
             data_location = total_data.sel(station_id=loc.location_id)
             data_location.to_netcdf(output_path_location)
+        remove_intermediary_paths(intermediary_paths)
         return 'Data has been processed successfully'
 
     def get_initialization_times(self) -> list[str]:
@@ -71,27 +81,29 @@ class CAMSProcessor:
         ) for time in initialization_times]
         return initialization_times
 
-    def get_data_for_all_times_and_locations(
+    def get_total_data(
             self,
-            initialization_times: List[str]) -> xr.Dataset:
+            initialization_times: List[str]) -> (xr.Dataset, Path):
         """
         Get the data for the whole time_range defined as an argument and all
         the locations of interest given in the .csv file concatenated
         """
-        total_data = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        intermediary_paths = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
             future_to_entry = {
                 executor.submit(
                     self.get_data_for_initialization_time,
                     init_time
                 ): init_time for init_time in initialization_times}
             for future in concurrent.futures.as_completed(future_to_entry):
-                data_for_init_time = future.result()
-                total_data.append(data_for_init_time)
-        total_data = xr.concat(total_data, dim='time')
-        return total_data
+                intermediary_path_for_init_time = future.result()
+                intermediary_paths.append(intermediary_path_for_init_time)
+        total_data = xr.open_mfdataset(intermediary_paths,
+                                       concat_dim='time')
+        return total_data, intermediary_paths
 
-    def get_data_for_initialization_time(self, initialization_time):
+    def get_data_for_initialization_time(self,
+                                         initialization_time: str) -> Path:
         """
         Get the data for one initialization_time of all the different locations
         of interest given in the .csv file
@@ -102,11 +114,12 @@ class CAMSProcessor:
             paths_for_forecast = self.get_paths_for_forecasted_variables(
                 initialization_time
             )
+            intermediary_path = self.get_intermediary_path(initialization_time)
             data = self.get_data(paths_for_forecast)
-            return data
+            data.to_netcdf(intermediary_path)
+            return intermediary_path
         except Exception as ex:
             logging.error(ex)
-            return None
 
     def get_paths_for_forecasted_variables(
             self,
@@ -182,5 +195,13 @@ class CAMSProcessor:
             f"cams_{country}_{city}_{station_id}_{time_range}{ext}"
         )
         return output_path
+
+    def get_intermediary_path(self, initialization_time):
+        ext = '.nc'
+        intermediary_path = Path(
+            self.intermediary_dir,
+            f"cams_all_stations_{initialization_time}{ext}"
+        )
+        return intermediary_path
 
 
