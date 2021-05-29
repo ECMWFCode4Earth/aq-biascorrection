@@ -12,6 +12,17 @@ import logging
 import warnings
 
 warnings.filterwarnings("ignore")
+
+
+def write_netcdf(output_path: Path,
+                 ds: xr.Dataset):
+    comp = dict(zlib=True,
+                complevel=1,
+                shuffle=True)
+    encoding = {var: comp for var in ds.data_vars}
+    ds.to_netcdf(path=output_path,
+                 unlimited_dims=None,
+                 encoding=encoding)
     
 
 class OpenAQDownloader:
@@ -242,7 +253,7 @@ class OpenAQDownloader:
         if not output_path_data.parent.exists():
             os.makedirs(output_path_data.parent, exist_ok=True)
         data = xr.concat(datasets, dim='station_id')
-        data.to_netcdf(output_path_data)
+        write_netcdf(output_path_data, data)
 
     def create_xarray_dataset_with_attrs(self,
                                          data: pd.DataFrame,

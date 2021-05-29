@@ -19,6 +19,17 @@ def remove_intermediary_paths(intermediary_paths: List[Path]):
             os.remove(path)
 
 
+def write_netcdf(output_path: Path,
+                 ds: xr.Dataset):
+    comp = dict(zlib=True,
+                complevel=1,
+                shuffle=True)
+    encoding = {var: comp for var in ds.data_vars}
+    ds.to_netcdf(path=output_path,
+                 unlimited_dims=None,
+                 encoding=encoding)
+
+
 class CAMSProcessor:
     """
     Class to process the CAMS model forecast
@@ -62,7 +73,7 @@ class CAMSProcessor:
             )
             output_path_location = self.get_output_path(loc)
             data_location = total_data.sel(station_id=loc.location_id)
-            data_location.to_netcdf(output_path_location)
+            write_netcdf(output_path_location, data_location)
         remove_intermediary_paths(intermediary_paths)
         return 'Data has been processed successfully'
 
@@ -89,7 +100,7 @@ class CAMSProcessor:
         the locations of interest given in the .csv file concatenated
         """
         intermediary_paths = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             future_to_entry = {
                 executor.submit(
                     self.get_data_for_initialization_time,
@@ -111,12 +122,12 @@ class CAMSProcessor:
         logging.info(f'Getting data for initialization time'
                      f' {initialization_time}')
         try:
+            intermediary_path = self.get_intermediary_path(initialization_time)
             paths_for_forecast = self.get_paths_for_forecasted_variables(
                 initialization_time
             )
-            intermediary_path = self.get_intermediary_path(initialization_time)
             data = self.get_data(paths_for_forecast)
-            data.to_netcdf(intermediary_path)
+            write_netcdf(intermediary_path, data)
             return intermediary_path
         except Exception as ex:
             logging.error(ex)
