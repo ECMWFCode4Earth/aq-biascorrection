@@ -64,7 +64,7 @@ class CAMSProcessor:
             initialization_times
         )
         # We get the data for all initialization_times and locations
-        for location in self.locations_df.iterrows():
+        for i, location in enumerate(self.locations_df.iterrows()):
             # Write one netcdf for each location of interest
             loc = Location(
                 location[1]['id'],
@@ -75,7 +75,9 @@ class CAMSProcessor:
             )
             output_path_location = self.get_output_path(loc)
             data_location = total_data.sel(station_id=loc.location_id)
-            logging.info(f'Writing netcdf for location: {location[1]["id"]}')
+            logging.info(f'Writing netcdf for location {i} out of '
+                         f'{len(self.locations_df)} with id: '
+                         f'{location[1]["id"]}')
             write_netcdf(output_path_location, data_location)
         logging.info(f'Deleting intermediary data')
         remove_intermediary_paths(intermediary_paths)
