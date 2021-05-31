@@ -16,6 +16,8 @@ warnings.filterwarnings("ignore")
 
 def write_netcdf(output_path: Path,
                  ds: xr.Dataset):
+    if not output_path.parent.exists():
+        os.makedirs(output_path.parent, exist_ok=True)
     comp = dict(zlib=True,
                 complevel=1,
                 shuffle=True)
@@ -62,8 +64,8 @@ class OpenAQDownloader:
             stations = self.get_closest_stations_to_location()
             datasets = self.get_data(stations)
             output_path_data = self.get_output_path()
-            self.save_data(datasets,
-                           output_path_data)
+            self.concat_by_time_and_save_data(datasets,
+                                              output_path_data)
             logging.info(f"Data has been correctly downloaded"
                          f" in {str(output_path_data)}")
         else:
@@ -240,7 +242,7 @@ class OpenAQDownloader:
             raise Exception('The variable intended to download is not'
                             ' available for the nearest / exact location')
 
-    def save_data(
+    def concat_by_time_and_save_data(
             self,
             datasets: List[xr.Dataset],
             output_path_data: Path
@@ -250,8 +252,6 @@ class OpenAQDownloader:
         """
 
         # Directory initialization if they do not exist
-        if not output_path_data.parent.exists():
-            os.makedirs(output_path_data.parent, exist_ok=True)
         data = xr.concat(datasets, dim='station_id')
         write_netcdf(output_path_data, data)
 

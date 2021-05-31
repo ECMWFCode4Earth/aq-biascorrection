@@ -21,6 +21,8 @@ def remove_intermediary_paths(intermediary_paths: List[Path]):
 
 def write_netcdf(output_path: Path,
                  ds: xr.Dataset):
+    if not output_path.parent.exists():
+        os.makedirs(output_path.parent, exist_ok=True)
     comp = dict(zlib=True,
                 complevel=1,
                 shuffle=True)
