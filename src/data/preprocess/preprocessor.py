@@ -125,11 +125,12 @@ class CAMSProcessor:
                      f' {initialization_time}')
         try:
             intermediary_path = self.get_intermediary_path(initialization_time)
-            paths_for_forecast = self.get_paths_for_forecasted_variables(
-                initialization_time
-            )
-            data = self.get_data(paths_for_forecast)
-            write_netcdf(intermediary_path, data)
+            if not intermediary_path.exists():
+                paths_for_forecast = self.get_paths_for_forecasted_variables(
+                    initialization_time
+                )
+                data = self.get_data(paths_for_forecast)
+                write_netcdf(intermediary_path, data)
             return intermediary_path
         except Exception as ex:
             logging.error(ex)
