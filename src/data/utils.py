@@ -18,11 +18,13 @@ class Location:
     def __str__(self):
         return f'Location(location_id={self.location_id}, ' \
                f'city={self.city}, country={self.country}, ' \
-               f'latitude={self.latitude}, longitude={self.longitude}'
+               f'latitude={self.latitude}, longitude={self.longitude}, ' \
+               f'timezone={self.timezone}'
 
     def get_observations_path(self, directory, variable, time_range):
         """
-        Method to get the output path where the data is stored.
+        Method to get the observations path given:
+        Location, directory, variable, time_range.
         """
         city = self.city.lower().replace(' ', '-')
         country = self.country.lower().replace(' ', '-')
@@ -40,7 +42,8 @@ class Location:
 
     def get_forecast_path(self, directory, time_range):
         """
-        Method to get the output path where the data is stored.
+        Method to get the forecast path given:
+        Location, directory, variable, time_range.
         """
         city = self.city.lower().replace(' ', '-')
         country = self.country.lower().replace(' ', '-')
