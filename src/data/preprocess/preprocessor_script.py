@@ -46,3 +46,5 @@ CAMSProcessor(
     Path(args.output_dir),
     args.time_period
 ).run()
+
+logging.info('Process finished!')

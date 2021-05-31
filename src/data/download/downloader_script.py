@@ -50,6 +50,7 @@ def download_openaq_data_from_csv_with_locations_info(
     logging.info(f'The number of locations which has been correctly downloaded'
                  f' is {number_of_successful_locations} out of'
                  f' {len(locations_df)} for variable {variable}')
+    logging.info('Process finished!')
 
 
 parser = argparse.ArgumentParser(

@@ -10,11 +10,18 @@ class StationTemporalSeriesPlotter:
             station_path_observations: Path,
             station_path_forecasts: Path = None
     ):
-        obs = xr.open_dataset(station_path_observations,
-                              chunks={'time': 100})
+        self.obs = xr.open_dataset(station_path_observations,
+                                   chunks={'time': 100})
         if station_path_forecasts is not None:
-            forecasts = xr.open_dataset(station_path_forecasts,
-                                        chunks={'time':100})
+            self.forecasts = xr.open_dataset(station_path_forecasts,
+                                             chunks={'time':100})
         else:
-            forecasts = None
+            self.forecasts = None
+        params = station_path_observations.name.split('_')
+        self.location_parameters = {}
+        for i, param in enumerate(['variable', 'country', 'city',
+                                   'location_id', 'time_range']):
+            self.location_parameters[param] = params[i]
+
+
 

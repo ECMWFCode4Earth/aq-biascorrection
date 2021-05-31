@@ -42,6 +42,7 @@ class OpenAQDownloader:
             time_range: Dict[str, str] = None
     ):
         self.units = None
+        # To take the last version of the OpenAQ API
         self.api = openaq.OpenAQ(version='v2')
         if time_range is None:
             time_range = dict(start='2019-06-01', end='2021-03-31')
