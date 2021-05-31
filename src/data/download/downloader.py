@@ -60,11 +60,15 @@ class OpenAQDownloader:
         """
         Main method for the OpenAQDownloader class.
         """
-        output_path_data = self.get_output_path()
+        output_path_data = self.location.get_observations_path(
+            self.output_dir, self.variable,
+            '_'.join(
+                self.time_range.values()
+            ).replace('-', '')
+        )
         if not output_path_data.exists():
             stations = self.get_closest_stations_to_location()
             datasets = self.get_data(stations)
-            output_path_data = self.get_output_path()
             self.concat_by_time_and_save_data(datasets,
                                               output_path_data)
             logging.info(f"Data has been correctly downloaded"
@@ -166,28 +170,6 @@ class OpenAQDownloader:
         if len(stations[stations['sensorType'] == 'reference grade']) >= 1:
             stations = stations[stations['sensorType'] == 'reference grade']
         return stations
-
-    def get_output_path(self) -> Path:
-        """
-        Method to get the output path where the data is stored.
-        """
-        city = self.location.city.lower().replace(' ', '-')
-        country = self.location.country.lower().replace(' ', '-')
-        station_id = self.location.location_id.lower()
-        variable = self.variable
-        time_range = '_'.join(
-            self.time_range.values()
-        ).replace('-', '')
-        ext = '.nc'
-        output_path = Path(
-            self.output_dir,
-            country,
-            city,
-            station_id,
-            variable,
-            f"{variable}_{country}_{city}_{station_id}_{time_range}{ext}"
-        )
-        return output_path
 
     def get_data(self, stations: pd.DataFrame) -> List[xr.Dataset]:
         stations_downloaded = 0
