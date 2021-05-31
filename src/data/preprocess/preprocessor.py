@@ -73,7 +73,12 @@ class CAMSProcessor:
                 location[1]['latitude'],
                 location[1]['longitude']
             )
-            output_path_location = self.get_output_path(loc)
+            output_path_location = loc.get_forecast_path(
+                self.output_dir,
+                '_'.join(
+                    self.time_range.values()
+                ).replace('-', '')
+            )
             data_location = total_data.sel(station_id=loc.location_id)
             logging.info(f'Writing netcdf for location {i} out of '
                          f'{len(self.locations_df)} with id: '
@@ -194,26 +199,6 @@ class CAMSProcessor:
             data_for_stations.append(data_location)
         data = xr.concat(data_for_stations, dim='station_id')
         return data
-
-    def get_output_path(self, location) -> Path:
-        """
-        Method to get the output path where the data is stored.
-        """
-        city = location.city.lower().replace(' ', '-')
-        country = location.country.lower().replace(' ', '-')
-        station_id = location.location_id.lower()
-        time_range = '_'.join(
-            self.time_range.values()
-        ).replace('-', '')
-        ext = '.nc'
-        output_path = Path(
-            self.output_dir,
-            country,
-            city,
-            station_id,
-            f"cams_{country}_{city}_{station_id}_{time_range}{ext}"
-        )
-        return output_path
 
     def get_intermediary_path(self, initialization_time):
         ext = '.nc'
