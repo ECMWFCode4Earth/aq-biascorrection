@@ -1,8 +1,8 @@
+from pathlib import Path
+from src.data.preprocess.preprocessor import CAMSProcessor
+
 import logging
 import argparse
-from pathlib import Path
-
-from src.data.preprocess.preprocessor import CAMSProcessor
 
 
 parser = argparse.ArgumentParser(

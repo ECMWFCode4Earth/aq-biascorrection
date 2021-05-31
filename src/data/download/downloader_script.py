@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from src.data.download.downloader import OpenAQDownloader
 from src.data.utils import Location
 
