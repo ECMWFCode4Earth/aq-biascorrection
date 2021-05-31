@@ -75,7 +75,9 @@ class CAMSProcessor:
             )
             output_path_location = self.get_output_path(loc)
             data_location = total_data.sel(station_id=loc.location_id)
+            logging.info(f'Writing netcdf for location: {location[1]["id"]}')
             write_netcdf(output_path_location, data_location)
+        logging.info(f'Deleting intermediary data')
         remove_intermediary_paths(intermediary_paths)
         return 'Data has been processed successfully'
 
@@ -111,6 +113,7 @@ class CAMSProcessor:
             for future in concurrent.futures.as_completed(future_to_entry):
                 intermediary_path_for_init_time = future.result()
                 intermediary_paths.append(intermediary_path_for_init_time)
+        logging.info(f'Opening the data for all the stations and times')
         total_data = xr.open_mfdataset(intermediary_paths,
                                        concat_dim='time')
         return total_data, intermediary_paths
