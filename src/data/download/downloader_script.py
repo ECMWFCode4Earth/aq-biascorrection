@@ -32,7 +32,8 @@ def download_openaq_data_from_csv_with_locations_info(
             location[1]['city'],
             location[1]['country'],
             location[1]['latitude'],
-            location[1]['longitude']
+            location[1]['longitude'],
+            location[1]['timezone']
         )
         logging.info(f"Starting process for location of"
                      f" interest {str(loc)}")
