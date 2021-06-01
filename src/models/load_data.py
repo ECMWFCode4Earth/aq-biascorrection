@@ -36,7 +36,7 @@ class DataLoader:
             ).replace('-', '')
         )
 
-    def run(self):
+    def run(self) -> pd.DataFrame:
         # Open forecast and observational data
         forecast_data = self.opening_and_transforming_forecast()
         try:
@@ -61,7 +61,7 @@ class DataLoader:
         ]
         return merged_pd
 
-    def opening_and_transforming_forecast(self):
+    def opening_and_transforming_forecast(self) -> xr.Dataset:
         # Open the data
         forecast_data = xr.open_dataset(self.forecast_path)
         #Rename some of the variables
@@ -89,7 +89,7 @@ class DataLoader:
         )
         return forecast_data
 
-    def opening_and_transforming_observations(self):
+    def opening_and_transforming_observations(self) -> xr.Dataset:
         # Open the data
         observations_data = xr.open_dataset(self.observations_path)
         # The variable 'o3' is in units of 'ppm' for the observations
@@ -120,30 +120,44 @@ class DataLoader:
             )
         return observations_data
 
-    def weight_average_with_distance(self, ds):
-        values_weighted_average = []
-        for time in ds.time.values:
-            ds_time = ds.sel(time=time)
-            distance_and_value = {}
-            for station in ds_time.station_id.values:
-                ds_station = ds_time.sel(station_id=station)
-                distance_weight = round(1 / ds_station.distance.values, 2)
-                value = float(ds_station[self.variable].values)
-                if not np.isnan(value):
-                    distance_and_value[distance_weight] = value
-            if len(distance_and_value) == 0:
-                values_weighted_average.append(np.nan)
-            else:
-                values_weighted_average.append(
-                    np.average(list(distance_and_value.values()),
-                               weights=list(distance_and_value.keys()))
-                )
-        ds = ds.mean('station_id')
-        ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
-        ds[self.variable][:] = values_weighted_average
+    def weight_average_with_distance(self, ds: xr.Dataset) -> xr.Dataset:
+        """
+        This method calculates the value for the observational data as a weight
+        average of the closes stations to the location of interest.
+        """
+        if len(ds.station_id.values) == 1:
+            ds = ds.mean('station_id')
+            ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
+        else:
+            values_weighted_average = []
+            for time in ds.time.values:
+                ds_time = ds.sel(time=time)
+                distance_and_value = {}
+                for station in ds_time.station_id.values:
+                    ds_station = ds_time.sel(station_id=station)
+                    distance_weight = round(1 / ds_station.distance.values, 2)
+                    value = float(ds_station[self.variable].values)
+                    if not np.isnan(value):
+                        distance_and_value[distance_weight] = value
+                if len(distance_and_value) == 0:
+                    values_weighted_average.append(np.nan)
+                else:
+                    values_weighted_average.append(
+                        np.average(list(distance_and_value.values()),
+                                   weights=list(distance_and_value.keys()))
+                    )
+            ds = ds.mean('station_id')
+            ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
+            ds[self.variable][:] = values_weighted_average
         return ds
 
-    def adding_local_time_hour(self, df):
+    def adding_local_time_hour(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        This method uses the location object 'timezone' attribute to obtain the
+        local time hour from the UTC time. This is importante step because the
+        bias in the model is known to depend on the diurnal cycle (local time
+        of the place is needed)
+        """
         timezone = pytz.timezone(
             self.location.timezone
         )
@@ -155,14 +169,3 @@ class DataLoader:
         df['local_time_hour'] = local_time_hour
         return df
 
-
-if __name__ == '__main__':
-    latitude_dubai = 25.0657
-    longitude_dubai = 55.17128
-    timezone = "Asia/Dubai"
-    DataLoader(
-        'pm25',
-        Location(
-            "AE001", "Dubai", "United Arab Emirates",
-            latitude_dubai, longitude_dubai, timezone),
-    ).run()
