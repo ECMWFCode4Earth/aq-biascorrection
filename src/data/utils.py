@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+import googlemaps
+import requests
+
 
 @dataclass
 class Location:
@@ -57,3 +60,9 @@ class Location:
             f"cams_{country}_{city}_{station_id}_{time_range}{ext}"
         )
         return output_path
+
+    def get_height_for_location(self, api_key: str):
+        url = f"https://api.open-elevation.com/api/v1/lookup?" \
+              f"locations={round(self.latitude, 2)},{round(self.longitude, 2)}"
+        elevation = requests.get(url).json()['results'][0]['elevation']
+        return elevation

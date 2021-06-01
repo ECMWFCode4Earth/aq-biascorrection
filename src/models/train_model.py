@@ -20,7 +20,7 @@ class ModelTrainer:
 
     def data_load(self):
         data_for_locations = None
-        for location in self.locations.iterrow():
+        for location in self.locations.iterrows():
             loc = Location(
                 location[1]['id'],
                 location[1]['city'],
@@ -40,4 +40,8 @@ class ModelTrainer:
                 logging.info(ex)
                 pass
         return data_for_locations
+
+
+if __name__ == '__main__':
+    ModelTrainer('pm25').run()
 

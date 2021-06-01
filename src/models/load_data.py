@@ -69,13 +69,19 @@ class DataLoader:
                                               'go3': 'o3'})
         # Transform units of concentration variables
         for variable in ['pm25', 'o3', 'no2', 'so2', 'pm10']:
-            # Micrograms / kilogram
-            forecast_data[variable] *= (10**9)
             # The air density depends on temperature and pressure, but an
             # standard is known when 15K and 1 atmosphere of pressure
-            air_density = 0.816
+            surface_pressure = self.calculate_surface_pressure_by_msl(
+                forecast_data['t2m'],
+                forecast_data['msl']
+            )
+            air_density = self.calculate_air_density(
+                surface_pressure,
+                forecast_data['t2m']
+            )
             # Now, we use the air density to transform to Micrograms / m³
-            forecast_data[variable] /= air_density
+            forecast_data[variable] *= air_density.values
+            forecast_data[variable] *= (10 ** 9)
 
         # Rename all the variables to "{variable}_forecast" in order to
         # distinguish them when merged
@@ -142,9 +148,12 @@ class DataLoader:
                 if len(distance_and_value) == 0:
                     values_weighted_average.append(np.nan)
                 else:
+                    weights_normalized = np.array(
+                        distance_and_value.keys()
+                    ) / sum(distance_and_value.keys())
                     values_weighted_average.append(
                         np.average(list(distance_and_value.values()),
-                                   weights=list(distance_and_value.keys()))
+                                   weights=weights_normalized)
                     )
             ds = ds.mean('station_id')
             ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
@@ -168,4 +177,21 @@ class DataLoader:
         ]
         df['local_time_hour'] = local_time_hour
         return df
+
+    def calculate_surface_pressure_by_msl(self,
+                                          temp: xr.DataArray,
+                                          mslp: xr.DataArray):
+        height = self.location.get_height_for_location(
+            'AIzaSyBtCNhvM2uDWP_Hum4PnuGR_OUGkcpAy7o'
+        )
+        exponent = (9.80665 * 0.0289644) / (8.31432 * 0.0065)
+        factor = (1 + ((-0.0065 / temp) * height)) ** exponent
+        surface_pressure = mslp * factor
+        return surface_pressure
+
+    def calculate_air_density(self,
+                              sp: xr.DataArray,
+                              temp: xr.DataArray):
+        return sp / (temp * 287.058)
+
 
