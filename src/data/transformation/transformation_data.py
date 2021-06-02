@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from src.data.transformation.transformation_location import LocationTransformer
 from src.data.utils import Location
 
@@ -15,13 +15,21 @@ class DataTransformer:
             self,
             variable: str,
             locations_csv_path: Path = Path(
-                '../../../data/external/stations_with_altitude.csv'
+                './data/external/stations_with_altitude.csv'
             ),
-            output_dir: Path = Path('../../../data/processed/')
+            output_dir: Path = Path('./data/processed/'),
+            observations_dir: Path = Path('./data/interim/observations/'),
+            forecast_dir: Path = Path('./data/interim/forecasts/'),
+            time_range: Dict[str, str] = None
     ):
         self.variable = variable
         self.locations = pd.read_csv(locations_csv_path)
         self.output_dir = output_dir
+        self.observations_dir = observations_dir
+        self.forecast_dir = forecast_dir
+        if time_range is None:
+            time_range = dict(start='2019-06-01', end='2021-03-31')
+        self.time_range = time_range
 
     def run(self):
         paths = self.data_transform()
@@ -60,7 +68,13 @@ class DataTransformer:
                 inter_loc_path = self.get_output_path(loc)
                 if inter_loc_path.exists():
                     return inter_loc_path
-                data_for_location = LocationTransformer(self.variable, loc).run()
+                data_for_location = LocationTransformer(
+                    self.variable,
+                    loc,
+                    observations_dir=self.observations_dir,
+                    forecast_dir=self.forecast_dir,
+                    time_range=self.time_range
+                ).run()
                 data_for_location.to_hdf(str(inter_loc_path),
                                          key='df',
                                          mode='w')
