@@ -24,3 +24,4 @@ pytz~=2021.1
 scikit-learn~=0.24.2
 requests~=2.25.1
 xgboost~=1.4.2
+datacleaner~=0.1.5
