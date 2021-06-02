@@ -16,7 +16,7 @@ class DataLoader:
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
         data = None
         for file in files:
-            dataset = pd.read_csv(file)
+            dataset = pd.read_csv(file, index_col=0)
             if data is None:
                 data = dataset
             else:
