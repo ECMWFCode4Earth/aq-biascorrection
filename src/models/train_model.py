@@ -21,21 +21,21 @@ class ModelTrain:
         self.model = xg.XGBRegressor(verbosity=1)
 
     def train(self):
-        parameters = {'nthread': [4],
+        parameters = {'nthread': [-1],
                       # when use hyperthread, xgboost may become slower
                       'objective': ['reg:squarederror'],
-                      'learning_rate': [.03, 0.05, .1, 0.2, 0.5, 0.7, 1],
+                      'learning_rate': [0.1, 0.2, 0.5, 0.7, 1],
                       # so called `eta` value
                       'max_depth': [5, 6, 7, 8],
                       'min_child_weight': [4, 5, 6, 7, 8],
                       'subsample': [0.7],
                       'colsample_bytree': [0.7],
-                      'n_estimators': [200, 300, 500, 700]}
+                      'n_estimators': [500, 700]}
 
         xgb_grid = GridSearchCV(self.model,
                                 parameters,
                                 cv=5,
-                                scoring='neg_mean_absolute_percentage_error',
+                                scoring='neg_mean_absolute_error',
                                 n_jobs=1,
                                 verbose=10)
         xgb_grid.fit(self.data_dict['train'][0],
