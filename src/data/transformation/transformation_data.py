@@ -75,15 +75,13 @@ class DataTransformer:
                     forecast_dir=self.forecast_dir,
                     time_range=self.time_range
                 ).run()
-                data_for_location.to_hdf(str(inter_loc_path),
-                                         key='df',
-                                         mode='w')
+                data_for_location.to_csv(str(inter_loc_path))
                 return inter_loc_path
             except Exception as ex:
                 return ex
 
     def get_output_path(self, loc: Location) -> Path:
-        ext = '.h5'
+        ext = '.csv'
         intermediary_path = Path(
             self.output_dir,
             self.variable,
@@ -93,3 +91,13 @@ class DataTransformer:
             os.makedirs(intermediary_path.parent, exist_ok=True)
         return intermediary_path
 
+
+if __name__ == '__main__':
+    DataTransformer(
+        variable="pm25",
+        locations_csv_path=Path("/home/pereza/git/esowc/aq-biascorrection/data/external/stations_with_altitude.csv"),
+        output_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/processed/"),
+        observations_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/interim/observations/"),
+        forecast_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/interim/forecasts/"),
+        time_range=None
+    ).run()
