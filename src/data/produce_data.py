@@ -26,8 +26,7 @@ def main(variable,
          output_data_transformation
          ):
     """
-    Runs data processing scripts to turn raw data from (../raw) into
-    cleaned data ready to be analyzed (saved in ../processed).
+    Function to do the whole ETL process
     """
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
@@ -49,7 +48,10 @@ def main(variable,
     DataTransformer(
         variable,
         locations_csv_path,
-        output_data_transformation
+        output_data_transformation,
+        observations_dir=output_observation_extraction,
+        forecast_dir=output_forecast_extraction,
+        time_range=None
     ).run()
 
 
