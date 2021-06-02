@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.data.preprocess.preprocessor import CAMSProcessor
+from src.data.extraction.cams_forecast import CAMSProcessor
 
 import logging
 import argparse

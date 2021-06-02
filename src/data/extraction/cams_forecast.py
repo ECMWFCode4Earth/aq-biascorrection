@@ -72,7 +72,8 @@ class CAMSProcessor:
                 location[1]['country'],
                 location[1]['latitude'],
                 location[1]['longitude'],
-                location[1]['timezone']
+                location[1]['timezone'],
+                location[1]['elevation']
             )
             output_path_location = loc.get_forecast_path(
                 self.output_dir,

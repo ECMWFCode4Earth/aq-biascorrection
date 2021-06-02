@@ -29,7 +29,7 @@ def write_netcdf(output_path: Path,
 
 class OpenAQDownloader:
     """
-    Class to download data from the OpenAQ platform for a specific location
+    Class to extraction data from the OpenAQ platform for a specific location
     of interest.
     It downloads the nearest station with the highest number of measurements
     in the time_range given by the user.
@@ -222,7 +222,7 @@ class OpenAQDownloader:
         variable of interest
         """
         if self.variable not in [x['parameter'] for x in station['parameters']]:
-            raise Exception('The variable intended to download is not'
+            raise Exception('The variable intended to extraction is not'
                             ' available for the nearest / exact location')
 
     def concat_by_time_and_save_data(

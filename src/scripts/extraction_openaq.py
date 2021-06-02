@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.data.download.downloader import OpenAQDownloader
+from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
 
 import pandas as pd
@@ -33,7 +33,8 @@ def download_openaq_data_from_csv_with_locations_info(
             location[1]['country'],
             location[1]['latitude'],
             location[1]['longitude'],
-            location[1]['timezone']
+            location[1]['timezone'],
+            location[1]['elevation']
         )
         logging.info(f"Starting process for location of"
                      f" interest {str(loc)}")
@@ -71,7 +72,7 @@ parser.add_argument(
 parser.add_argument(
     "-var", '--variable',
     default=None,
-    help="Variable to which to download the OpenAQ data"
+    help="Variable to which to extraction the OpenAQ data"
 )
 
 args = parser.parse_args()

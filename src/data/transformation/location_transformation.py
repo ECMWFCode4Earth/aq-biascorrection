@@ -8,13 +8,13 @@ import numpy as np
 import pytz
 
 
-class DataLoader:
+class LocationTransformer:
     def __init__(
             self,
             variable: str,
             location: Location,
-            observations_dir: Path = Path('../../data/processed/observations/'),
-            forecast_dir: Path = Path('../../data/processed/forecasts/'),
+            observations_dir: Path = Path('./data/interim/observations/'),
+            forecast_dir: Path = Path('./data/interim/forecasts/'),
             time_range: Dict[str, str] = None
     ):
         self.variable = variable
@@ -41,7 +41,7 @@ class DataLoader:
         forecast_data = self.opening_and_transforming_forecast()
         try:
             observed_data = self.opening_and_transforming_observations()
-        except:
+        except Exception as ex:
             raise Exception('There is not data for this variable at the'
                             ' location of interest')
         # Merge both xarray datasets
@@ -59,6 +59,7 @@ class DataLoader:
         ] - merged_pd[
             f'{self.variable}_observed'
         ]
+        merged_pd.reset_index(inplace=True)
         return merged_pd
 
     def opening_and_transforming_forecast(self) -> xr.Dataset:
@@ -141,7 +142,12 @@ class DataLoader:
                 distance_and_value = {}
                 for station in ds_time.station_id.values:
                     ds_station = ds_time.sel(station_id=station)
-                    distance_weight = round(1 / ds_station.distance.values, 2)
+                    if ds_station.distance.values > 1:
+                        distance_weight = round(1 / ds_station.distance.values, 2)
+                    else:
+                        # We give the same weight to those stations 1km close
+                        # to the location of interest
+                        distance_weight = 1
                     value = float(ds_station[self.variable].values)
                     if not np.isnan(value):
                         distance_and_value[distance_weight] = value
@@ -149,14 +155,14 @@ class DataLoader:
                     values_weighted_average.append(np.nan)
                 else:
                     weights_normalized = np.array(
-                        distance_and_value.keys()
+                        list(distance_and_value.keys())
                     ) / sum(distance_and_value.keys())
                     values_weighted_average.append(
                         np.average(list(distance_and_value.values()),
                                    weights=weights_normalized)
                     )
-            ds = ds.mean('station_id')
             ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
+            ds = ds.mean('station_id')
             ds[self.variable][:] = values_weighted_average
         return ds
 
@@ -181,17 +187,23 @@ class DataLoader:
     def calculate_surface_pressure_by_msl(self,
                                           temp: xr.DataArray,
                                           mslp: xr.DataArray):
-        height = self.location.get_height_for_location(
-            'AIzaSyBtCNhvM2uDWP_Hum4PnuGR_OUGkcpAy7o'
-        )
+        """
+        Method to get the surface pressure by using the elevation of the
+        location of interest, the temperature (temp) and the mean sea
+        level pressure (mslp)
+        """
+        elevation = self.location.elevation
         exponent = (9.80665 * 0.0289644) / (8.31432 * 0.0065)
-        factor = (1 + ((-0.0065 / temp) * height)) ** exponent
+        factor = (1 + ((-0.0065 / temp) * elevation)) ** exponent
         surface_pressure = mslp * factor
         return surface_pressure
 
     def calculate_air_density(self,
-                              sp: xr.DataArray,
-                              temp: xr.DataArray):
-        return sp / (temp * 287.058)
+                              pressure: xr.DataArray,
+                              temperature: xr.DataArray):
+        """
+        Method to get the air density at a given temperature and pressure
+        """
+        return pressure / (temperature * 287.058)
 
 

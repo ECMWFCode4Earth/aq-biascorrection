@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
+from tenacity import retry
 
-import googlemaps
 import requests
 
 
@@ -17,12 +17,13 @@ class Location:
     latitude: float
     longitude: float
     timezone: str
+    elevation: float
 
     def __str__(self):
         return f'Location(location_id={self.location_id}, ' \
                f'city={self.city}, country={self.country}, ' \
                f'latitude={self.latitude}, longitude={self.longitude}, ' \
-               f'timezone={self.timezone}'
+               f'elevation={self.elevation}, timezone={self.timezone}'
 
     def get_observations_path(self, directory, variable, time_range):
         """
@@ -61,8 +62,13 @@ class Location:
         )
         return output_path
 
-    def get_height_for_location(self, api_key: str):
-        url = f"https://api.open-elevation.com/api/v1/lookup?" \
-              f"locations={round(self.latitude, 2)},{round(self.longitude, 2)}"
-        elevation = requests.get(url).json()['results'][0]['elevation']
-        return elevation
+@retry
+def get_elevation_for_location(latitude: float, longitude:float):
+    """
+    Function to get the elevation of a specific location given the latitude and
+    the longitude
+    """
+    url = f"https://api.open-elevation.com/api/v1/lookup?" \
+          f"locations={round(latitude, 4)},{round(longitude, 4)}"
+    elevation = requests.get(url, timeout=30).json()['results'][0]['elevation']
+    return elevation
