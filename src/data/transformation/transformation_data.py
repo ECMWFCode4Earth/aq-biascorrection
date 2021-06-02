@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List
-from src.data.transformation.location_transformation import LocationTransformer
+from src.data.transformation.transformation_location import LocationTransformer
 from src.data.utils import Location
 
 import pandas as pd
