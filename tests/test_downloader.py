@@ -1,6 +1,6 @@
-from src.data.download.openaq import OpenAQDownloader
+from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
-from src.tests.file_provider import get_remote_file
+from tests.file_provider import get_remote_file
 
 import tempfile
 import filecmp
