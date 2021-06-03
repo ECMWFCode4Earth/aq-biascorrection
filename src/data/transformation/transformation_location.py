@@ -84,6 +84,10 @@ class LocationTransformer:
             forecast_data[variable] *= air_density.values
             forecast_data[variable] *= (10 ** 9)
 
+        # Some forecast variables are aggregated daily, so a temporal
+        # disaggregation is needed
+        # TODO: Add temporal disaggregation
+
         # Rename all the variables to "{variable}_forecast" in order to
         # distinguish them when merged
         for data_var in list(forecast_data.data_vars.keys()):
