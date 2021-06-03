@@ -1,7 +1,9 @@
 from pathlib import Path
+from typing import Dict
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score, mean_squared_error
 from src.data.load.load_data import DataLoader
+from src.models.utils import read_yaml
 
 import xgboost as xg
 
@@ -9,48 +11,53 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+models_dict = {
+    'xgboostregressor': xg.XGBRegressor()
+}
+
 
 class ModelTrain:
     def __init__(
             self,
-            variable: str,
-            input_dir: Path
+            config_yml: Path
     ):
-        data_loader = DataLoader(variable, input_dir)
-        self.data_dict = data_loader.data_load()
-        self.model = xg.XGBRegressor(verbosity=1)
+        self.config = read_yaml(config_yml)
 
-    def train(self):
-        parameters = {'nthread': [-1],
-                      # when use hyperthread, xgboost may become slower
-                      'objective': ['reg:squarederror'],
-                      'learning_rate': [0.1, 0.2, 0.5, 0.7, 1],
-                      # so called `eta` value
-                      'max_depth': [5, 6, 7, 8],
-                      'min_child_weight': [4, 5, 6, 7, 8],
-                      'subsample': [0.7],
-                      'colsample_bytree': [0.7],
-                      'n_estimators': [500, 700]}
+    def run(self):
+        for model in self.config['models']:
+            data_dict = DataLoader(model['variable'],
+                                   model['data_dir']).data_load()
+            gridsearch = self.train(model, data_dict)
+            model_output_path = self.get_model_output_path(gridsearch, model)
 
-        xgb_grid = GridSearchCV(self.model,
+    def train(self, model: Dict, data: Dict):
+        model_instance = models_dict[model['type']]
+        parameters = model['model_parameters'][0]
+        training_methods = model['training_method'][0]
+
+        xgb_grid = GridSearchCV(model_instance,
                                 parameters,
-                                cv=5,
-                                scoring='neg_mean_absolute_error',
-                                n_jobs=1,
-                                verbose=10)
-        xgb_grid.fit(self.data_dict['train'][0],
-                     self.data_dict['train'][1])
+                                cv=training_methods['cv'],
+                                scoring=training_methods['scoring'],
+                                n_jobs=training_methods['n_jobs'],
+                                verbose=training_methods['verbose'])
+        xgb_grid.fit(data['train'][0],
+                     data['train'][1])
 
         # Print the r2 score
-        print(r2_score(self.data_dict['test'][1],
+        print(r2_score(data['test'][1],
                        xgb_grid.best_estimator_.predict(
-                           self.data_dict['test'][0]
+                           data['test'][0]
                        )))
 
-        print(mean_squared_error(self.data_dict['test'][1],
+        print(mean_squared_error(data['test'][1],
                                  xgb_grid.best_estimator_.predict(
-                                 self.data_dict['test'][0]
+                                 data['test'][0]
                                  )))
+        return xgb_grid
+
+    def get_model_output_path(self, gridsearch, model) -> Path:
+        pass
 
 
 if __name__ == '__main__':
