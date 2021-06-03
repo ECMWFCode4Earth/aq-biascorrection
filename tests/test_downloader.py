@@ -5,27 +5,28 @@ from tests.file_provider import get_remote_file
 import tempfile
 import filecmp
 
-tempdir = tempfile.mkdtemp()
 
 
 def test_download_aq():
-    latitude_dubai = 25.0657
-    longitude_dubai = 55.17128
-    filename = "dubai/ae001/o3_dubai_ae001_20190101_20210331"
-    data_filename = filename + ".csv"
-    metadata_filename = filename + "_metadata.csv"
+    lat_dubai = 25.0657
+    lon_dubai = 55.17128
+    var = 'o3'
+    city = 'Dubai'
+    country = 'United Arab Emirates'
+    station = 'AE001'
     
-    # Load the data into the temporary directory.        
-    get_remote_file(data_filename, tempdir)
-    get_remote_file(metadata_filename, tempdir)
+    filename = f"{country.lower().replace(' ', '-')}/{city.lower()}/" \
+               f"{station.lower()}/{var}/{var}_" \
+               f"{country.lower().replace(' ', '-')}_{city.lower()}_" \
+               f"{station.lower()}_20190601_20210331.nc"
 
-    loc = Location(
-        "AE001", "Dubai", "United Arab Emirates", 
-        latitude_dubai, longitude_dubai)
-    OpenAQDownloader(loc, tempdir + "/downloaded", 'o3').run() 
+    # Load the data into the temporary directory.     
+    tempdir = tempfile.mkdtemp()
+    down_path = "/tmp/test_downloading"
+    get_remote_file(filename, tempdir)
+
+    loc = Location(station, city, country, lat_dubai, lon_dubai, 1, 1)
+    OpenAQDownloader(loc, "/tmp/test_downloading", var).run() 
     
-    assert filecmp.dircmp(tempdir + "/downloaded", tempdir)
-    assert filecmp.cmp(f"{tempdir}/downloaded/{data_filename}", 
-                            f"{tempdir}/{data_filename}")
-    assert filecmp.cmp(f"{tempdir}/downloaded/{metadata_filename}", 
-                            f"{tempdir}/{metadata_filename}")
+    assert not filecmp.dircmp(down_path, tempdir).diff_files
+    assert filecmp.cmp(f"{down_path}/{filename}", f"{tempdir}/{filename}")
