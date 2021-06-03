@@ -7,4 +7,9 @@ setup(
     description='Bias correction of air quality CAMS model predictions by using OpenAQ observations.',
     author='Antonio Pérez Velasco / Mario Santa Cruz López',
     license='MIT',
+    entrypoints={
+        'console_scripts': [
+            'extract_cams = src.scripts.extraction_cams:main'
+        ]
+    }
 )
