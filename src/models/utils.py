@@ -10,7 +10,3 @@ def read_yaml(yaml_path):
         except yaml.YAMLError as exc:
             logging.error(exc)
             raise exc
-
-if __name__ == '__main__':
-    from pathlib import Path
-    read_yaml(Path('../../models/configuration/model_config.yml'))
