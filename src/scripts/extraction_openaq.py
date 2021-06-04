@@ -4,9 +4,19 @@ from src.data.utils import Location
 
 import pandas as pd
 import logging
-import argparse
+import click
 
 
+FILE = click.Path(exists=True, path_type=Path)
+
+
+@click.command()
+@click.option("-output", '--output_dir', type=FILE,
+              help="Output directory where to store the data to")
+@click.option("-locations", '--locations_csv_path', type=FILE,
+              help="Path to the file where the locations of interest are defined")
+@click.option("-var", '--variable', default=None, type=str, 
+              help="Variable to which to extraction the OpenAQ data")
 def download_openaq_data_from_csv_with_locations_info(
         csv_path: Path,
         output_dir: Path,
@@ -24,6 +34,8 @@ def download_openaq_data_from_csv_with_locations_info(
     for the respective variable / location combination and  stores the
     data at the output directory (given as an argument)
     """
+    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
     locations_df = pd.read_csv(csv_path)
     number_of_successful_locations = 0
     for location in locations_df.iterrows():
@@ -53,35 +65,3 @@ def download_openaq_data_from_csv_with_locations_info(
                  f' is {number_of_successful_locations} out of'
                  f' {len(locations_df)} for variable {variable}')
     logging.info('Process finished!')
-
-
-parser = argparse.ArgumentParser(
-    prog='OpenAQDownloader',
-)
-
-parser.add_argument(
-    "-output", '--output_dir',
-    help="Output directory where to store the data to"
-)
-
-parser.add_argument(
-    "-locations", '--locations_csv_path',
-    help="Path to the file where the locations of interest are defined"
-)
-
-parser.add_argument(
-    "-var", '--variable',
-    default=None,
-    help="Variable to which to extraction the OpenAQ data"
-)
-
-args = parser.parse_args()
-log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-download_openaq_data_from_csv_with_locations_info(
-    Path(args.locations_csv_path),
-    Path(args.output_dir),
-    args.variable
-)
-

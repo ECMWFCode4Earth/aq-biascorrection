@@ -1,6 +1,6 @@
 from pathlib import Path
 from src.data.utils import Location
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from dask import distributed
 
 import pandas as pd
@@ -90,7 +90,7 @@ class CAMSProcessor:
         remove_intermediary_paths(intermediary_paths)
         return 'Data has been processed successfully'
 
-    def get_initialization_times(self) -> list[str]:
+    def get_initialization_times(self) -> List[str]:
         """
         Get all the initialization times (days) in the range defined by the
         time_range argument of the CAMSPreprocessor class
@@ -107,7 +107,7 @@ class CAMSProcessor:
 
     def get_total_data(
             self,
-            initialization_times: List[str]) -> (xr.Dataset, Path):
+            initialization_times: List[str]) -> Tuple[xr.Dataset, Path]:
         """
         Get the data for the whole time_range defined as an argument and all
         the locations of interest given in the .csv file concatenated
