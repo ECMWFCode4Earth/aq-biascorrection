@@ -14,7 +14,8 @@ PATH = click.Path(exists=True, path_type=Path)
 @click.option("-var", '--variable', default=None, type=click.STRING,
               help="Variable to which to extraction the OpenAQ data")
 @click.option("-locations", '--locations_csv_path', type=PATH,
-              help="Path to the file where the locations of interest are defined")
+              help="Path to the file where the locations "
+                   "of interest are defined")
 @click.option("-output", '--output_dir', type=PATH, 
               help="Output directory where to store the data to")
 def main(variable: str, locations_csv_path: Path, output_dir: Path):
