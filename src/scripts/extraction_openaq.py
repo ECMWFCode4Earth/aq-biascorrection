@@ -7,13 +7,13 @@ import logging
 import click
 
 
-FILE = click.Path(exists=True, path_type=Path)
+PATH = click.Path(exists=True, path_type=Path)
 
 
 @click.command()
-@click.option("-locations", '--locations_csv_path', type=FILE, required=True,
+@click.option("-locations", '--locations_csv_path', type=PATH, required=True,
               help="Path to the file where the locations of interest are defined")
-@click.option("-output", '--output_dir', type=FILE, required=True,
+@click.option("-output", '--output_dir', type=PATH, required=True,
               help="Output directory where to store the data to")
 @click.option("-var", '--variable', default=None, type=str, 
               help="Variable to which to extraction the OpenAQ data")

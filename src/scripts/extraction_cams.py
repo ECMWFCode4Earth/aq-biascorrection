@@ -5,20 +5,23 @@ import logging
 import click
 
 
-FILE = click.Path(exists=True, path_type=Path)
+PATH = click.Path(exists=True, path_type=Path)
+DATE_TYPE = click.DateTime()
+
 
 @click.command()
-@click.option('-i', '--input_dir', type=FILE, required=True,
+@click.option('-i', '--input_dir', type=PATH, required=True,
               help="Input directory where to take the data from")
-@click.option('-intermediary', '--intermediary_dir', type=FILE, required=True,
+@click.option('-intermediary', '--intermediary_dir', type=PATH, required=True,
               help="Intermediary directory where to store the temporal data")
-@click.option('-locations', '--locations_csv_path', type=FILE, help="Path to "
+@click.option('-locations', '--locations_csv_path', type=PATH, help="Path to "
               "the file where the locations of interest are defined", 
               required=True)
-@click.option('-o', '--output_dir', type=FILE, required=True,
+@click.option('-o', '--output_dir', type=PATH, required=True,
               help="Output directory where to store the data to")
-@click.option('-p', '--time_period', default=None, help="Period of time in "
-              "which to process the CAMS data")
+@click.option('-p', '--time_period', type=click.Tuple([DATE_TYPE, DATE_TYPE]),
+              default=None, help="Period of time in which to process the CAMS "
+              "data")
 def main(input_dir, intermediary_dir, locations_csv_path, output_dir, time_period):
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -28,7 +31,7 @@ def main(input_dir, intermediary_dir, locations_csv_path, output_dir, time_perio
         Path(intermediary_dir),
         Path(locations_csv_path),
         Path(output_dir),
-        time_period
+        dict(zip(['start', 'end'], time_period) if time_period else time_period)
     ).run()
 
     logging.info('Process finished!')
