@@ -11,10 +11,10 @@ FILE = click.Path(exists=True, path_type=Path)
 
 
 @click.command()
-@click.option("-output", '--output_dir', type=FILE,
-              help="Output directory where to store the data to")
-@click.option("-locations", '--locations_csv_path', type=FILE,
+@click.option("-locations", '--locations_csv_path', type=FILE, required=True,
               help="Path to the file where the locations of interest are defined")
+@click.option("-output", '--output_dir', type=FILE, required=True,
+              help="Output directory where to store the data to")
 @click.option("-var", '--variable', default=None, type=str, 
               help="Variable to which to extraction the OpenAQ data")
 def download_openaq_data_from_csv_with_locations_info(
