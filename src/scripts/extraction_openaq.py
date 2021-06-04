@@ -16,7 +16,7 @@ PATH = click.Path(exists=True, path_type=Path)
                    "of interest are defined in .csv format")
 @click.option("-output", '--output_dir', type=PATH, required=True,
               help="Output directory where to store the data to")
-@click.option("-var", '--variable', default=None, type=str, 
+@click.option("-var", '--variable', default=None, type=click.STRING,
               help="Variable to which to extraction the OpenAQ data")
 def download_openaq_data_by_locations_csv(
         csv_path: Path,
