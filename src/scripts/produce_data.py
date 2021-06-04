@@ -2,9 +2,11 @@
 from src.scripts.extraction_openaq import download_openaq_data_from_csv_with_locations_info
 from src.data.extraction.cams_forecast import CAMSProcessor
 from src.data.transformation.transformation_data import DataTransformer
+from src import constants
 from pathlib import Path
 
 import click
+import sys
 import logging
 
 
@@ -21,20 +23,21 @@ import logging
                 type=click.Path())
 @click.argument('output_data_transformation', 
                 type=click.Path())
-def main(variable,
-         locations_csv_path,
-         output_observation_extraction,
-         input_forecast_extraction,
-         intermediary_forecast_extraction,
-         output_forecast_extraction,
-         output_data_transformation
-         ):
+def main(
+    variable: str,
+    locations_csv_path: Path,
+    output_observation_extraction: Path,
+    input_forecast_extraction: Path,
+    intermediary_forecast_extraction: Path,
+    output_forecast_extraction: Path,
+    output_data_transformation: Path
+):
     """
     Function to do the whole ETL process
     """
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
+    logger = logging.getLogger("ETL Pipeline")
     logger.info('Making final data set from raw data')
 
     download_openaq_data_from_csv_with_locations_info(

@@ -1,9 +1,12 @@
 from pathlib import Path
+from datetime import datetime
+from typing import Tuple
+from src import constants
 from src.data.extraction.cams_forecast import CAMSProcessor
 
 import logging
 import click
-
+import sys
 
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()
@@ -22,9 +25,17 @@ DATE_TYPE = click.DateTime()
 @click.option('-p', '--time_period', type=click.Tuple([DATE_TYPE, DATE_TYPE]),
               default=None, help="Period of time in which to process the CAMS "
               "data")
-def main(input_dir, intermediary_dir, locations_csv_path, output_dir, time_period):
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
+def main(
+    input_dir: Path, 
+    intermediary_dir: Path, 
+    locations_csv_path: Path,
+    output_dir: Path,
+    time_period: Tuple[datetime, datetime]):
+    """
+    Script to process the CAMS forecasts.
+    """
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
 
     CAMSProcessor(
         Path(input_dir),

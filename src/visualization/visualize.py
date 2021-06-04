@@ -31,13 +31,13 @@ class StationTemporalSeriesPlotter:
             which takes all the stations.
         """
         self.varname = varname
-        self.st_metadata = pd.read_csv(metadata_path)
+        st_metadata = pd.read_csv(metadata_path)
         
         # Load stations data
-        sts_df = self.st_metadata[self.st_metadata.country == country]
+        self.sts_df = st_metadata[st_metadata.country == country]
         if stations is not None:
-            sts_df = sts_df[sts_df.city.isin(stations)]
-        ids = sts_df.id.values
+            self.sts_df = self.sts_df[self.sts_df.city.isin(stations)]
+        ids = self.sts_df.id.values
         paths = [data_path / varname / f"data_{varname}_{id}.csv" for id in ids]
         csvs = [pd.read_csv(path, index_col=0) for path in paths]
         
@@ -53,7 +53,7 @@ class StationTemporalSeriesPlotter:
             the first station of the country.
         """
         for st_code in self.codes:
-            info = self.st_metadata[self.st_metadata.id == st_code]
+            info = self.sts_df[self.sts_df.id == st_code]
             df = self.data[st_code].set_index('index')
             df.index.name = 'Date'
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
@@ -72,7 +72,7 @@ class StationTemporalSeriesPlotter:
         features.
         """
         for st_code in self.codes:
-            info = self.st_metadata[self.st_metadata.id == st_code]
+            info = self.sts_df[self.sts_df.id == st_code]
             df = self.data[st_code].set_index('index')
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']

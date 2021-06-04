@@ -29,4 +29,5 @@ def test_download_aq():
     OpenAQDownloader(loc, "/tmp/test_downloading", var).run() 
     
     assert not filecmp.dircmp(down_path, tempdir).diff_files
-    assert filecmp.cmp(f"{down_path}/{filename}", f"{tempdir}/{filename}")
+    filecmp.clear_cache()
+    assert filecmp.cmp(f"{down_path}/{filename}", f"{tempdir}/{filename}", False)

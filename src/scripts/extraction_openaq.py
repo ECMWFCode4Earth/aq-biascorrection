@@ -1,10 +1,12 @@
 from pathlib import Path
+from src import constants
 from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
 
 import pandas as pd
 import logging
 import click
+import sys
 
 
 PATH = click.Path(exists=True, path_type=Path)
@@ -34,8 +36,9 @@ def download_openaq_data_from_csv_with_locations_info(
     for the respective variable / location combination and  stores the
     data at the output directory (given as an argument)
     """
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
+    logger = logging.getLogger("OpenAQ download Pipeline")
     locations_df = pd.read_csv(csv_path)
     number_of_successful_locations = 0
     for location in locations_df.iterrows():
@@ -48,7 +51,7 @@ def download_openaq_data_from_csv_with_locations_info(
             location[1]['timezone'],
             location[1]['elevation']
         )
-        logging.info(f"Starting process for location of"
+        logger.info(f"Starting process for location of"
                      f" interest {str(loc)}")
         downloader = OpenAQDownloader(
             loc,
@@ -59,9 +62,9 @@ def download_openaq_data_from_csv_with_locations_info(
             output_path = downloader.run()
             number_of_successful_locations += 1
         except Exception as ex:
-            logging.error(str(ex))
+            logger.error(str(ex))
             continue
-    logging.info(f'The number of locations which has been correctly downloaded'
+    logger.info(f'The number of locations which has been correctly downloaded'
                  f' is {number_of_successful_locations} out of'
                  f' {len(locations_df)} for variable {variable}')
-    logging.info('Process finished!')
+    logger.info('Process finished!')
