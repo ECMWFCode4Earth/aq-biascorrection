@@ -3,7 +3,7 @@ import seaborn as sns
 import pandas as pd
 
 from pathlib import Path
-from typing import List
+from typing import List, NoReturn
 
 
 preprocess = lambda ds: ds.expand_dims(['station_id', 'latitude', 'longitude'])
@@ -44,9 +44,9 @@ class StationTemporalSeriesPlotter:
         self.codes = ids
         self.data = dict(zip(ids, csvs))
 
-    def plot_data(self):
-        """ Plot the for the variable requeste in the stations whose position is
-        specified.
+    def plot_data(self) -> NoReturn:
+        """ Plot the for the variable requested in the stations whose position 
+        is specified.
 
         Args:
             station (int): Position of the station of the country. Defaults to 
@@ -67,7 +67,10 @@ class StationTemporalSeriesPlotter:
 
         plt.show()
 
-    def plot_correlations(self):
+    def plot_correlations(self) -> NoReturn:
+        """ Plort the correlation between the prediction bias and the model
+        features.
+        """
         for st_code in self.codes:
             info = self.st_metadata[self.st_metadata.id == st_code]
             df = self.data[st_code].set_index('index')

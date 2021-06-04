@@ -11,7 +11,9 @@ setup(
         'console_scripts': [
             'extract_cams = src.scripts.extraction_cams:main',
             'extraction_openaq = src.scripts.extraction_openaq:download_openaq_data_from_csv_with_locations_info',
-            'transform_data = src.scripts.transformation_data:main'
+            'transform_data = src.scripts.transformation_data:main',
+            'plot_station_data = src.scripts.plotting:main_line',
+            'plot_station_corrs = src.scripts.plotting:main_corrs'
         ]
     }
 )
