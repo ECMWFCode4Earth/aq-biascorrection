@@ -9,7 +9,9 @@ setup(
     license='MIT',
     entrypoints={
         'console_scripts': [
-            'extract_cams = src.scripts.extraction_cams:main'
+            'extract_cams = src.scripts.extraction_cams:main',
+            'extraction_openaq = src.scripts.extraction_openaq:download_openaq_data_from_csv_with_locations_info',
+            'transform_data = src.scripts.transformation_data:main'
         ]
     }
 )
