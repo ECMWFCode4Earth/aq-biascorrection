@@ -78,3 +78,38 @@ def main_corrs(
         [station] if station else station
     ).plot_correlations()
     logging.info("The script finished!")
+
+
+@click.command()
+@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2'], 
+                                             case_sensitive=True))
+@click.argument('country', type=click.STRING)
+@click.option('-d', '--data_path', type=PATH, required=True)
+@click.option('-m', '--metadata_path', type=PATH,
+              default=Path(f"{constants.ROOT_DIR}/data/external/stations.csv"))
+@click.option('--show_std', type=click.BOOL, default=True, help="Show the "
+              "estimated standard deviation of the dataset.")
+def main_hourly_bias(
+    varname: str, 
+    country: str, 
+    data_path: Path, 
+    metadata_path: Path,
+    show_std: bool = True
+):
+    """ Generates a figure showing the correlation between all the features and 
+    the forecast bias.
+
+    Options:
+        data_path (Path): path to the folder containing the data.
+        metadata_path (Path): path to the folder containing the metadata.
+        station (str): whether to plot any particular station or not.
+    """
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
+    StationTemporalSeriesPlotter(
+        varname,
+        country,
+        data_path,
+        metadata_path
+    ).plot_hourly_bias(show_std)
+    logging.info("The script finished!")
