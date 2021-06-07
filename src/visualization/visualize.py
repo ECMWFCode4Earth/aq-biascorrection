@@ -34,6 +34,7 @@ class StationTemporalSeriesPlotter:
             which takes all the stations.
         """
         self.varname = varname
+        self.country = country
         st_metadata = pd.read_csv(metadata_path)
         
         # Load stations data
@@ -121,19 +122,18 @@ class StationTemporalSeriesPlotter:
         """
         stats = ['mean', 'std']
         bias_var = f"{self.varname}_bias"
-        means = {}
-        stds = {}
+        means = pd.DataFrame(index=list(range(24)))
+        stds = pd.DataFrame(index=list(range(24)))
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
             log.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
             agg_h = data.groupby('local_time_hour').agg(stats)[bias_var]
-            means[info.city.values[0]] = agg_h['mean'].values
-            stds[info.city.values[0]] = agg_h['std'].values
+            means[info.city.values[0]] = agg_h['mean']
+            stds[info.city.values[0]] = agg_h['std']
             
-        if means == {}:
-            log.error(f"No data available for any station in "
-                      f"{info.country.values[0]}")
+        if len(means.columns) == 0:
+            log.error(f"No data available for any station in {self.country}")
             return None
 
         m = pd.DataFrame(means, index=agg_h.index)

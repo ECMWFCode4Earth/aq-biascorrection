@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 from tenacity import retry
-
+from typing import List
+from src.constants import ROOT_DIR
+import pandas as pd
 import requests
 
 
@@ -72,3 +74,9 @@ def get_elevation_for_location(latitude: float, longitude:float):
           f"locations={round(latitude, 4)},{round(longitude, 4)}"
     elevation = requests.get(url, timeout=30).json()['results'][0]['elevation']
     return elevation
+
+
+def get_countries(data_path: Path = ROOT_DIR / "data/external") -> List[str]:
+    """Get all the countries with stations available. """
+    df = pd.read_csv(data_path / "stations.csv", usecols=['country'])
+    return list(df.country.values)

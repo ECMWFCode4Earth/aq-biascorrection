@@ -1,8 +1,8 @@
 from src.visualization.visualize import StationTemporalSeriesPlotter
+from src.data import utils
 from src import constants
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import click
 import logging
 import sys
@@ -12,7 +12,7 @@ PATH = click.Path(exists=True, path_type=Path)
 
 
 @click.command()
-@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2'], 
+@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2', 'all'], 
                                              case_sensitive=True))
 @click.argument('country', type=click.STRING)
 @click.option('-d', '--data_path', type=PATH, required=True)
@@ -32,26 +32,32 @@ def main_line(
     """ Generates a plot for the variable specified for all stations located in 
     the country chosen.
 
-    Options:
-        data_path (Path): path to the folder containing the data.
-        metadata_path (Path): path to the folder containing the metadata.
-        station (str): whether to plot any particular station or not.
-        output_path (Path): Output path of the image to save.
+    Args:
+
+        varname (str): The name of the variable to consider. Specify 'all' for 
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.
+        country (str): The country to consider. Specify 'all' for selecting
+        all countries with processed data.
     """
     logging.basicConfig(
         stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
-    StationTemporalSeriesPlotter(
-        varname,
-        country,
-        data_path,
-        metadata_path, 
-        [station] if station else station
-    ).plot_data(output_path)
+    countries = utils.get_countries() if country == 'all' else [country]
+    varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
+    for var in varnames:
+        for country in countries:
+            logging.info(f"Processing plot for {varname} bias for {country}.")
+            StationTemporalSeriesPlotter(
+                var,
+                country,
+                data_path,
+                metadata_path, 
+                [station] if station else station
+            ).plot_data(output_path)
     logging.info("The script finished!")
 
 
 @click.command()
-@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2'], 
+@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2', 'all'], 
                                              case_sensitive=True))
 @click.argument('country', type=click.STRING)
 @click.option('-d', '--data_path', type=PATH, required=True)
@@ -71,26 +77,34 @@ def main_corrs(
     """ Generates a figure showing the correlation between all the features and 
     the forecast bias.
 
-    Options:
-        data_path (Path): path to the folder containing the data.
-        metadata_path (Path): path to the folder containing the metadata.
-        station (str): whether to plot any particular station or not.
-        output_path (Path): Output path of the image to save.
+    Args:
+
+        varname (str): The name of the variable to consider. Specify 'all' for 
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.
+        country (str): The country to consider. Specify 'all' for selecting
+        all countries with processed data.
     """
     logging.basicConfig(
         stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
-    StationTemporalSeriesPlotter(
-        varname,
-        country,
-        data_path,
-        metadata_path, 
-        [station] if station else station
-    ).plot_correlations(output_path)
-    logging.info("The script finished!")
+    
+    countries = utils.get_countries() if country == 'all' else [country]
+    varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
+    for var in varnames:
+        for country in countries:
+            logging.info(f"Processing correlation with {varname} bias for "
+                        f"{country}.")
+            StationTemporalSeriesPlotter(
+                var,
+                country,
+                data_path,
+                metadata_path, 
+                [station] if station else station
+            ).plot_correlations(output_path)
+        logging.info("The script finished!")
 
 
 @click.command()
-@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2'], 
+@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2', 'all'], 
                                              case_sensitive=True))
 @click.argument('country', type=click.STRING)
 @click.option('-d', '--data_path', type=PATH, required=True)
@@ -98,8 +112,8 @@ def main_corrs(
               default=Path(f"{constants.ROOT_DIR}/data/external/stations.csv"))
 @click.option('--show_std', type=click.BOOL, default=True, help="Show the "
               "estimated standard deviation of the dataset.")
-@click.option('-o', '--output_path', type=click.Path(writable=True), 
-              default=None, help="Output path of the figure to be saved.")
+@click.option('-o', '--output_path', type=PATH, default=None, 
+              help="Output path of the figure to be saved.")
 def main_hourly_bias(
     varname: str, 
     country: str, 
@@ -111,18 +125,25 @@ def main_hourly_bias(
     """ Generates a figure showing the correlation between all the features and 
     the forecast bias.
 
-    Options:
-        data_path (Path): path to the folder containing the data.
-        metadata_path (Path): path to the folder containing the metadata.
-        station (str): whether to plot any particular station or not.
-        output_path (Path): Output path of the image to save.
+    Args:
+
+        varname (str): The name of the variable to consider. Specify 'all' for 
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.
+        country (str): The country to consider. Specify 'all' for selecting
+        all countries with processed data.
     """
     logging.basicConfig(
         stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
-    StationTemporalSeriesPlotter(
-        varname,
-        country,
-        data_path,
-        metadata_path
-    ).plot_hourly_bias(show_std, output_path)
+    
+    countries = utils.get_countries() if country == 'all' else [country]
+    varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
+    for var in varnames:
+        for country in countries:
+            logging.info(f"Processing hourly {varname} bias for {country}.")
+            StationTemporalSeriesPlotter(
+                var,
+                country,
+                data_path,
+                metadata_path
+            ).plot_hourly_bias(show_std, output_path)
     logging.info("The script finished!")
