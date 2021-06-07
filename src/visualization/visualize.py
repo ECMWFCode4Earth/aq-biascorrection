@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import os
+import logging
 
 from pathlib import Path
 from typing import List, NoReturn
 
 
+log = logging.getLogger("Station Plotter")
 preprocess = lambda ds: ds.expand_dims(['station_id', 'latitude', 'longitude'])
 
 
@@ -39,10 +42,15 @@ class StationTemporalSeriesPlotter:
             self.sts_df = self.sts_df[self.sts_df.city.isin(stations)]
         ids = self.sts_df.id.values
         paths = [data_path / varname / f"data_{varname}_{id}.csv" for id in ids]
-        csvs = [pd.read_csv(path, index_col=0) for path in paths]
-        
-        self.codes = ids
-        self.data = dict(zip(ids, csvs))
+        self.data = {}
+        self.codes = []
+        for i, path in enumerate(paths):
+            if os.path.exists(path):
+                log.debug(f"Data for station {ids[i]} is found.")
+                self.data[ids[i]] = pd.read_csv(path, index_col=0)
+                self.codes.append(ids[i])
+            else:
+                log.info(f"Data for station {ids[i]} is not found.")
 
     def plot_data(self) -> NoReturn:
         """ Plot the for the variable requested in the stations whose position 
@@ -50,6 +58,7 @@ class StationTemporalSeriesPlotter:
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
+            log.debug(f"Plotting data for {info.city.values[0]}")
             df = self.data[st_code].set_index('index')
             df.index.name = 'Date'
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
@@ -69,6 +78,7 @@ class StationTemporalSeriesPlotter:
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
+            log.debug(f"Plotting data for {info.city.values[0]}")
             df = self.data[st_code].set_index('index')
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
@@ -94,6 +104,7 @@ class StationTemporalSeriesPlotter:
         stds = {}
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
+            log.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
             agg_h = data.groupby('local_time_hour').agg(stats)[bias_var]
             means[info.city.values[0]] = agg_h['mean'].values
@@ -105,7 +116,9 @@ class StationTemporalSeriesPlotter:
             m.plot.bar(yerr=s, capsize=4, rot=0)
         else:
             m.plot.bar()
+        plt.axhline(0, ls='--', lw=2, c='k')
         plt.xlabel("Local Time")
         plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
         plt.tight_layout()
+        plt.legend(title='City', fontsize='large', title_fontsize='large')
         plt.show()
