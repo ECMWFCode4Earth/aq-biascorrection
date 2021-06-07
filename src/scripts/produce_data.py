@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from src.scripts.extraction_openaq import download_openaq_data_by_locations_csv
+from src.scripts.extraction_openaq import main
 from src.data.extraction.cams_forecast import CAMSProcessor
 from src.data.transformation.transformation_data import DataTransformer
 from src import constants
@@ -40,7 +40,7 @@ def main(
     logger = logging.getLogger("ETL Pipeline")
     logger.info('Making final data set from raw data')
 
-    download_openaq_data_by_locations_csv(
+    main(
         locations_csv_path,
         output_observation_extraction,
         variable

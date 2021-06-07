@@ -45,18 +45,18 @@ def test_heatmap_corrs(mocker: MockerFixture):
     visualize.pd.read_csv.assert_called()
 
 
- 
 def test_cli_line_plot(mocker: MockerFixture):
     mocker.patch.object(
-    visualize.pd, 
-    'read_csv', 
-    side_effect=[mock_metadata(), mock_data()])
+        visualize.pd,
+        'read_csv',
+        side_effect=[mock_metadata(), mock_data()]
+    )
     runner = CliRunner()
     result = runner.invoke(
-        main_line,
-        ['pm25', 'Canada', 
-         '-d', str(Path(constants.ROOT_DIR) / "data" / "processed"),
-         '-s', 'Montreal']
+            main_line,
+            ['pm25', 'Canada',
+             '-d', str(Path(constants.ROOT_DIR) / "data" / "processed"),
+             '-s', 'Montreal']
     )
     
     assert result.exit_code == 0
