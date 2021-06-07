@@ -52,7 +52,7 @@ class StationTemporalSeriesPlotter:
             else:
                 log.info(f"Data for station {ids[i]} is not found.")
 
-    def plot_data(self) -> NoReturn:
+    def plot_data(self, output_filename: Path = None) -> NoReturn:
         """ Plot the for the variable requested in the stations whose position 
         is specified.
         """
@@ -70,9 +70,15 @@ class StationTemporalSeriesPlotter:
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})")
             plt.tight_layout()
 
-        plt.show()
+        if output_filename:
+            log.info(f"Plot saved to {output_filename}.")
+            mng = plt.get_current_fig_manager()
+            mng.full_screen_toggle()
+            plt.savefig(output_filename)
+        else:
+            plt.show()
 
-    def plot_correlations(self) -> NoReturn:
+    def plot_correlations(self, output_filename: Path = None) -> NoReturn:
         """ Plort the correlation between the prediction bias and the model
         features.
         """
@@ -92,9 +98,19 @@ class StationTemporalSeriesPlotter:
                       fontsize='large')
             plt.xticks(rotation=65)
             
-        plt.show()
+        if output_filename:
+            log.info(f"Plot saved to {output_filename}.")
+            mng = plt.get_current_fig_manager()
+            mng.full_screen_toggle()
+            plt.savefig(output_filename)
+        else:
+            plt.show()
 
-    def plot_hourly_bias(self, show_std: bool = True) -> NoReturn:
+    def plot_hourly_bias(
+        self, 
+        show_std: bool = True, 
+        output_filename: Path = None
+    ) -> NoReturn:
         """ Plot the bias for the variable requested in the stations whose
         position is specified.
         """
@@ -113,12 +129,16 @@ class StationTemporalSeriesPlotter:
         m = pd.DataFrame(means, index=agg_h.index)
         s = pd.DataFrame(stds, index=agg_h.index)
         if show_std:
-            m.plot.bar(yerr=s, capsize=4, rot=0)
+            m.plot.bar(yerr=s, capsize=4, rot=0, figsize=(20, 14))
         else:
-            m.plot.bar()
+            m.plot.bar(figsize=(26, 14))
         plt.axhline(0, ls='--', lw=2, c='k')
         plt.xlabel("Local Time")
         plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
         plt.tight_layout()
         plt.legend(title='City', fontsize='large', title_fontsize='large')
-        plt.show()
+        if output_filename:
+            log.info(f"Plot saved to {output_filename}.")
+            plt.savefig(output_filename)
+        else:
+            plt.show()
