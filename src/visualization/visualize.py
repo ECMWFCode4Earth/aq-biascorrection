@@ -52,7 +52,7 @@ class StationTemporalSeriesPlotter:
             else:
                 log.info(f"Data for station {ids[i]} is not found.")
 
-    def plot_data(self, output_filename: Path = None) -> NoReturn:
+    def plot_data(self, output_path: Path = None) -> NoReturn:
         """ Plot the for the variable requested in the stations whose position 
         is specified.
         """
@@ -70,15 +70,17 @@ class StationTemporalSeriesPlotter:
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})")
             plt.tight_layout()
 
-        if output_filename:
-            log.info(f"Plot saved to {output_filename}.")
-            mng = plt.get_current_fig_manager()
-            mng.full_screen_toggle()
-            plt.savefig(output_filename)
+            if output_path:
+                city = ''.join(info.city.values[0]).lower()
+                country = ''.join(info.country.values[0]).lower()
+                filename = f"{self.varname}_bias_{city}_{country}.png"
+                output_filename = output_path / filename
+                log.info(f"Plot saved to {output_filename}.")
+                plt.savefig(output_filename)
         else:
             plt.show()
 
-    def plot_correlations(self, output_filename: Path = None) -> NoReturn:
+    def plot_correlations(self, output_path: Path = None) -> NoReturn:
         """ Plort the correlation between the prediction bias and the model
         features.
         """
@@ -98,18 +100,21 @@ class StationTemporalSeriesPlotter:
                       fontsize='large')
             plt.xticks(rotation=65)
             
-        if output_filename:
-            log.info(f"Plot saved to {output_filename}.")
-            mng = plt.get_current_fig_manager()
-            mng.full_screen_toggle()
-            plt.savefig(output_filename)
-        else:
+            if output_path:
+                city = ''.join(info.city.values[0]).lower()
+                country = ''.join(info.country.values[0]).lower()
+                filename = f"corrs_{self.varname}_bias_{city}_{country}.png"
+                output_filename = output_path / filename
+                log.info(f"Plot saved to {output_filename}.")
+                plt.savefig(output_filename)
+                
+        if not output_path:
             plt.show()
 
     def plot_hourly_bias(
         self, 
         show_std: bool = True, 
-        output_filename: Path = None
+        output_path: Path = None
     ) -> NoReturn:
         """ Plot the bias for the variable requested in the stations whose
         position is specified.
@@ -125,6 +130,11 @@ class StationTemporalSeriesPlotter:
             agg_h = data.groupby('local_time_hour').agg(stats)[bias_var]
             means[info.city.values[0]] = agg_h['mean'].values
             stds[info.city.values[0]] = agg_h['std'].values
+            
+        if means == {}:
+            log.error(f"No data available for any station in "
+                      f"{info.country.values[0]}")
+            return None
 
         m = pd.DataFrame(means, index=agg_h.index)
         s = pd.DataFrame(stds, index=agg_h.index)
@@ -137,7 +147,10 @@ class StationTemporalSeriesPlotter:
         plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
         plt.tight_layout()
         plt.legend(title='City', fontsize='large', title_fontsize='large')
-        if output_filename:
+        if output_path:
+            country = ''.join(info.country.values[0]).lower()
+            filename = f"hourly_{self.varname}_bias_{country}.png"
+            output_filename = output_path / filename
             log.info(f"Plot saved to {output_filename}.")
             plt.savefig(output_filename)
         else:
