@@ -47,10 +47,6 @@ class StationTemporalSeriesPlotter:
     def plot_data(self) -> NoReturn:
         """ Plot the for the variable requested in the stations whose position 
         is specified.
-
-        Args:
-            station (int): Position of the station of the country. Defaults to 
-            the first station of the country.
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
@@ -86,4 +82,30 @@ class StationTemporalSeriesPlotter:
                       fontsize='large')
             plt.xticks(rotation=65)
             
-        plt.show()    
+        plt.show()
+
+    def plot_hourly_bias(self, show_std: bool = True) -> NoReturn:
+        """ Plot the bias for the variable requested in the stations whose
+        position is specified.
+        """
+        stats = ['mean', 'std']
+        bias_var = f"{self.varname}_bias"
+        means = {}
+        stds = {}
+        for st_code in self.codes:
+            info = self.sts_df[self.sts_df.id == st_code]
+            data = self.data[st_code]
+            agg_h = data.groupby('local_time_hour').agg(stats)[bias_var]
+            means[info.city.values[0]] = agg_h['mean'].values
+            stds[info.city.values[0]] = agg_h['std'].values
+
+        m = pd.DataFrame(means, index=agg_h.index)
+        s = pd.DataFrame(stds, index=agg_h.index)
+        if show_std:
+            m.plot.bar(yerr=s, capsize=4, rot=0)
+        else:
+            m.plot.bar()
+        plt.xlabel("Local Time")
+        plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
+        plt.tight_layout()
+        plt.show()
