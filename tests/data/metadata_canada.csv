@@ -1,4 +1,4 @@
-,id,city,country,latitude,longitude,timezone
-28,CA001,Montreal,Canada,45.50884,-73.58781,America/Toronto
-29,CA002,Toronto,Canada,43.70011,-79.4163,America/Toronto
-30,CA003,Vancouver,Canada,49.24966,-123.11934,America/Vancouver
+,id,city,country,latitude,longitude,timezone,elevation
+28,CA001,Montreal,Canada,45.50884,-73.58781,America/Toronto,217
+29,CA002,Toronto,Canada,43.70011,-79.4163,America/Toronto,170
+30,CA003,Vancouver,Canada,49.24966,-123.11934,America/Vancouver,76

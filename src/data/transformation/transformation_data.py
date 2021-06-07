@@ -15,7 +15,7 @@ class DataTransformer:
             self,
             variable: str,
             locations_csv_path: Path = Path(
-                './data/external/stations_with_altitude.csv'
+                './data/external/stations.csv'
             ),
             output_dir: Path = Path('./data/processed/'),
             observations_dir: Path = Path('./data/interim/observations/'),
@@ -95,7 +95,7 @@ class DataTransformer:
 if __name__ == '__main__':
     DataTransformer(
         variable="pm25",
-        locations_csv_path=Path("/home/pereza/git/esowc/aq-biascorrection/data/external/stations_with_altitude.csv"),
+        locations_csv_path=Path("/data/external/stations.csv"),
         output_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/processed/"),
         observations_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/interim/observations/"),
         forecast_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/interim/forecasts/"),
