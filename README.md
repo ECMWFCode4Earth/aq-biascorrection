@@ -3,6 +3,37 @@ aq-biascorrection
 
 Bias correction of air quality CAMS model predictions by using OpenAQ observations.
 
+## Data
+
+```
+
+```
+
+
+## Visualizations
+
+```
+plot_station_data pm25 Qatar -d data/processed -o reports/figures
+```
+
+![Station data](reports/figures/pm25_bias_doha_qatar.png "Doha")
+
+
+```
+plot_station_corrs pm25 Spain -d data/processed -o reports/figures
+```
+
+![Station data](reports/figures/corrs_pm25_bias_madrid_spain.png "Madrid")
+
+
+```
+plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
+```
+
+![Station data](reports/figures/hourly_pm25_bias_germany.png "Germany")
+
+
+
 Project Organization
 ------------
 
@@ -49,9 +80,6 @@ Project Organization
     │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
     │       └── visualize.py
     │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
+    └── tox.ini            <- tox file with settings for running tox; 
 
 --------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
