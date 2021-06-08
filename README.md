@@ -12,20 +12,26 @@ Bias correction of air quality CAMS model predictions by using OpenAQ observatio
 
 ## Visualizations
 
+Below, several examples of how to generate the different visualizations provided by the repository are shown.
+
+Firstly, a visualization for comparing the observed and predicted values for any given city is presented.
+
 ```
-plot_station_data pm25 Qatar -d data/processed -o reports/figures
+plot_station_data pm25 Qatar -s Doha -d data/processed -o reports/figures
 ```
 
 ![Station data](reports/figures/pm25_bias_doha_qatar.png "Doha")
 
+There is also the possibility to show the correlation between the feature variables and the bias in one heatmap.
 
 ```
-plot_station_corrs pm25 Spain -d data/processed -o reports/figures
+plot_station_corrs pm25 Spain -s Madrid -d data/processed -o reports/figures
 ```
 
 ![Station data](reports/figures/corrs_pm25_bias_madrid_spain.png "Madrid")
 
 
+Lastly, the dsitribution of the bias by the local time can also be presented as follows.
 ```
 plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
 ```
