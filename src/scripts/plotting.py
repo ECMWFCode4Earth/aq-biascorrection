@@ -64,7 +64,7 @@ def main_line(
 @click.option('-m', '--metadata_path', type=PATH,
               default=Path(f"{constants.ROOT_DIR}/data/external/stations.csv"))
 @click.option('-s', '--station', type=click.STRING, default=None)
-@click.option('-o', '--output_path', type=click.Path(writable=True), 
+@click.option('-o', '--output_path', type=PATH, 
               default=None, help="Output path of the figure to be saved.")
 def main_corrs(
     varname: str, 
