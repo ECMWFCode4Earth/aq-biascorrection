@@ -10,9 +10,8 @@ setup(
     license='MIT',
     entry_points={
         'console_scripts': [
-            'extract_cams = src.scripts.extraction_cams:main',
             'extraction_openaq = src.scripts.extraction_openaq:main',
-            'transform_data = src.scripts.transformation_data:main',
+            'produce_data = src.scripts.produce_data:main',
             'plot_station_data = src.scripts.plotting:main_line',
             'plot_station_corrs = src.scripts.plotting:main_corrs',
             'plot_station_hourly_bias = src.scripts.plotting:main_hourly_bias',
