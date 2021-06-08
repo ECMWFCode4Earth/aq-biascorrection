@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
 import pandas as pd
 import os
@@ -65,10 +66,16 @@ class StationTemporalSeriesPlotter:
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
 
-            df[[f'{self.varname}_forecast', f'{self.varname}_observed']].plot()
+            ax = df[[f'{self.varname}_forecast',
+                     f'{self.varname}_observed']].plot(figsize=(23, 12))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H'))
             plt.legend(["Forecast", "Observed"], title=self.varname.upper(), 
-                    fontsize='large', title_fontsize='large')
-            plt.title(f"{info.city.values[0]} ({info.country.values[0]})")
+                    fontsize='x-large', title_fontsize='x-large')
+            plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
+                      fontsize='xx-large')
+            plt.xticks(fontsize='x-large')
+            plt.yticks(fontsize='x-large')
+            plt.xlabel("Date", fontsize='x-large')
             plt.tight_layout()
 
             if output_path:
@@ -95,11 +102,12 @@ class StationTemporalSeriesPlotter:
             df = df.rename({f'{self.varname}_bias' : f'{self.varname} Bias',
                             'local_time_hour': 'Local time'}, axis=1)
             df.columns = [col.split('_')[0].upper() for col in df.columns]
-            plt.figure()
+            plt.figure(figsize=(26, 14))
             sns.heatmap(df.corr(), vmin=-1, vmax=1)
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
-                      fontsize='large')
-            plt.xticks(rotation=65)
+                      fontsize='xx-large')
+            plt.xticks(rotation=65, fontsize='x-large')
+            plt.yticks(fontsize='x-large')
             
             if output_path:
                 city = ''.join(info.city.values[0]).lower()
@@ -143,10 +151,10 @@ class StationTemporalSeriesPlotter:
         else:
             m.plot.bar(figsize=(26, 14))
         plt.axhline(0, ls='--', lw=2, c='k')
-        plt.xlabel("Local Time")
+        plt.xlabel("Local Time", fontsize='x-large')
         plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
         plt.tight_layout()
-        plt.legend(title='City', fontsize='large', title_fontsize='large')
+        plt.legend(title='City', fontsize='x-large', title_fontsize='x-large')
         if output_path:
             country = ''.join(info.country.values[0]).lower()
             filename = f"hourly_{self.varname}_bias_{country}.png"
