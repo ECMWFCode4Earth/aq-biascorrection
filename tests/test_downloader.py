@@ -2,6 +2,7 @@ from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
 from tests.file_provider import get_remote_file
 
+import xarray as xr
 import tempfile
 import filecmp
 
@@ -29,5 +30,8 @@ def test_download_aq():
     OpenAQDownloader(loc, "/tmp/test_downloading", var).run() 
     
     assert not filecmp.dircmp(down_path, tempdir).diff_files
-    filecmp.clear_cache()
-    assert filecmp.cmp(f"{down_path}/{filename}", f"{tempdir}/{filename}", False)
+    ds1 = xr.open_dataset(f"{down_path}/{filename}")
+    ds2 = xr.open_dataset(f"{tempdir}/{filename}")
+    assert bool((ds1.x == ds2.x).values)
+    assert bool((ds1.y == ds2.y).values)
+    assert bool((ds1 == ds2).all()[var].values)
