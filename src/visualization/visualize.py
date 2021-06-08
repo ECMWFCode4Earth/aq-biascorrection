@@ -78,7 +78,7 @@ class StationTemporalSeriesPlotter:
                 output_filename = output_path / filename
                 log.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
-        else:
+        if not output_path:
             plt.show()
 
     def plot_correlations(self, output_path: Path = None) -> NoReturn:
