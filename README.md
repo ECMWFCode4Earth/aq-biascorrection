@@ -5,10 +5,17 @@ Bias correction of air quality CAMS model predictions by using OpenAQ observatio
 
 ## Data
 
-```
+The data used in this project comes from two different sources. Firstly, the observations from [OpenAQ](https://openaq.org/#/) stations have been downloaded. 
 
 ```
 
+```
+
+On the other hand, the forecasts are provided by the CAMS model, which we would like to correct. 
+
+```
+
+```
 
 ## Visualizations
 
