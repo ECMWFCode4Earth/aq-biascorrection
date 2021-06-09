@@ -67,9 +67,8 @@ class StationTemporalSeriesPlotter:
                 df[f'{self.varname}_bias']
             df.index = pd.to_datetime(df.index).strftime('%Y-%m-%d %HH')
 
-            ax = df[[f'{self.varname}_forecast',
-                     f'{self.varname}_observed']].plot(figsize=(23, 12))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H'))
+            df[[f'{self.varname}_forecast',
+                f'{self.varname}_observed']].plot(figsize=(23, 12))
             plt.legend(["Forecast", "Observed"], title=self.varname.upper(), 
                     fontsize='x-large', title_fontsize='x-large')
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
