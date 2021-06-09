@@ -65,6 +65,7 @@ class StationTemporalSeriesPlotter:
             df.index.name = 'Date'
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
+            df.index = pd.to_datetime(df.index).strftime('%Y-%m-%d %HH')
 
             ax = df[[f'{self.varname}_forecast',
                      f'{self.varname}_observed']].plot(figsize=(23, 12))
@@ -79,8 +80,8 @@ class StationTemporalSeriesPlotter:
             plt.tight_layout()
 
             if output_path:
-                city = ''.join(info.city.values[0]).lower()
-                country = ''.join(info.country.values[0]).lower()
+                city = ''.join(info.city.values[0].split(' ')).lower()
+                country = ''.join(info.country.values[0].split(' ')).lower()
                 filename = f"{self.varname}_bias_{city}_{country}.png"
                 output_filename = output_path / filename
                 log.info(f"Plot saved to {output_filename}.")
@@ -110,8 +111,8 @@ class StationTemporalSeriesPlotter:
             plt.yticks(fontsize='x-large')
             
             if output_path:
-                city = ''.join(info.city.values[0]).lower()
-                country = ''.join(info.country.values[0]).lower()
+                city = ''.join(info.city.values[0].split(' ')).lower()
+                country = ''.join(info.country.values[0].split(' ')).lower()
                 filename = f"corrs_{self.varname}_bias_{city}_{country}.png"
                 output_filename = output_path / filename
                 log.info(f"Plot saved to {output_filename}.")
@@ -156,7 +157,7 @@ class StationTemporalSeriesPlotter:
         plt.tight_layout()
         plt.legend(title='City', fontsize='x-large', title_fontsize='x-large')
         if output_path:
-            country = ''.join(info.country.values[0]).lower()
+            country = ''.join(info.country.values[0].split(' ')).lower()
             filename = f"hourly_{self.varname}_bias_{country}.png"
             output_filename = output_path / filename
             log.info(f"Plot saved to {output_filename}.")
