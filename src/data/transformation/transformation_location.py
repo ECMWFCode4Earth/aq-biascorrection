@@ -68,7 +68,12 @@ class LocationTransformer:
         #Rename some of the variables
         forecast_data = forecast_data.rename({'pm2p5': 'pm25',
                                               'go3': 'o3'})
-        # TODO: Interpolate time axis to 1h data
+        # Interpolate time axis to 1h data
+        hourly_times = pd.date_range(forecast_data.time.values[0],
+                                  forecast_data.time.values[-1],
+                                  freq='1H')
+        forecast_data = forecast_data.interp(time=hourly_times,
+                                             method='linear')
 
         # Transform units of concentration variables
         for variable in ['pm25', 'o3', 'no2', 'so2', 'pm10']:
@@ -127,7 +132,7 @@ class LocationTransformer:
         # Resample the values in order to have the same time frequency as
         # CAMS model forecast
         observations_data = observations_data.resample(
-            {'time': '3H'}
+            {'time': '1H'}
         ).mean('time')
         # If there are more than one station associated with the location of
         # interest an average is performed taking into consideration the
