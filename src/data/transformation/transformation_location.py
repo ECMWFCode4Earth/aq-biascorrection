@@ -8,13 +8,28 @@ import numpy as np
 import pytz
 
 
+def forecast_accumulated_variables_disaggregation(forecast_data):
+    vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
+    for variable in vars_to_temp_diss:
+        ds_variable = forecast_data[variable].copy()
+        ds_variable_diff = ds_variable.differentiate(
+            'time', 1, 'h'
+        )
+        ds_variable_diff = ds_variable_diff.where(
+            ds_variable_diff >= 0,
+            0
+        )
+        forecast_data[variable] = ds_variable_diff
+    return forecast_data
+
+
 class LocationTransformer:
     def __init__(
             self,
             variable: str,
             location: Location,
-            observations_dir: Path = Path('../../../data/interim/observations/'),
-            forecast_dir: Path = Path('../../../data/interim/forecasts/'),
+            observations_dir: Path = Path('./data/interim/observations/'),
+            forecast_dir: Path = Path('./data/interim/forecasts/'),
             time_range: Dict[str, str] = None
     ):
         self.variable = variable
@@ -93,17 +108,9 @@ class LocationTransformer:
 
         # Some forecast variables are aggregated daily, so a temporal
         # disaggregation is needed
-        vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
-        for variable in vars_to_temp_diss:
-            ds_variable = forecast_data[variable].copy()
-            ds_variable_diff = ds_variable.differentiate(
-                'time', 1, 'h'
-            )
-            ds_variable_diff = ds_variable_diff.where(
-                ds_variable_diff >= 0,
-                0
-            )
-            forecast_data[variable] = ds_variable_diff
+        forecast_data = forecast_accumulated_variables_disaggregation(
+            forecast_data
+        )
         # Rename all the variables to "{variable}_forecast" in order to
         # distinguish them when merged
         for data_var in list(forecast_data.data_vars.keys()):
@@ -188,7 +195,7 @@ class LocationTransformer:
 
     def adding_local_time_hour(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        This method uses the location object 'timezone' attribute to obtain the
+        This method uses the Location object 'timezone' attribute to obtain the
         local time hour from the UTC time. This is importante step because the
         bias in the model is known to depend on the diurnal cycle (local time
         of the place is needed)
@@ -225,17 +232,3 @@ class LocationTransformer:
         Method to get the air density at a given temperature and pressure
         """
         return pressure / (temperature * 287.058)
-
-
-if __name__ == '__main__':
-    lat_dubai = 25.0657
-    lon_dubai = 55.17128
-    var = 'o3'
-    city = 'Dubai'
-    country = 'United Arab Emirates'
-    station = 'AE001'
-    loc = Location(location_id=station, country=country, city=city,
-                   latitude=lat_dubai, longitude=lon_dubai,
-                   timezone="Asia/Dubai", elevation=2)
-    LocationTransformer('pm25',
-                        loc).run()

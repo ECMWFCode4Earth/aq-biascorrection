@@ -46,7 +46,7 @@ class DataTransformer:
                 location[1]['timezone'],
                 location[1]['elevation']
             ) for location in self.locations.iterrows()]
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             future_to_entry = {
                 executor.submit(
                     self._data_transform,
@@ -90,14 +90,3 @@ class DataTransformer:
         if not intermediary_path.parent.exists():
             os.makedirs(intermediary_path.parent, exist_ok=True)
         return intermediary_path
-
-
-if __name__ == '__main__':
-    DataTransformer(
-        variable="pm25",
-        locations_csv_path=Path("/data/external/stations.csv"),
-        output_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/processed/"),
-        observations_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/interim/observations/"),
-        forecast_dir=Path("/home/pereza/git/esowc/aq-biascorrection/data/interim/forecasts/"),
-        time_range=None
-    ).run()
