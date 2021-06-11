@@ -64,6 +64,11 @@ class LocationTransformer:
         merged_pd = merged.to_dataframe()
         # Adding local_time as a coordinate
         merged_pd = self.adding_local_time_hour(merged_pd)
+        # There are some stations which has 0s, which seems to be NaN, drop
+        # them
+        merged_pd['pm25_observed'] = merged_pd['pm25_observed'].where(
+            merged_pd['pm25_observed'] > 0
+        )
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias
