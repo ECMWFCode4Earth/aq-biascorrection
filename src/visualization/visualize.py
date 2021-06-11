@@ -103,7 +103,7 @@ class StationTemporalSeriesPlotter:
                             'local_time_hour': 'Local time'}, axis=1)
             df.columns = [col.split('_')[0].upper() for col in df.columns]
             plt.figure(figsize=(26, 14))
-            sns.heatmap(df.corr(), vmin=-1, vmax=1)
+            sns.heatmap(df.corr(), vmin=-1, vmax=1, cmap='RdBu')
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
             plt.xticks(rotation=65, fontsize='x-large')
