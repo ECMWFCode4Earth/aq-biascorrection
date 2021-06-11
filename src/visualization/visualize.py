@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
 import pandas as pd
+import numpy as np
 import os
 import logging
 
@@ -103,7 +104,15 @@ class StationTemporalSeriesPlotter:
                             'local_time_hour': 'Local time'}, axis=1)
             df.columns = [col.split('_')[0].upper() for col in df.columns]
             plt.figure(figsize=(26, 14))
-            sns.heatmap(df.corr(), vmin=-1, vmax=1, cmap='RdBu')
+            mask = np.triu(np.ones(df.shape[1], dtype=np.bool))
+            ax = sns.heatmap(df.corr(), vmin=-1, vmax=1, cmap='RdBu', mask=mask, 
+                             annot=True)
+            plt.setp(ax.get_yticklabels()[0], visible=False)  
+            plt.setp(ax.get_xticklabels()[-1], visible=False)
+            xticks = ax.xaxis.get_major_ticks()
+            xticks[-1].set_visible(False)
+            yticks = ax.yaxis.get_major_ticks()
+            yticks[0].set_visible(False)
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
             plt.xticks(rotation=65, fontsize='x-large')
@@ -155,6 +164,37 @@ class StationTemporalSeriesPlotter:
         plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
         plt.tight_layout()
         plt.legend(title='City', fontsize='x-large', title_fontsize='x-large')
+        if output_path:
+            country = ''.join(info.country.values[0].split(' ')).lower()
+            filename = f"hourly_{self.varname}_bias_{country}.png"
+            output_filename = output_path / filename
+            log.info(f"Plot saved to {output_filename}.")
+            plt.savefig(output_filename)
+        else:
+            plt.show()
+
+    def plot_bias_cdf(self, output_path: str = None) -> NoReturn:
+        target = f'{self.varname}_bias'
+        dfs = []
+        labels = []
+        for st_code in self.codes:
+            info = self.sts_df[self.sts_df.id == st_code]
+            log.debug(f"Plotting data for {info.city.values[0]}")
+            data = self.data[st_code]
+            data['City'] = f"{info.city.values[0]} ({data.shape[0] // 8:.0f})"
+            dfs.append(data)
+            labels.append(f"{info.city.values[0]} ({data.shape[0] // 8:.0f})")
+
+        df = pd.concat(dfs)
+        g = sns.FacetGrid(df, hue="City", height=8, aspect=1.6, legend_out=True)
+        g = g.map_dataframe(sns.histplot, target, stat='probability', kde=True, 
+                            binwidth=5, legend=True)
+        plt.title(f"CDF of {self.varname.upper()} bias in {info.country.values[0]}")
+        plt.legend(labels, title='City (days available)', title_fontsize='x-large', 
+                   fontsize='x-large')
+        plt.ylabel("Probability", fontsize='x-large')
+        plt.xlabel(target.replace("_", " ").capitalize(), fontsize='x-large')
+        plt.tight_layout()
         if output_path:
             country = ''.join(info.country.values[0].split(' ')).lower()
             filename = f"hourly_{self.varname}_bias_{country}.png"
