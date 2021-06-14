@@ -213,8 +213,8 @@ class StationTemporalSeriesPlotter:
             info = self.sts_df[self.sts_df.id == st_code]
             log.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
-            data['City'] = f"{info.city.values[0]} ({data.shape[0] // 8:.0f})"
             if agg: data = aggregate_df(data, agg, 'index')
+            data['City'] = f"{info.city.values[0]} ({data.shape[0] // 8:.0f})"
             dfs.append(data)
             labels.append(f"{info.city.values[0]} ({data.shape[0] // 8:.0f})")
         
@@ -229,6 +229,7 @@ class StationTemporalSeriesPlotter:
                   f" bias in {info.country.values[0]}")
         plt.legend(labels, title='City (days available)', title_fontsize='x-large', 
                    fontsize='x-large')
+        plt.axvline(0, ls='--', lw=2, c='k')
         plt.ylabel("Probability", fontsize='x-large')
         plt.xlabel(target.replace("_", " ").capitalize(), fontsize='x-large')
         plt.tight_layout()
