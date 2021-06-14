@@ -1,16 +1,16 @@
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import seaborn as sns
-import pandas as pd
-import numpy as np
-import os
 import logging
-
+import os
 from math import pi
 from pathlib import Path
 from typing import List, NoReturn
-from src import constants
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+from src import constants
 
 log = logging.getLogger("Station Plotter")
 preprocess = lambda ds: ds.expand_dims(['station_id', 'latitude', 'longitude'])

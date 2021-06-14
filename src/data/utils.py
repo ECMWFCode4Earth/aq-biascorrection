@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
-from tenacity import retry
 from typing import List
-from src.constants import ROOT_DIR
+
 import pandas as pd
 import requests
+from tenacity import retry
+
+from src.constants import ROOT_DIR
 
 
 @dataclass

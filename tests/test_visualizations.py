@@ -1,12 +1,13 @@
-from src.visualization import visualize
-from src import constants
-from src.scripts.plotting import main_line, main_corrs, main_hourly_bias
-from click.testing import CliRunner
-from pytest_mock import MockerFixture
 from pathlib import Path
 
 import pandas as pd
 import pytest
+from click.testing import CliRunner
+from pytest_mock import MockerFixture
+
+from src import constants
+from src.scripts.plotting import main_corrs, main_hourly_bias, main_line
+from src.visualization import visualize
 
 
 def mock_data():

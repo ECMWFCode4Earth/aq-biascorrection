@@ -1,9 +1,9 @@
+import glob
 from pathlib import Path
-from sklearn.model_selection import train_test_split
-from datacleaner import autoclean
 
 import pandas as pd
-import glob
+from datacleaner import autoclean
+from sklearn.model_selection import train_test_split
 
 
 class DataLoader:

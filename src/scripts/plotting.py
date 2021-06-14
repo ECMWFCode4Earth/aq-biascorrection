@@ -1,13 +1,13 @@
-from src.visualization.visualize import StationTemporalSeriesPlotter
-from src.data import utils
-from src import constants
+import logging
+import os
+import sys
 from pathlib import Path
 
 import click
-import logging
-import sys
-import os
 
+from src import constants
+from src.data import utils
+from src.visualization.visualize import StationTemporalSeriesPlotter
 
 PATH = click.Path(exists=True, path_type=Path)
 

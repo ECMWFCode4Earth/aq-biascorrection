@@ -1,13 +1,13 @@
+import logging
+import sys
 from pathlib import Path
+
+import click
+import pandas as pd
+
 from src import constants
 from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
-
-import pandas as pd
-import logging
-import click
-import sys
-
 
 PATH = click.Path(exists=True, path_type=Path)
 

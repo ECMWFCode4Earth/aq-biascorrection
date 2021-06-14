@@ -1,5 +1,6 @@
-import yaml
 import logging
+
+import yaml
 
 
 def read_yaml(yaml_path):

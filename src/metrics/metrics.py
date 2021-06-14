@@ -1,9 +1,10 @@
 from pathlib import Path
-from src.metrics.utils import weighted_corr
 
-import xarray as xr
-import pandas as pd
 import numpy as np
+import pandas as pd
+import xarray as xr
+
+from src.metrics.utils import weighted_corr
 
 
 class ScoresTables:

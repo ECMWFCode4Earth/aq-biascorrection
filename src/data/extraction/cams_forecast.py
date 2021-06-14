@@ -1,16 +1,16 @@
+import concurrent.futures
+import datetime
+import glob
+import logging
+import os
 from pathlib import Path
-from src.data.utils import Location
 from typing import Dict, List, Tuple
-from dask import distributed
 
 import pandas as pd
 import xarray as xr
+from dask import distributed
 
-import datetime
-import logging
-import glob
-import concurrent.futures
-import os
+from src.data.utils import Location
 
 
 def remove_intermediary_paths(intermediary_paths: List[Path]):

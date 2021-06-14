@@ -1,15 +1,16 @@
-from pathlib import Path
-from typing import Dict, List
-from math import sin, cos, sqrt, atan2, radians
-from src.data.utils import Location
-
-import pandas as pd
-import xarray as xr
-import os
-import openaq
 import datetime
 import logging
+import os
 import warnings
+from math import atan2, cos, radians, sin, sqrt
+from pathlib import Path
+from typing import Dict, List
+
+import openaq
+import pandas as pd
+import xarray as xr
+
+from src.data.utils import Location
 
 warnings.filterwarnings("ignore")
 
