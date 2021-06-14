@@ -474,17 +474,42 @@ plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
 <!-- AUTHORS -->
 <h2 id="authors"> Authors</h2>
 
-  :boy: <b> Mario Santa Cruz López</b> <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BSc in _Mathematics_ at Universidad de Cantabria <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSc in _Statistics_ at Imperial College London <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GitHub: <a href="https://github.com/jpxkqx">@jpxkqx</a> <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LinkedIn: <a href="https://www.linkedin.com/in/mariosanta-cruz/">@mariosanta-cruz</a> <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a>
+<div id="authors-aq">
+  <section>
+          <ul style="list-style: none;" id="a">
+            <li>
+              <a href="mario.jpg">
+                <img style="float: left" src="reports/images/mario.png" alt="" width=160px id="pic_mario">
+                <p>
+                        :boy: <b> Mario Santa Cruz López</b> <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BSc in _Mathematics_ at Universidad de Cantabria <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSc in _Statistics_ at Imperial College London <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GitHub: <a href="https://github.com/jpxkqx">@jpxkqx</a> <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LinkedIn: <a href="https://www.linkedin.com/in/mariosanta-cruz/">@mariosanta-cruz</a> <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a> 
+                </p>
+              </a>
+            </li>
+          </ul>
+  </section>
+  <br>
+  <section>
+          <ul style="list-style: none;" id="b">
+            <li>
+              <a href="antonio.jpg">
+                <img style="float: left" src="reports/images/antonio.jpg" alt="" width=160px id="pic_antonio">
+                  <p>
+                        :boy: <b> Antonio Pérez Velasco</b> <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BSc in _Physics_ at Universidad de Cantabria <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSc in _Data Science_ at Universidad de Cantabria <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Industrial PhD at Universidad de Cantabria <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GitHub: <a href="https://github.com/aperezvelasco">@aperezvelasco</a> <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LinkedIn: <a href="https://www.linkedin.com/in/antonio-perez-velasco/">@antonio-perez-velasco</a> <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a>
+                </p>
+              </a>
+            </li>
+          </ul>
+  </section>
 
-  :boy: <b> Antonio Pérez Velasco</b> <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BSc in _Physics_ at Universidad de Cantabria <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSc in _Data Science_ at Universidad de Cantabria <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Industrial PhD at Universidad de Cantabria <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GitHub: <a href="https://github.com/aperezvelasco">@aperezvelasco</a> <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LinkedIn: <a href="https://www.linkedin.com/in/antonio-perez-velasco/">@antonio-perez-velasco</a> <br>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a>
+</div>
