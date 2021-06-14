@@ -40,7 +40,7 @@
 
 
 <!-- ABOUT THE PROJECT -->
-<h2 id="about-the-project"> About the project</h2>
+<h2 id="about-the-project"> :blue_book: About the project</h2>
 
 Bias correction of CAMS model forecasts for air quality variables by using 
 in-situ observations. The bias correction algorithm will mainly be based on
@@ -51,14 +51,14 @@ machine-learning / deep-learning techniques.
 
 
 <!-- PREREQUISITES -->
-<h2 id="prerequisites">  Prerequisites</h2>
+<h2 id="prerequisites"> :pushpin: Prerequisites</h2>
 
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 
 <!-- MILESTONES -->
-<h2 id="milestones"> Milestones </h2>
+<h2 id="milestones"> :bookmark: Milestones </h2>
 
 This section is intended to propose a breakdown of the work in a set of weekly milestones (see Figure 3), detailing as much as possible the features studied at each level (this schema could be redesigned during the development stage due to technical problems, commented on following sections).
 
@@ -87,7 +87,7 @@ selected based on the insights obtained during the validation stage.
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 <!-- DATA -->
-<h2 id="data"> Data</h2>
+<h2 id="data"> :1234: Data</h2>
 
 The data used in this project comes from two different sources.
 Firstly, the observations from [OpenAQ](https://openaq.org/#/) stations have
@@ -357,7 +357,7 @@ Some interesting highlights to mention about this transformation section:
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 <!-- VISUALIZATION -->
-<h2 id="visualizations"> Visualizations </h2>
+<h2 id="visualizations"> :art: Visualizations </h2>
 
 
 Below, several examples of how to generate the different visualizations provided by the repository are shown.
@@ -404,7 +404,7 @@ plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 <!-- RESULTS -->
-<h2 id="results"> Results</h2>
+<h2 id="results"> :trophy: Results</h2>
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
@@ -412,7 +412,7 @@ plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
 
 
 <!-- PROJECT ORGANIZATION -->
-<h2 id="project-organization"> :cactus: Project Organization</h2>
+<h2 id="project-organization"> :open_file_folder: Project Organization</h2>
 
 
     ├── LICENSE
@@ -464,56 +464,51 @@ plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 <!-- FAQ -->
-<h2 id="faq"> :scroll: FAQ</h2>
+<h2 id="faq"> :question: FAQ</h2>
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 
 <!-- REFERENCES -->
-<h2 id="references"> References</h2>
+<h2 id="references"> :books: References</h2>
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 
 <!-- AUTHORS -->
-<h2 id="authors"> Authors</h2>
+<h2 id="authors"> :bust_in_silhouette: Authors</h2>
 
-<div id="authors-aq">
+<div>
   <section>
-          <ul style="list-style: none;" id="a">
-            <li>
-              <a href="mario.jpg">
-                <img style="float: left" src="reports/images/mario.png" alt="" width=160px id="pic_mario">
-                <p>
-                        :boy: <b> Mario Santa Cruz López</b> <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BSc in _Mathematics_ at Universidad de Cantabria <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSc in _Statistics_ at Imperial College London <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GitHub: <a href="https://github.com/jpxkqx">@jpxkqx</a> <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LinkedIn: <a href="https://www.linkedin.com/in/mariosanta-cruz/">@mariosanta-cruz</a> <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a> 
-                </p>
-              </a>
-            </li>
-          </ul>
+    <ul style="list-style-type:none;" id="a">
+      <li>
+          <img style="float: left" src="reports/images/mario.png" alt="" width=160px id="pic_mario">
+          <p>
+            :man: <b> Mario Santa Cruz López</b> <br>
+            BSc in <strong>Mathematics</strong> at Universidad de Cantabria <br>
+            MSc in <strong>Statistics</strong> at Imperial College London <br>
+            GitHub: <a href="https://github.com/jpxkqx">@jpxkqx</a> <br>
+            LinkedIn: <a href="https://www.linkedin.com/in/mariosanta-cruz/">@mariosanta-cruz</a> <br>
+            Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a> 
+          </p>
+      </li>
+    </ul>
   </section>
   <br>
   <section>
-          <ul style="list-style: none;" id="b">
-            <li>
-              <a href="antonio.jpg">
-                <img style="float: left" src="reports/images/antonio.jpg" alt="" width=160px id="pic_antonio">
-                  <p>
-                        :boy: <b> Antonio Pérez Velasco</b> <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BSc in _Physics_ at Universidad de Cantabria <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MSc in _Data Science_ at Universidad de Cantabria <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Industrial PhD at Universidad de Cantabria <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GitHub: <a href="https://github.com/aperezvelasco">@aperezvelasco</a> <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LinkedIn: <a href="https://www.linkedin.com/in/antonio-perez-velasco/">@antonio-perez-velasco</a> <br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a>
-                </p>
-              </a>
-            </li>
-          </ul>
+    <ul style="list-style-type:none;" id="b">
+      <li>
+          <img style="float: left" src="reports/images/antonio.jpg" alt="" width=160px id="pic_antonio">
+          <p>
+            :man: <b> Antonio Pérez Velasco</b> <br>
+            BSc in <strong>Physics</strong> at Universidad de Cantabria <br>
+            MSc in <strong>Data Science</strong> at Universidad de Cantabria <br>
+            Industrial PhD at Universidad de Cantabria <br>
+            GitHub: <a href="https://github.com/aperezvelasco">@aperezvelasco</a> <br>
+            LinkedIn: <a href="https://www.linkedin.com/in/antonio-perez-velasco/">@antonio-perez-velasco</a> <br>
+            Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a>
+         </p>
+      </li>
+    </ul>
   </section>
-
 </div>
