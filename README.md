@@ -5,13 +5,99 @@ Bias correction of air quality CAMS model predictions by using OpenAQ observatio
 
 ## Data
 
-The data used in this project comes from two different sources. Firstly, the observations from [OpenAQ](https://openaq.org/#/) stations have been downloaded. 
-
+The data used in this project comes from two different sources.
+Firstly, the observations from [OpenAQ](https://openaq.org/#/) stations have
+been downloaded for the three variables of interest at a set of interesting 
+locations / cities
+```
+extraction_openaq -var pm25 -locations data/external/stations.csv -output data/interim
+```
+```
+extraction_openaq -var o3 -locations data/external/stations.csv -output data/interim
+```
+```
+extraction_openaq -var no2 -locations data/external/stations.csv -output data/interim
 ```
 
+The stations.csv file must follow the structure:
+```
+,id,city,country,latitude,longitude,timezone,elevation
 ```
 
-On the other hand, the forecasts are provided by the CAMS model, which we would like to correct. 
+For instance:
+```
+,id,city,country,latitude,longitude,timezone,elevation
+0,AE001,Dubai,United Arab Emirates,25.0657,55.17128,Asia/Dubai,2
+1,AE002,Abu Dhabi,United Arab Emirates,24.46667,54.36667,Asia/Dubai,3
+```
+
+The data for every location / variable is processed and stored in netcdf format:
+```
+netcdf pm25_spain_madrid_es001_20190601_20210331 {
+dimensions:
+        time = 8885 ;
+        station_id = 5 ;
+variables:
+        int64 time(time) ;
+                time:units = "hours since 2019-06-01 08:00:00" ;
+                time:calendar = "proleptic_gregorian" ;
+        double pm25(station_id, time) ;
+                pm25:_FillValue = NaN ;
+                string pm25:units = "µg/m³" ;
+                pm25:standard_name = "pm25" ;
+                pm25:long_name = "Particulate matter (PM2.5)" ;
+                pm25:coordinates = "y x _x _y distance" ;
+        int64 station_id(station_id) ;
+                station_id:long_name = "station name" ;
+                station_id:cf_role = "timeseries_id" ;
+        double x(station_id) ;
+                x:_FillValue = NaN ;
+                x:units = "degrees_east" ;
+                x:long_name = "Longitude" ;
+                x:standard_name = "longitude" ;
+        double y(station_id) ;
+                y:_FillValue = NaN ;
+                y:units = "degrees_north" ;
+                y:long_name = "Latitude" ;
+                y:standard_name = "latitude" ;
+        double _x ;
+                _x:_FillValue = NaN ;
+                _x:units = "degrees_east" ;
+                _x:long_name = "Longitude of the location of interest" ;
+                _x:standard_name = "longitude_interest" ;
+        double _y ;
+                _y:_FillValue = NaN ;
+                _y:units = "degrees_north" ;
+                _y:long_name = "Latitude of the location of interest" ;
+                _y:standard_name = "latitude_interest" ;
+        double distance(station_id) ;
+                distance:_FillValue = NaN ;
+                distance:units = "km" ;
+                distance:long_name = "Distance" ;
+                distance:standard_name = "distance" ;
+
+// global attributes:
+                :featureType = "timeSeries" ;
+                :Conventions = "CF-1.4" ;
+}
+```
+
+where (_x, _y) are the coordinates of the location of interest as given in the 
+stations.csv file, and (x, y) are the coordinates of the closest stations
+downloaded from the [OpenAQ](https://openaq.org/#/) platform 
+(taking a maximum of 5 stations). In addition, information about the distance
+from the OpenAQ station to the location of interest is provided in kilometers.
+
+For the five stations shown in the file befores, these distances are:
+```
+ distance = 1.81559141220802, 2.45376657682221, 2.78449016534016, 
+ 3.2173204331241, 3.7871094512231 ;
+```
+
+On the other hand, the forecasts are provided by the CAMS model, 
+which we would like to correct. The files have been processed and offered as
+part of the project by the ECMWF team. The structure followed was: one file per
+variable and initialization time step.
 
 ```
 
