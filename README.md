@@ -106,7 +106,7 @@ For the five stations shown in the file befores, these distances are:
 On the other hand, the forecasts are provided by the CAMS model, 
 which we would like to correct. The files have been processed and offered as
 part of the project by the ECMWF team. The structure followed was: one file per
-variable and initialization time step.
+variable and initialization time step (3 hour frequency).
 
 ```
 extraction_cams -i data1/cams_model -intermediary data/interim -locations data/external/stations.csv -o data/interim
@@ -221,6 +221,11 @@ variables:
 }
 
 ```
+
+Once the data from the forecasts and observations is steady in place, they
+are merged into a unique pd.DataFrame for each location of interest in which 
+both of them are available.
+
 ## Visualizations
 
 Below, several examples of how to generate the different visualizations provided by the repository are shown.
