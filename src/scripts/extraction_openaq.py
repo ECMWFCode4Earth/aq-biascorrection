@@ -13,22 +13,23 @@ PATH = click.Path(exists=True, path_type=Path)
 
 
 @click.command()
-@click.option("-locations", '--locations_csv_path', type=PATH, required=True,
+@click.argument("var", type=click.Choice(['pm25', 'no2', 'o3', 'all']))
+@click.option("-l", '--locations_csv_path', type=PATH, required=True,
               help="Path to the file where the locations "
                    "of interest are defined in .csv format")
-@click.option("-output", '--output_dir', type=PATH, required=True,
+@click.option("-o", '--output_dir', type=PATH, required=True,
               help="Output directory where to store the data to")
-@click.option("-var", '--variable', default=None, type=click.STRING,
-              help="Variable to which to extraction the OpenAQ data")
 def main(
+        var: str,
         csv_path: Path,
-        output_dir: Path,
-        variable: str
+        output_dir: Path
 ):
     """
     This function reads a csv file with the following structure:
     id,city,country,latitude,longitude,timezone
+
     AE001,Dubai,United Arab Emirates,25.0657,55.17128,Asia/Dubai
+
     ............................................................
     ............................................................
     ............................................................
@@ -36,36 +37,41 @@ def main(
     For each of the rows of the csv file, it runs the OpenAQDownloader
     for the respective variable / location combination and  stores the
     data at the output directory (given as an argument)
+
+    VAR is the variable to extract from OpenAQ API.
     """
     logging.basicConfig(
         stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
     logger = logging.getLogger("OpenAQ download Pipeline")
-    locations_df = pd.read_csv(csv_path)
-    number_of_successful_locations = 0
-    for location in locations_df.iterrows():
-        loc = Location(
-            location[1]['id'],
-            location[1]['city'],
-            location[1]['country'],
-            location[1]['latitude'],
-            location[1]['longitude'],
-            location[1]['timezone'],
-            location[1]['elevation']
-        )
-        logger.info(f"Starting process for location of"
-                     f" interest {str(loc)}")
-        downloader = OpenAQDownloader(
-            loc,
-            output_dir,
-            variable,
-        )
-        try:
-            output_path = downloader.run()
-            number_of_successful_locations += 1
-        except Exception as ex:
-            logger.error(str(ex))
-            continue
-    logger.info(f'The number of locations which has been correctly downloaded'
-                 f' is {number_of_successful_locations} out of'
-                 f' {len(locations_df)} for variable {variable}')
-    logger.info('Process finished!')
+
+    varnames = ['pm25', 'no2', 'o3'] if var == 'all' else [var]
+    for variable in varnames:
+        locations_df = pd.read_csv(csv_path)
+        number_of_successful_locations = 0
+        for location in locations_df.iterrows():
+            loc = Location(
+                location[1]['id'],
+                location[1]['city'],
+                location[1]['country'],
+                location[1]['latitude'],
+                location[1]['longitude'],
+                location[1]['timezone'],
+                location[1]['elevation']
+            )
+            logger.info(f"Starting process for location of"
+                        f" interest {str(loc)}")
+            downloader = OpenAQDownloader(
+                loc,
+                output_dir,
+                variable,
+            )
+            try:
+                output_path = downloader.run()
+                number_of_successful_locations += 1
+            except Exception as ex:
+                logger.error(str(ex))
+                continue
+        logger.info(f'The number of locations which has been correctly downloaded'
+                    f' is {number_of_successful_locations} out of'
+                    f' {len(locations_df)} for variable {variable}')
+        logger.info('Process finished!')

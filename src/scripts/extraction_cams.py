@@ -18,7 +18,7 @@ DATE_TYPE = click.DateTime()
               help="Input directory where to take the data from")
 @click.option('-intermediary', '--intermediary_dir', type=PATH, required=True,
               help="Intermediary directory where to store the temporal data")
-@click.option('-locations', '--locations_csv_path', type=PATH, help="Path to "
+@click.option('-l', '--locations_csv_path', type=PATH, help="Path to "
               "the file where the locations of interest are defined", 
               required=True)
 @click.option('-o', '--output_dir', type=PATH, required=True,

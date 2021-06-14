@@ -94,7 +94,7 @@ Firstly, the observations from [OpenAQ](https://openaq.org/#/) stations have
 been downloaded for the three variables of interest at a set of interesting 
 locations / cities
 ```
-extraction_openaq -var pm25 -locations data/external/stations.csv -output data/interim
+extraction_openaq pm25 -l data/external/stations.csv -o data/interim
 ```
 
 The stations.csv file must follow the structure:
@@ -187,7 +187,7 @@ part of the project by the ECMWF team. The structure followed was: one file per
 variable and initialization time step (3 hour frequency).
 
 ```
-extraction_cams -i data1/cams_model -intermediary data/interim -locations data/external/stations.csv -o data/interim
+extraction_cams -i data1/cams_model -intermediary data/interim -l data/external/stations.csv -o data/interim
 ```
 
 The processed and stored data follows the consequent pattern:
@@ -305,7 +305,7 @@ are merged into a unique pd.DataFrame for each location of interest in which
 both of them are available.
 
 ```
-transform_data -var pm25 -locations data/external/stations.csv -output data/processed
+transform_data pm25 -l data/external/stations.csv -o data/processed
 ```
 
 
