@@ -261,8 +261,3 @@ def aggregate_df(df, agg, index_col: str = None) -> pd.DataFrame:
         df = df.resample(constants.str2agg[agg])
     
     return df.mean().dropna()
-
-
-if __name__ == '__main__':
-    st = StationTemporalSeriesPlotter('pm25', 'Spain', Path('data/processed'))
-    st.plot_data(agg='daily')

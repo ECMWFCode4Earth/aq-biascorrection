@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 import logging
 import sys
+import os
 
 
 PATH = click.Path(exists=True, path_type=Path)
@@ -49,6 +50,9 @@ def main_line(
     varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
     for var in varnames:
         for country in countries:
+            temp_agg = agg_by.capitalize() if agg_by else "Raw"
+            output_folder = output_path / var / "StationBias" / temp_agg
+            os.makedirs(output_folder, exist_ok=True)
             logging.info(f"Processing plot for {varname} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
@@ -56,7 +60,7 @@ def main_line(
                 data_path,
                 metadata_path, 
                 [station] if station else station
-            ).plot_data(output_path / var / "StationBias", agg=agg_by)
+            ).plot_data(output_folder, agg=agg_by)
     logging.info("The script finished!")
 
 
@@ -99,6 +103,9 @@ def main_corrs(
     varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
     for var in varnames:
         for country in countries:
+            temp_agg = agg_by.capitalize() if agg_by else "Raw"
+            output_folder = output_path / var / "Correlations" / temp_agg  
+            os.makedirs(output_folder, exist_ok=True)
             logging.info(f"Processing correlation with {varname} bias for "
                         f"{country}.")
             StationTemporalSeriesPlotter(
@@ -107,7 +114,7 @@ def main_corrs(
                 data_path,
                 metadata_path, 
                 [station] if station else station
-            ).plot_correlations(output_path / var / "Correlations", agg=agg_by)
+            ).plot_correlations(output_folder, agg=agg_by)
         logging.info("The script finished!")
 
 
@@ -194,11 +201,14 @@ def main_cdf_bias(
     varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
     for var in varnames:
         for country in countries:
+            temp_agg = agg_by.capitalize() if agg_by else "Raw"
+            output_folder = output_path / var / "BiasDistribution" / temp_agg
+            os.makedirs(output_folder, exist_ok=True)
             logging.info(f"Processing CDF of {varname} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
                 country,
                 data_path,
                 metadata_path
-            ).plot_bias_cdf(output_path / var / "StationBias", agg=agg_by)
+            ).plot_bias_cdf(output_folder, agg=agg_by)
     logging.info("The script finished!")
