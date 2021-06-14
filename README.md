@@ -262,7 +262,8 @@ Some interesting highlights to mention about this transformation section:
   gas equation to obtain the air density at a given time step and transform the 
   corresponding kg / kg to μg / m³. This process has been taken into 
   consideration for `pm25` and `no2` variables, due to the fact that `o3`
-  observations are given in `ppm` by the OpenAQ platform.
+  observations are given in `ppm` by the OpenAQ platform. Similar approach is 
+  driven.
     
 - Some variables [`dsrp`, `tp`, `uvb`] are accumulated during the day 
   (i.e, the precipitation at the 24h is the sum of the other 
