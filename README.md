@@ -109,9 +109,118 @@ part of the project by the ECMWF team. The structure followed was: one file per
 variable and initialization time step.
 
 ```
-
+extraction_cams -i data1/cams_model -intermediary data/interim -locations data/external/stations.csv -o data/interim
 ```
 
+The processed and stored data follows the consequent pattern:
+```
+netcdf cams_spain_madrid_es001_20190601_20210331 {
+dimensions:
+        time = 5360 ;
+variables:
+        int64 time(time) ;
+                time:long_name = "time" ;
+                time:units = "hours since 2019-06-01 00:00:00" ;
+                time:calendar = "proleptic_gregorian" ;
+        float longitude ;
+                longitude:_FillValue = NaNf ;
+                longitude:units = "degrees_east" ;
+                longitude:long_name = "longitude" ;
+        float latitude ;
+                latitude:_FillValue = NaNf ;
+                latitude:units = "degrees_north" ;
+                latitude:long_name = "latitude" ;
+        float blh(time) ;
+                blh:_FillValue = NaNf ;
+                blh:units = "m" ;
+                blh:long_name = "Boundary layer height" ;
+                blh:coordinates = "latitude station_id longitude" ;
+        string station_id ;
+        float d2m(time) ;
+                d2m:_FillValue = NaNf ;
+                d2m:units = "K" ;
+                d2m:long_name = "2 metre dewpoint temperature" ;
+                d2m:coordinates = "latitude station_id longitude" ;
+        float dsrp(time) ;
+                dsrp:_FillValue = NaNf ;
+                dsrp:units = "J m**-2" ;
+                dsrp:long_name = "Direct solar radiation" ;
+                dsrp:coordinates = "latitude station_id longitude" ;
+        float go3(time) ;
+                go3:_FillValue = NaNf ;
+                go3:units = "kg kg**-1" ;
+                go3:long_name = "GEMS Ozone" ;
+                go3:coordinates = "longitude latitude" ;
+        float msl(time) ;
+                msl:_FillValue = NaNf ;
+                msl:units = "Pa" ;
+                msl:long_name = "Mean sea level pressure" ;
+                msl:standard_name = "air_pressure_at_mean_sea_level" ;
+                msl:coordinates = "latitude station_id longitude" ;
+        float no2(time) ;
+                no2:_FillValue = NaNf ;
+                no2:units = "kg kg**-1" ;
+                no2:long_name = "Nitrogen dioxide" ;
+                no2:coordinates = "longitude latitude" ;
+        float pm10(time) ;
+                pm10:_FillValue = NaNf ;
+                pm10:units = "kg m**-3" ;
+                pm10:long_name = "Particulate matter d < 10 um" ;
+                pm10:coordinates = "latitude station_id longitude" ;
+        float pm2p5(time) ;
+                pm2p5:_FillValue = NaNf ;
+                pm2p5:units = "kg m**-3" ;
+                pm2p5:long_name = "Particulate matter d < 2.5 um" ;
+                pm2p5:coordinates = "latitude station_id longitude" ;
+        float so2(time) ;
+                so2:_FillValue = NaNf ;
+                so2:units = "kg kg**-1" ;
+                so2:long_name = "Sulphur dioxide" ;
+                so2:coordinates = "longitude latitude" ;
+        float t2m(time) ;
+                t2m:_FillValue = NaNf ;
+                t2m:units = "K" ;
+                t2m:long_name = "2 metre temperature" ;
+                t2m:coordinates = "latitude station_id longitude" ;
+        float tcc(time) ;
+                tcc:_FillValue = NaNf ;
+                tcc:units = "(0 - 1)" ;
+                tcc:long_name = "Total cloud cover" ;
+                tcc:standard_name = "cloud_area_fraction" ;
+                tcc:coordinates = "latitude station_id longitude" ;
+        float tp(time) ;
+                tp:_FillValue = NaNf ;
+                tp:units = "m" ;
+                tp:long_name = "Total precipitation" ;
+                tp:coordinates = "latitude station_id longitude" ;
+        float u10(time) ;
+                u10:_FillValue = NaNf ;
+                u10:units = "m s**-1" ;
+                u10:long_name = "10 metre U wind component" ;
+                u10:coordinates = "latitude station_id longitude" ;
+        float uvb(time) ;
+                uvb:_FillValue = NaNf ;
+                uvb:units = "J m**-2" ;
+                uvb:long_name = "Downward UV radiation at the surface" ;
+                uvb:coordinates = "latitude station_id longitude" ;
+        float v10(time) ;
+                v10:_FillValue = NaNf ;
+                v10:units = "m s**-1" ;
+                v10:long_name = "10 metre V wind component" ;
+                v10:coordinates = "latitude station_id longitude" ;
+        float z(time) ;
+                z:_FillValue = NaNf ;
+                z:units = "m**2 s**-2" ;
+                z:long_name = "Geopotential" ;
+                z:standard_name = "geopotential" ;
+                z:coordinates = "latitude station_id longitude" ;
+
+// global attributes:
+                :Conventions = "CF-1.6" ;
+                :history = "2021-05-13 16:28:04 GMT by grib_to_netcdf-2.19.1: grib_to_netcdf -D NC_FLOAT -k3 -o ./input_data/hcn9/z_cams_c_ecmf_20190601_hcn9_fc_ml137_000_blh.nc.tmp ./input_data/hcn9/z_cams_c_ecmf_20190601_hcn9_fc_ml137_000_blh.grib" ;
+}
+
+```
 ## Visualizations
 
 Below, several examples of how to generate the different visualizations provided by the repository are shown.

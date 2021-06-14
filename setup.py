@@ -11,6 +11,7 @@ setup(
     entry_points={
         'console_scripts': [
             'extraction_openaq = src.scripts.extraction_openaq:main',
+            'extraction_cams = src.scripts.extraction_cams:main',
             'produce_data = src.scripts.produce_data:main',
             'plot_station_data = src.scripts.plotting:main_line',
             'plot_station_corrs = src.scripts.plotting:main_corrs',
