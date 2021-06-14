@@ -314,13 +314,6 @@ both of them are available.
 transform_data -var pm25 -locations data/external/stations.csv -output data/processed
 ```
 
-```
-transform_data -var no2 -locations data/external/stations.csv -output data/processed
-```
-
-```
-transform_data -var o3 -locations data/external/stations.csv -output data/processed
-```
 
 A .csv file is stored for each location of interest with the following name:
 `data/processed/{variable}/data_{variable}_{location_id}.csv`
@@ -365,10 +358,10 @@ Below, several examples of how to generate the different visualizations provided
 Firstly, a visualization for comparing the observed and predicted values for any given city is presented.
 
 ```
-plot_station_data pm25 Qatar -s Doha -d data/processed -o reports/figures
+plot_station_data pm25 Spain -s Madrid -d data/processed -o reports/figures
 ```
 
-<img id="line-plot" src="reports/images/pm25_bias_doha_qatar.png" alt="Station Data">
+<img id="line-plot" src="reports/images/pm25_bias_madrid_spain.png" alt="Station Data">
 
 
 There is also the possibility to show the correlation between the feature variables and the bias in one heatmap. The values can be aggregated by its daily mean using the option __-a__ or __--agg_by__.
@@ -383,17 +376,17 @@ plot_station_corrs no2 Spain -s Madrid -d data/processed -o reports/figures -a d
 Addionally, the cumulative distribution function of the bias at each station can be compared for each country, which can also be aggregated daily if desired. The number days with observations is provided in the legend in order to represent  the representativeness of each station sample.
 
 ```
-plot_station_cdf_bias no2 China -d data/processed -o reports/figures
+plot_station_cdf_bias pm25 Madrid -d data/processed -o reports/figures
 ```
 
-<img id="cdf-bias" src="reports/images/bias_cdf_no2_bias_china.png" alt="CDF bias">
+<img id="cdf-bias" src="reports/images/bias_cdf_pm25_bias_spain.png" alt="CDF bias">
 
 Lastly, the distribution of the bias by the local time can also be presented as follows.
 ```
-plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
+plot_station_hourly_bias pm25 Spain -d data/processed -o reports/figures
 ```
 
-<img id="hourly-bias" src="reports/images/hourly_pm25_bias_germany.png" alt="Hourly bias">
+<img id="hourly-bias" src="reports/images/hourly_pm25_bias_spain.png" alt="Hourly bias">
 
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)

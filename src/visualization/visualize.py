@@ -234,9 +234,12 @@ class StationTemporalSeriesPlotter:
             info = self.sts_df[self.sts_df.id == st_code]
             log.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
-            ndays = len(data.index) // 8
-            if agg: data = aggregate_df(data, agg, 'index')
-            data['City'] = f"{info.city.values[0]} ({ndays:0.f})"
+            ndays = len(aggregate_df(data, 'daily', 'index').index)
+            log.debug(f"There are {len(data.index)} observation which corresponds to a total of {ndays} days.")
+            
+            if agg: 
+                data = aggregate_df(data, agg, 'index')
+            data['City'] = f"{info.city.values[0]} ({ndays:.0f})"
             dfs.append(data)
             labels.append(f"{info.city.values[0]} ({ndays:.0f})")
         
