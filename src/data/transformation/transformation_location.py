@@ -8,6 +8,21 @@ import numpy as np
 import pytz
 
 
+def forecast_accumulated_variables_disaggregation(forecast_data):
+    vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
+    for variable in vars_to_temp_diss:
+        ds_variable = forecast_data[variable].copy()
+        ds_variable_diff = ds_variable.differentiate(
+            'time', 1, 'h'
+        )
+        ds_variable_diff = ds_variable_diff.where(
+            ds_variable_diff >= 0,
+            0
+        )
+        forecast_data[variable] = ds_variable_diff
+    return forecast_data
+
+
 class LocationTransformer:
     def __init__(
             self,
@@ -49,6 +64,11 @@ class LocationTransformer:
         merged_pd = merged.to_dataframe()
         # Adding local_time as a coordinate
         merged_pd = self.adding_local_time_hour(merged_pd)
+        # There are some stations which has 0s, which seems to be NaN, drop
+        # them
+        merged_pd['pm25_observed'] = merged_pd['pm25_observed'].where(
+            merged_pd['pm25_observed'] > 0
+        )
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias
@@ -68,6 +88,13 @@ class LocationTransformer:
         #Rename some of the variables
         forecast_data = forecast_data.rename({'pm2p5': 'pm25',
                                               'go3': 'o3'})
+        # Interpolate time axis to 1h data
+        hourly_times = pd.date_range(forecast_data.time.values[0],
+                                  forecast_data.time.values[-1],
+                                  freq='1H')
+        forecast_data = forecast_data.interp(time=hourly_times,
+                                             method='linear')
+
         # Transform units of concentration variables
         for variable in ['pm25', 'o3', 'no2', 'so2', 'pm10']:
             # The air density depends on temperature and pressure, but an
@@ -86,8 +113,9 @@ class LocationTransformer:
 
         # Some forecast variables are aggregated daily, so a temporal
         # disaggregation is needed
-        # TODO: Add temporal disaggregation
-
+        forecast_data = forecast_accumulated_variables_disaggregation(
+            forecast_data
+        )
         # Rename all the variables to "{variable}_forecast" in order to
         # distinguish them when merged
         for data_var in list(forecast_data.data_vars.keys()):
@@ -116,7 +144,7 @@ class LocationTransformer:
         # Resample the values in order to have the same time frequency as
         # CAMS model forecast
         observations_data = observations_data.resample(
-            {'time': '3H'}
+            {'time': '1H'}
         ).mean('time')
         # If there are more than one station associated with the location of
         # interest an average is performed taking into consideration the
@@ -172,7 +200,7 @@ class LocationTransformer:
 
     def adding_local_time_hour(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        This method uses the location object 'timezone' attribute to obtain the
+        This method uses the Location object 'timezone' attribute to obtain the
         local time hour from the UTC time. This is importante step because the
         bias in the model is known to depend on the diurnal cycle (local time
         of the place is needed)
@@ -209,5 +237,3 @@ class LocationTransformer:
         Method to get the air density at a given temperature and pressure
         """
         return pressure / (temperature * 287.058)
-
-

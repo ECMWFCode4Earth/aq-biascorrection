@@ -26,7 +26,8 @@ def test_download_aq():
     down_path = "/tmp/test_downloading"
     get_remote_file(filename, tempdir)
 
-    loc = Location(station, city, country, lat_dubai, lon_dubai, 1, 1)
+    loc = Location(station, city, country, lat_dubai,
+                   lon_dubai, "Asia/Dubai", 2)
     OpenAQDownloader(loc, "/tmp/test_downloading", var).run() 
     
     assert not filecmp.dircmp(down_path, tempdir).diff_files

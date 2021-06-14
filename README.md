@@ -27,7 +27,7 @@ Firstly, a visualization for comparing the observed and predicted values for any
 plot_station_data pm25 Qatar -s Doha -d data/processed -o reports/figures
 ```
 
-![Station data](reports/figures/pm25_bias_doha_qatar.png "Doha")
+![Station data](reports/figures/station_bias/pm25_bias_doha_qatar.png "Doha")
 
 There is also the possibility to show the correlation between the feature variables and the bias in one heatmap.
 
@@ -35,7 +35,7 @@ There is also the possibility to show the correlation between the feature variab
 plot_station_corrs pm25 Spain -s Madrid -d data/processed -o reports/figures
 ```
 
-![Station data](reports/figures/corrs_pm25_bias_madrid_spain.png "Madrid")
+![Station data](reports/figures/corrs/corrs_pm25_bias_madrid_spain.png "Madrid")
 
 
 Lastly, the dsitribution of the bias by the local time can also be presented as follows.
@@ -43,7 +43,7 @@ Lastly, the dsitribution of the bias by the local time can also be presented as 
 plot_station_hourly_bias pm25 Germany -d data/processed -o reports/figures
 ```
 
-![Station data](reports/figures/hourly_pm25_bias_germany.png "Germany")
+![Station data](reports/figures/hourly_bias/hourly_pm25_bias_germany.png "Germany")
 
 
 

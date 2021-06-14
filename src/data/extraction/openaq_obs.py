@@ -233,8 +233,6 @@ class OpenAQDownloader:
         """
         This function saves the data in netcdf format
         """
-
-        # Directory initialization if they do not exist
         data = xr.concat(datasets, dim='station_id')
         write_netcdf(output_path_data, data)
 
