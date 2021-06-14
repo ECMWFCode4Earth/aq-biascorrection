@@ -60,7 +60,7 @@ machine-learning / deep-learning techniques.
 <!-- MILESTONES -->
 <h2 id="milestones"> :bookmark: Milestones </h2>
 
-This section is intended to propose a breakdown of the work in a set of weekly milestones (see Figure 3), detailing as much as possible the features studied at each level (this schema could be redesigned during the development stage due to technical problems, commented on following sections).
+This section is intended to propose a breakdown of the work in a set of weekly milestones, detailing as much as possible the features studied at each level (this schema could be redesigned during the development stage due to technical problems, commented on following sections).
 
 • **Milestone 1** (*Week 1*): Download of data and analysis of data quality.
 
