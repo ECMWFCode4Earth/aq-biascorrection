@@ -234,10 +234,11 @@ class StationTemporalSeriesPlotter:
             info = self.sts_df[self.sts_df.id == st_code]
             log.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
+            ndays = len(data.index) // 8
             if agg: data = aggregate_df(data, agg, 'index')
-            data['City'] = f"{info.city.values[0]} ({data.shape[0] // 8:.0f})"
+            data['City'] = f"{info.city.values[0]} ({ndays:0.f})"
             dfs.append(data)
-            labels.append(f"{info.city.values[0]} ({data.shape[0] // 8:.0f})")
+            labels.append(f"{info.city.values[0]} ({ndays:.0f})")
         
         if len(dfs) == 0:
             log.error(f"No data available for any station in {self.country}")
