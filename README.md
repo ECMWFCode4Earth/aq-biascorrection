@@ -42,6 +42,10 @@
 <!-- ABOUT THE PROJECT -->
 <h2 id="about-the-project"> About the project</h2>
 
+Bias correction of CAMS model forecasts for air quality variables by using 
+in-situ observations. The bias correction algorithm will mainly be based on
+machine-learning / deep-learning techniques.
+
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
