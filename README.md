@@ -249,6 +249,26 @@ and the following pattern:
 2,2019-08-20 11:00:00,498.63124593098956,297.5174560546875,2710528.0,107.81134804645772,100242.22916666667,73.13640423978323,95.29553961138413,45.228101565972075,18.74278688256282,310.16429646809894,0.00040690104166666663,0.0,3.2521514892578125,304298.6666666666,-1.748611450195313,57900.291666666664,65.0,15,-19.771898434027925
 ```
 
+Some interesting highlights to mention about this transformation section:
+
+- Time interpolation has been performed to the forecast (3 hourly) data in order
+  to have 1h frequency data. For the same purpose, a resampling has been 
+  performed to the observations (average of the available observations over an
+  hour).
+
+- The units are in different format for the observations (μg / m³) and 
+  the forecast (kg / kg). In order to take the best approach: elevation,
+  temperature and mean sea level pressure have been used with the ideal
+  gas equation to obtain the air density at a given time step and transform the 
+  corresponding kg / kg to μg / m³. This process has been taken into 
+  consideration for `pm25` and `no2` variables, due to the fact that `o3`
+  observations are given in `ppm` by the OpenAQ platform.
+    
+- Some variables [`dsrp`, `tp`, `uvb`] are accumulated during the day 
+  (i.e, the precipitation at the 24h is the sum of the other 
+  23 hours + the 24th hour), so they have been disaggregated during the process.
+  
+
 ## Visualizations
 
 Below, several examples of how to generate the different visualizations provided by the repository are shown.
