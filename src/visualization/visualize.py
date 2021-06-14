@@ -25,7 +25,8 @@ class StationTemporalSeriesPlotter:
             metadata_path: Path = Path("data/external/stations.csv"), 
             stations: List[str] = None
     ):
-        """ 
+        """ Class that handles the visualization generation for all data at each
+        station.
 
         Args:
             varname (str): variable to consider.
@@ -60,6 +61,10 @@ class StationTemporalSeriesPlotter:
     def plot_data(self, output_path: Path = None, agg: str = None) -> NoReturn:
         """ Plot the for the variable requested in the stations whose position 
         is specified.
+
+        Args:
+            output_path (Path): the output folder at which save the images.
+            agg (str): Whether to aggregate data. Choices are: daily or monthly.
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
@@ -107,6 +112,10 @@ class StationTemporalSeriesPlotter:
     ) -> NoReturn:
         """ Plort the correlation between the prediction bias and the model
         features.
+
+        Args:
+            output_path (Path): the output folder at which save the images.
+            agg (str): Whether to aggregate data. Choices are: daily or monthly.
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
@@ -164,6 +173,11 @@ class StationTemporalSeriesPlotter:
     ) -> NoReturn:
         """ Plot the bias for the variable requested in the stations whose
         position is specified.
+
+        Args:
+            show_std (bool): whether to show the empirical standard deviation
+            or not. By default, it is shown.
+            output_path (Path): the output folder at which save the images.
         """
         stats = ['mean', 'std']
         bias_var = f"{self.varname}_bias"
@@ -206,6 +220,13 @@ class StationTemporalSeriesPlotter:
         output_path: str = None, 
         agg: str = None
     ) -> NoReturn:
+        """Plot the CDF of bias for the variable requested in the stations whose
+        position is specified.
+
+        Args:
+            output_path (Path): the output folder at which save the images.
+            agg (str): Whether to aggregate data. Choices are: daily or monthly.
+        """
         target = f'{self.varname}_bias'
         dfs = []
         labels = []
@@ -225,17 +246,18 @@ class StationTemporalSeriesPlotter:
         g = sns.FacetGrid(df, hue="City", height=8, aspect=1.6, legend_out=True)
         g = g.map_dataframe(sns.histplot, target, stat='probability', kde=True, 
                             binwidth=5, legend=True)
-        plt.title(f"CDF of {agg + ' ' if agg else ''}{self.varname.upper()}"
+        freq = agg + ' ' if agg else ''
+        plt.title(f"CDF of {freq}{self.varname.upper()}"
                   f" bias in {info.country.values[0]}")
-        plt.legend(labels, title='City (days available)', title_fontsize='x-large', 
-                   fontsize='x-large')
-        plt.axvline(0, ls='--', lw=2, c='k')
+        plt.legend(labels, title='City (days available)', 
+                   title_fontsize='x-large', fontsize='x-large')
         plt.ylabel("Probability", fontsize='x-large')
-        plt.xlabel(target.replace("_", " ").capitalize(), fontsize='x-large')
+        plt.xlabel(freq + target.replace("_", " ").capitalize(), 
+                   fontsize='x-large')
         plt.tight_layout()
         if output_path:
             country = ''.join(info.country.values[0].split(' ')).lower()
-            freq = agg + '_' if agg else ''
+            freq = freq.replace(' ', '_')
             filename = f"{freq}bias_cdf_{self.varname}_bias_{country}.png"
             output_filename = output_path / filename
             log.info(f"Plot saved to {output_filename}.")
