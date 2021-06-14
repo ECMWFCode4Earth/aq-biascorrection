@@ -30,8 +30,17 @@ For instance:
 0,AE001,Dubai,United Arab Emirates,25.0657,55.17128,Asia/Dubai,2
 1,AE002,Abu Dhabi,United Arab Emirates,24.46667,54.36667,Asia/Dubai,3
 ```
+In case that there are no available stations in a radius of 100 kilometeres to
+the location of interest in the time range selected by the user 
+(default: 1-6-2019 to 31-3-2021), no data is downloaded, and an exception
+is raised with the message: 
+```
+- 'There is no data in the time range considered for this location of interest'
+- 'There are no stations next to this location in OpenAQ for the variable of interest'
+```
 
-The data for every location / variable is processed and stored in netcdf format:
+In case of successful retrieval, the data for every location / variable
+is processed and stored in netcdf format:
 ```
 netcdf pm25_spain_madrid_es001_20190601_20210331 {
 dimensions:
