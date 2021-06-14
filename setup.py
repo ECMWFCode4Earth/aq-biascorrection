@@ -15,6 +15,7 @@ setup(
             'plot_station_data = src.scripts.plotting:main_line',
             'plot_station_corrs = src.scripts.plotting:main_corrs',
             'plot_station_hourly_bias = src.scripts.plotting:main_hourly_bias',
+            'plot_station_cdf_bias = src.scripts.plotting:main_cdf_bias',
         ],
     },
 )

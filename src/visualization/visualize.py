@@ -6,8 +6,10 @@ import numpy as np
 import os
 import logging
 
+from math import pi
 from pathlib import Path
 from typing import List, NoReturn
+from src import constants
 
 
 log = logging.getLogger("Station Plotter")
@@ -55,7 +57,7 @@ class StationTemporalSeriesPlotter:
             else:
                 log.info(f"Data for station {ids[i]} is not found.")
 
-    def plot_data(self, output_path: Path = None) -> NoReturn:
+    def plot_data(self, output_path: Path = None, agg: str = None) -> NoReturn:
         """ Plot the for the variable requested in the stations whose position 
         is specified.
         """
@@ -64,6 +66,8 @@ class StationTemporalSeriesPlotter:
             log.debug(f"Plotting data for {info.city.values[0]}")
             df = self.data[st_code].set_index('index')
             df.index.name = 'Date'
+            if agg: 
+                df = aggregate_df(df, agg)
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
             df.index = pd.to_datetime(df.index).strftime('%Y-%m-%d %HH')
@@ -71,25 +75,36 @@ class StationTemporalSeriesPlotter:
             df[[f'{self.varname}_forecast',
                 f'{self.varname}_observed']].plot(figsize=(23, 12))
             plt.legend(["Forecast", "Observed"], title=self.varname.upper(), 
-                    fontsize='x-large', title_fontsize='x-large')
+                       fontsize='x-large', title_fontsize='x-large')
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
             plt.xticks(fontsize='x-large')
             plt.yticks(fontsize='x-large')
             plt.xlabel("Date", fontsize='x-large')
+            if agg: 
+                x_pos = float(np.mean(plt.gca().get_xlim()))
+                y_pos = float(np.average(plt.gca().get_ylim(), 
+                                         weights=[0.05, 0.95]))
+                annot = agg.capitalize() + " aggregated data"
+                plt.text(x_pos, y_pos, annot, fontsize='x-large', ha='center')
             plt.tight_layout()
 
             if output_path:
                 city = ''.join(info.city.values[0].split(' ')).lower()
                 country = ''.join(info.country.values[0].split(' ')).lower()
-                filename = f"{self.varname}_bias_{city}_{country}.png"
+                freq = f'{agg}_' if agg else ''
+                filename = f"{freq}{self.varname}_bias_{city}_{country}.png"
                 output_filename = output_path / filename
                 log.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
         if not output_path:
             plt.show()
 
-    def plot_correlations(self, output_path: Path = None) -> NoReturn:
+    def plot_correlations(
+        self, 
+        output_path: Path = None,
+        agg: str = None
+    ) -> NoReturn:
         """ Plort the correlation between the prediction bias and the model
         features.
         """
@@ -100,6 +115,13 @@ class StationTemporalSeriesPlotter:
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
             df = df.drop(f'{self.varname}_observed', axis=1)
+            df['local_time_hour'] = np.cos(2 * pi * df['local_time_hour'] / 24)\
+                + np.sin(2 * pi * df['local_time_hour'] / 24)
+
+            if agg:
+                df = df.drop('local_time_hour', axis=1)
+                df = aggregate_df(df, agg)
+
             df = df.rename({f'{self.varname}_bias' : f'{self.varname} Bias',
                             'local_time_hour': 'Local time'}, axis=1)
             df.columns = [col.split('_')[0].upper() for col in df.columns]
@@ -115,17 +137,23 @@ class StationTemporalSeriesPlotter:
             yticks[0].set_visible(False)
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
+            if agg: 
+                x_pos = len(df.columns) / 2
+                y_pos = 1
+                annot = agg.capitalize() + " aggregated data"
+                plt.text(x_pos, y_pos, annot, fontsize='large', ha='center')
             plt.xticks(rotation=65, fontsize='x-large')
-            plt.yticks(fontsize='x-large')
-            
+            plt.yticks(rotation=0, fontsize='x-large')
+
             if output_path:
                 city = ''.join(info.city.values[0].split(' ')).lower()
                 country = ''.join(info.country.values[0].split(' ')).lower()
-                filename = f"corrs_{self.varname}_bias_{city}_{country}.png"
+                filename = f"{agg + '_' if agg else ''}corrs_{self.varname}" \
+                           f"_bias_{city}_{country}.png"
                 output_filename = output_path / filename
                 log.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
-                
+
         if not output_path:
             plt.show()
 
@@ -173,7 +201,11 @@ class StationTemporalSeriesPlotter:
         else:
             plt.show()
 
-    def plot_bias_cdf(self, output_path: str = None) -> NoReturn:
+    def plot_bias_cdf(
+        self, 
+        output_path: str = None, 
+        agg: str = None
+    ) -> NoReturn:
         target = f'{self.varname}_bias'
         dfs = []
         labels = []
@@ -182,14 +214,19 @@ class StationTemporalSeriesPlotter:
             log.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
             data['City'] = f"{info.city.values[0]} ({data.shape[0] // 8:.0f})"
+            if agg: data = aggregate_df(data, agg, 'index')
             dfs.append(data)
             labels.append(f"{info.city.values[0]} ({data.shape[0] // 8:.0f})")
-
+        
+        if len(dfs) == 0:
+            log.error(f"No data available for any station in {self.country}")
+            return None
         df = pd.concat(dfs)
         g = sns.FacetGrid(df, hue="City", height=8, aspect=1.6, legend_out=True)
         g = g.map_dataframe(sns.histplot, target, stat='probability', kde=True, 
                             binwidth=5, legend=True)
-        plt.title(f"CDF of {self.varname.upper()} bias in {info.country.values[0]}")
+        plt.title(f"CDF of {agg + ' ' if agg else ''}{self.varname.upper()}"
+                  f" bias in {info.country.values[0]}")
         plt.legend(labels, title='City (days available)', title_fontsize='x-large', 
                    fontsize='x-large')
         plt.ylabel("Probability", fontsize='x-large')
@@ -197,9 +234,35 @@ class StationTemporalSeriesPlotter:
         plt.tight_layout()
         if output_path:
             country = ''.join(info.country.values[0].split(' ')).lower()
-            filename = f"hourly_{self.varname}_bias_{country}.png"
+            freq = agg + '_' if agg else ''
+            filename = f"{freq}bias_cdf_{self.varname}_bias_{country}.png"
             output_filename = output_path / filename
             log.info(f"Plot saved to {output_filename}.")
             plt.savefig(output_filename)
         else:
             plt.show()
+
+
+def aggregate_df(df, agg, index_col: str = None) -> pd.DataFrame:
+    """ Aggregate values in dataframe aggregating them by a column specified. 
+    The column must represent a date.
+
+    Args:
+        df (pd.DataFrame): dataframe to aggregate.
+        agg (str): period to aggregate the data. Choices are: daily or monthly.
+        index_col (str): The column name to use as index for aggregation. 
+        Consider the index as default.
+    """
+    if index_col:
+        df[index_col] = pd.to_datetime(df[index_col])
+        df = df.resample(constants.str2agg[agg], on=index_col)
+    else:
+        df.index = pd.to_datetime(df.index)
+        df = df.resample(constants.str2agg[agg])
+    
+    return df.mean().dropna()
+
+
+if __name__ == '__main__':
+    st = StationTemporalSeriesPlotter('pm25', 'Spain', Path('data/processed'))
+    st.plot_data(agg='daily')

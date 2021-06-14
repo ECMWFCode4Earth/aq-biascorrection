@@ -21,13 +21,17 @@ PATH = click.Path(exists=True, path_type=Path)
 @click.option('-s', '--station', type=click.STRING, default=None)
 @click.option('-o', '--output_path', type=PATH, 
               default=None, help="Output path of the figure to be saved.")
+@click.option('-a', '--agg_by', type=click.Choice(['daily', 'monthly']), 
+              default=None, help="Indicates if any temporal aggregation is"
+              " needed.", metavar='<str>')
 def main_line(
     varname: str, 
     country: str, 
     data_path: Path, 
     metadata_path: Path,
     station: str,
-    output_path: Path = None
+    output_path: Path = None,
+    agg_by: str = None
 ):
     """ Generates a plot for the variable specified for all stations located in 
     the country chosen.
@@ -35,7 +39,7 @@ def main_line(
     Args:
 
         varname (str): The name of the variable to consider. Specify 'all' for 
-        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'. \n
         country (str): The country to consider. Specify 'all' for selecting
         all countries with processed data.
     """
@@ -52,7 +56,7 @@ def main_line(
                 data_path,
                 metadata_path, 
                 [station] if station else station
-            ).plot_data(output_path)
+            ).plot_data(output_path / var / "StationBias", agg=agg_by)
     logging.info("The script finished!")
 
 
@@ -66,13 +70,17 @@ def main_line(
 @click.option('-s', '--station', type=click.STRING, default=None)
 @click.option('-o', '--output_path', type=PATH, 
               default=None, help="Output path of the figure to be saved.")
+@click.option('-a', '--agg_by', type=click.Choice(['daily', 'monthly']), 
+              default=None, help="Indicates if any temporal aggregation is"
+              " needed.", metavar='<str>')
 def main_corrs(
     varname: str, 
     country: str, 
     data_path: Path, 
     metadata_path: Path,
     station: str,
-    output_path: Path = None
+    output_path: Path = None,
+    agg_by: str = None
 ):
     """ Generates a figure showing the correlation between all the features and 
     the forecast bias.
@@ -80,7 +88,7 @@ def main_corrs(
     Args:
 
         varname (str): The name of the variable to consider. Specify 'all' for 
-        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'. \n
         country (str): The country to consider. Specify 'all' for selecting
         all countries with processed data.
     """
@@ -99,7 +107,7 @@ def main_corrs(
                 data_path,
                 metadata_path, 
                 [station] if station else station
-            ).plot_correlations(output_path)
+            ).plot_correlations(output_path / var / "Correlations", agg=agg_by)
         logging.info("The script finished!")
 
 
@@ -128,7 +136,7 @@ def main_hourly_bias(
     Args:
 
         varname (str): The name of the variable to consider. Specify 'all' for 
-        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.\n
         country (str): The country to consider. Specify 'all' for selecting
         all countries with processed data.
     """
@@ -145,5 +153,52 @@ def main_hourly_bias(
                 country,
                 data_path,
                 metadata_path
-            ).plot_hourly_bias(show_std, output_path)
+            ).plot_hourly_bias(show_std, output_path / var / "HourlyBias")
+    logging.info("The script finished!")
+
+
+@click.command()
+@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2', 'all'], 
+                                             case_sensitive=True))
+@click.argument('country', type=click.STRING)
+@click.option('-d', '--data_path', type=PATH, required=True)
+@click.option('-m', '--metadata_path', type=PATH, metavar='<str>',
+              default=Path(f"{constants.ROOT_DIR}/data/external/stations.csv"))
+@click.option('-o', '--output_path', type=PATH, default=None, metavar='<str>', 
+              help="Output path of the figure to be saved.")
+@click.option('-a', '--agg_by', type=click.Choice(['daily', 'monthly']), 
+              default=None, help="Indicates if any temporal aggregation is"
+              " needed.", metavar='<str>')
+def main_cdf_bias(
+    varname: str, 
+    country: str, 
+    data_path: Path, 
+    metadata_path: Path,
+    output_path: Path = None,   
+    agg_by: str = None
+):
+    """ Generates a figure showing the empirical Cumulative Distribution
+    Function (CDF) of the bias observed at each station.
+
+    Args:
+
+        varname (str): The name of the variable to consider. Specify 'all' for 
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'.\n
+        country (str): The country to consider. Specify 'all' for selecting
+        all countries with processed data.
+    """
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
+    
+    countries = utils.get_countries() if country == 'all' else [country]
+    varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
+    for var in varnames:
+        for country in countries:
+            logging.info(f"Processing CDF of {varname} bias for {country}.")
+            StationTemporalSeriesPlotter(
+                var,
+                country,
+                data_path,
+                metadata_path
+            ).plot_bias_cdf(output_path / var / "StationBias", agg=agg_by)
     logging.info("The script finished!")
