@@ -347,7 +347,7 @@ Some interesting highlights to mention about this transformation section:
 <h2 id="visualizations"> :art: Visualizations </h2>
 
 
-Below, several examples of how to generate the different visualizations provided by the repository are shown.
+Below, several examples of how to generate the different visualizations provided by the repository are shown. All visualizations generated can be accesed from [http://185.226.253.38/](http://185.226.253.38/).
 
 Firstly, a visualization for comparing the observed and predicted values for any given city is presented.
 
