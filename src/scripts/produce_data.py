@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-from src.scripts.extraction_openaq import main
-from src.data.extraction.cams_forecast import CAMSProcessor
-from src.data.transformation.transformation_data import DataTransformer
-from src import constants
+import logging
+import sys
 from pathlib import Path
 
 import click
-import sys
-import logging
+
+from src import constants
+from src.data.extraction.cams_forecast import CAMSProcessor
+from src.data.transformation.transformation_data import DataTransformer
+from src.scripts.extraction_openaq import main
 
 
 @click.command()

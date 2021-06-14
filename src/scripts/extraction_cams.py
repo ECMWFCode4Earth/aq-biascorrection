@@ -1,12 +1,13 @@
-from pathlib import Path
+import logging
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Tuple
+
+import click
+
 from src import constants
 from src.data.extraction.cams_forecast import CAMSProcessor
-
-import logging
-import click
-import sys
 
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()

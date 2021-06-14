@@ -1,11 +1,11 @@
+import filecmp
+import tempfile
+
+import xarray as xr
+
 from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
 from tests.file_provider import get_remote_file
-
-import xarray as xr
-import tempfile
-import filecmp
-
 
 
 def test_download_aq():

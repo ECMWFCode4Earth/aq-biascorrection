@@ -1,10 +1,10 @@
+import logging
+import shutil
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, NoReturn
-from dataclasses import dataclass
 
 import fabric
-import shutil
-import logging
 
 
 @dataclass
