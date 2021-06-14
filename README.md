@@ -1,4 +1,4 @@
-aq-biascorrection
+AQ-biascorrection
 ==============================
 
 Bias correction of air quality CAMS model predictions by using OpenAQ observations.
@@ -225,6 +225,29 @@ variables:
 Once the data from the forecasts and observations is steady in place, they
 are merged into a unique pd.DataFrame for each location of interest in which 
 both of them are available.
+
+```
+transform_data -var pm25 -locations data/external/stations.csv -output data/processed
+```
+
+```
+transform_data -var no2 -locations data/external/stations.csv -output data/processed
+```
+
+```
+transform_data -var o3 -locations data/external/stations.csv -output data/processed
+```
+
+A .csv file is stored for each location of interest with the following name:
+`data/processed/{variable}/data_{variable}_{location_id}.csv`
+
+and the following pattern:
+```
+,index,blh_forecast,d2m_forecast,dsrp_forecast,o3_forecast,msl_forecast,no2_forecast,pm10_forecast,pm25_forecast,so2_forecast,t2m_forecast,tcc_forecast,tp_forecast,u10_forecast,uvb_forecast,v10_forecast,z_forecast,pm25_observed,local_time_hour,pm25_bias
+0,2019-08-20 09:00:00,607.5200805664062,295.787353515625,2751658.666666666,92.31901583552234,100358.6875,46.60620273757936,96.03606479780699,45.14446319682656,14.990726261869126,310.6859436035156,0.00030517578125,0.0,2.1806488037109375,329045.3333333334,1.7370452880859375,57955.546875,46.0,13,-0.8555368031734432
+1,2019-08-20 10:00:00,553.0756632486979,296.65240478515625,2710528.0,100.0631568771554,100300.45833333333,59.867852416089804,95.6658838697942,45.18626472314821,16.8662672354812,310.4251200358073,0.0003560384114583333,0.0,2.716400146484375,304298.66666666674,-0.005783081054687722,57927.919270833336,89.0,14,-43.81373527685179
+2,2019-08-20 11:00:00,498.63124593098956,297.5174560546875,2710528.0,107.81134804645772,100242.22916666667,73.13640423978323,95.29553961138413,45.228101565972075,18.74278688256282,310.16429646809894,0.00040690104166666663,0.0,3.2521514892578125,304298.6666666666,-1.748611450195313,57900.291666666664,65.0,15,-19.771898434027925
+```
 
 ## Visualizations
 
