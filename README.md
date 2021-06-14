@@ -96,12 +96,6 @@ locations / cities
 ```
 extraction_openaq -var pm25 -locations data/external/stations.csv -output data/interim
 ```
-```
-extraction_openaq -var o3 -locations data/external/stations.csv -output data/interim
-```
-```
-extraction_openaq -var no2 -locations data/external/stations.csv -output data/interim
-```
 
 The stations.csv file must follow the structure:
 ```
