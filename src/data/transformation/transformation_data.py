@@ -9,18 +9,19 @@ import pandas as pd
 
 from src.data.transformation.transformation_location import LocationTransformer
 from src.data.utils import Location
+from src.constants import ROOT_DIR
 
 
 class DataTransformer:
     def __init__(
             self,
             variable: str,
-            locations_csv_path: Path = Path(
-                './data/external/stations.csv'
-            ),
-            output_dir: Path = Path('./data/processed/'),
-            observations_dir: Path = Path('./data/interim/observations/'),
-            forecast_dir: Path = Path('./data/interim/forecasts/'),
+            locations_csv_path: Path = ROOT_DIR / 'data' / 'external' / \
+                'stations_with_altitude.csv'
+            ,
+            output_dir: Path = ROOT_DIR / 'data/processed/',
+            observations_dir: Path = ROOT_DIR / 'data/interim/observations/',
+            forecast_dir: Path = ROOT_DIR / 'data/interim/forecasts/',
             time_range: Dict[str, str] = None
     ):
         self.variable = variable
@@ -32,11 +33,7 @@ class DataTransformer:
             time_range = dict(start='2019-06-01', end='2021-03-31')
         self.time_range = time_range
 
-    def run(self):
-        paths = self.data_transform()
-        return paths
-
-    def data_transform(self) -> List[Path]:
+    def run(self) -> List[Path]:
         data_for_locations_paths = []
         locations = [Location(
                 location[1]['id'],
@@ -91,3 +88,9 @@ class DataTransformer:
         if not intermediary_path.parent.exists():
             os.makedirs(intermediary_path.parent, exist_ok=True)
         return intermediary_path
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    DataTransformer('pm25').run()
+    
