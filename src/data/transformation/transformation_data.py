@@ -16,9 +16,7 @@ class DataTransformer:
     def __init__(
             self,
             variable: str,
-            locations_csv_path: Path = ROOT_DIR / 'data' / 'external' / \
-                'stations_with_altitude.csv'
-            ,
+            locations_csv_path: Path = ROOT_DIR / 'data/external/stations.csv',
             output_dir: Path = ROOT_DIR / 'data/processed/',
             observations_dir: Path = ROOT_DIR / 'data/interim/observations/',
             forecast_dir: Path = ROOT_DIR / 'data/interim/forecasts/',
@@ -93,4 +91,5 @@ class DataTransformer:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     DataTransformer('pm25').run()
+    DataTransformer('no2').run()
     
