@@ -190,7 +190,9 @@ class CAMSProcessor:
                 location[1]['city'],
                 location[1]['country'],
                 location[1]['latitude'],
-                location[1]['longitude']
+                location[1]['longitude'],
+                location[1]['timezone'],
+                location[1]['elevation']
             )
             data_location = data.sel(latitude=loc.latitude,
                                      longitude=loc.longitude,
