@@ -326,6 +326,10 @@ Some interesting highlights to mention about this transformation section:
   to have 1h frequency data. For the same purpose, a resampling has been 
   performed to the observations (average of the available observations over an
   hour).
+  
+- For the observations with more than one stations available (maximum of five), 
+  a weighted average has been performed as a function of the distance to the 
+  location of interest.
 
 - The units are in different format for the observations (μg / m³) and 
   the forecast (kg / kg). In order to take the best approach: elevation,
