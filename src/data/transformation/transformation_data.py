@@ -12,6 +12,9 @@ from src.data.utils import Location
 from src.constants import ROOT_DIR
 
 
+logger = logging.getLogger("Data Transformer")
+
+
 class DataTransformer:
     def __init__(
             self,
@@ -51,16 +54,16 @@ class DataTransformer:
             for future in concurrent.futures.as_completed(future_to_entry):
                 result = future.result()
                 if type(result) is pathlib.PosixPath:
-                    logging.info(f'Intermediary data saved to:'
+                    logger.info(f'Intermediary data saved to:'
                                  f' {result}')
                     data_for_locations_paths.append(result)
                 else:
-                    logging.error(result)
+                    logger.error(result)
         return data_for_locations_paths
 
     def _data_transform(self, loc) -> Path or Exception:
             try:
-                logging.info(f'Extracting data for location: {str(loc)}')
+                logger.info(f'Extracting data for location: {str(loc)}')
                 inter_loc_path = self.get_output_path(loc)
                 if inter_loc_path.exists():
                     return inter_loc_path
@@ -86,3 +89,10 @@ class DataTransformer:
         if not intermediary_path.parent.exists():
             os.makedirs(intermediary_path.parent, exist_ok=True)
         return intermediary_path
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    DataTransformer('pm25').run()
+    DataTransformer('no2').run()
+    

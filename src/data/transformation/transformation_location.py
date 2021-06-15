@@ -10,6 +10,9 @@ from src.data.utils import Location
 from src.constants import ROOT_DIR
 
 
+logger = logging.getLogger('Location Transformer')
+
+
 def forecast_accumulated_variables_disaggregation(forecast_data):
     vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
     for variable in vars_to_temp_diss:
@@ -91,6 +94,7 @@ class LocationTransformer:
         forecast_data = forecast_data.rename({'pm2p5': 'pm25',
                                               'go3': 'o3'})
         # Interpolate time axis to 1h data
+        logger.info("Interpolating time data to hourly resolution.")
         hourly_times = pd.date_range(forecast_data.time.values[0],
                                   forecast_data.time.values[-1],
                                   freq='1H')
@@ -99,6 +103,7 @@ class LocationTransformer:
 
         # Transform units of concentration variables
         for variable in ['pm25', 'o3', 'no2', 'so2', 'pm10']:
+            logger.info(f"Transforming data for variable {variable}.")
             # The air density depends on temperature and pressure, but an
             # standard is known when 15K and 1 atmosphere of pressure
             surface_pressure = self.calculate_surface_pressure_by_msl(
@@ -115,6 +120,7 @@ class LocationTransformer:
 
         # Some forecast variables are aggregated daily, so a temporal
         # disaggregation is needed
+        logger.info(f"Dissaggregate forecast variables.")
         forecast_data = forecast_accumulated_variables_disaggregation(
             forecast_data
         )
