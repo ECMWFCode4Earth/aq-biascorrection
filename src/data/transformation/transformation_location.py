@@ -7,6 +7,7 @@ import pytz
 import xarray as xr
 
 from src.data.utils import Location
+from src.constants import ROOT_DIR
 
 
 def forecast_accumulated_variables_disaggregation(forecast_data):
@@ -29,8 +30,8 @@ class LocationTransformer:
             self,
             variable: str,
             location: Location,
-            observations_dir: Path = Path('./data/interim/observations/'),
-            forecast_dir: Path = Path('./data/interim/forecasts/'),
+            observations_dir: Path = ROOT_DIR / 'data/interim/observations/',
+            forecast_dir: Path = ROOT_DIR / 'data/interim/forecasts/',
             time_range: Dict[str, str] = None
     ):
         self.variable = variable
