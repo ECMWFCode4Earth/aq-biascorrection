@@ -137,6 +137,14 @@ class LocationTransformer:
         return forecast_data
 
     def opening_and_transforming_observations(self) -> xr.Dataset:
+        """
+        Open the observations given the path specified in the object 
+        declaration. It also transgforms the units of the air quality variables
+        and filter the outliers.
+
+        Returns:
+            xr.Dataset: the observations dataset
+        """
         # Open the data
         observations_data = xr.open_dataset(self.observations_path)
         # The variable 'o3' is in units of 'ppm' for the observations
@@ -165,12 +173,49 @@ class LocationTransformer:
             observations_data = observations_data.rename(
                 {data_var: f"{data_var}_observed"}
             )
+        # Filter outliers
+        observations_data = self.filter_observations_data(observations_data)
+
         return observations_data
+    
+    def filter_observations_data(
+        self, 
+        data: xr.Dataset, 
+        rate_iqr: float = 20
+    ) -> xr.Dataset:
+        """ 
+        Method for filtering extreme values for the air quality observed values.
+        By defaults it filters values over 20 times the IQR over the third 
+        quartile.
+
+        Args:
+            data (xr.Dataset): dataset of observations to filter.
+            rate_iqr (float): number of IQR to add to the third quartile.
+
+        Returns:
+            xr.Dataset: dataset containing the filtered observations.
+        """
+        q3 = float(data.quantile(0.75)[f'{self.variable}_observed'])
+        q1 = float(data.quantile(0.25)[f'{self.variable}_observed'])
+        iqr = q3 - q1
+        thres = q3 + rate_iqr * iqr
+
+        # Filter values over the specified threshold
+        logger.debug(f"Filtering observations values over {thres:.2f}.")
+        data.where(data[f'{self.variable}_observed'] < thres).dropna('time')
+        return data
 
     def weight_average_with_distance(self, ds: xr.Dataset) -> xr.Dataset:
         """
         This method calculates the value for the observational data as a weight
         average of the closes stations to the location of interest.
+
+        Args:
+            ds (xr.Dataset): dataset containing a dimension station_id, which 
+            represents different stations.
+        
+        Returns:
+            xr.Dataset: dataset of observed value at the location specified.
         """
         if len(ds.station_id.values) == 1:
             ds = ds.mean('station_id')
@@ -212,6 +257,12 @@ class LocationTransformer:
         local time hour from the UTC time. This is importante step because the
         bias in the model is known to depend on the diurnal cycle (local time
         of the place is needed)
+
+        Args:
+            df (pd.DataFrame): table with index compatible with datetime.
+
+        Returns:
+            pd.DataFrame: table with new column containing the local time hour.
         """
         timezone = pytz.timezone(
             self.location.timezone
@@ -224,13 +275,22 @@ class LocationTransformer:
         df['local_time_hour'] = local_time_hour
         return df
 
-    def calculate_surface_pressure_by_msl(self,
-                                          temp: xr.DataArray,
-                                          mslp: xr.DataArray):
+    def calculate_surface_pressure_by_msl(
+        self,
+        temp: xr.DataArray,
+        mslp: xr.DataArray
+    ) -> xr.DataArray:
         """
         Method to get the surface pressure by using the elevation of the
         location of interest, the temperature (temp) and the mean sea
-        level pressure (mslp)
+        level pressure (mslp).
+
+        Args:
+            temp (xr.DataArray): dataset of the temperature.
+            mslp (xr.DataArray): dataset of the mean sea level pressure.
+
+        Returns:
+            xr.DataArray: dataset of the surface pressure
         """
         elevation = self.location.elevation
         exponent = (9.80665 * 0.0289644) / (8.31432 * 0.0065)
@@ -238,10 +298,19 @@ class LocationTransformer:
         surface_pressure = mslp * factor
         return surface_pressure
 
-    def calculate_air_density(self,
-                              pressure: xr.DataArray,
-                              temperature: xr.DataArray):
+    def calculate_air_density(
+        self,
+        pressure: xr.DataArray,
+        temperature: xr.DataArray
+    ) -> xr.DataArray:
         """
-        Method to get the air density at a given temperature and pressure
+        Method to get the air density at a given temperature and pressure.
+
+        Args:
+            pressure (xr.DataArray): dataset of pressure.
+            temperature (xr.DataArray): dataset of temperature.
+
+        Returns:
+            xr.DataArray: dataset of air density.
         """
         return pressure / (temperature * 287.058)
