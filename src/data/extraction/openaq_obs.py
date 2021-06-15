@@ -12,6 +12,8 @@ import xarray as xr
 
 from src.data.utils import Location
 
+
+logger = logging.getLogger("OpenAQ Downloader")
 warnings.filterwarnings("ignore")
 
 
@@ -72,11 +74,11 @@ class OpenAQDownloader:
             datasets = self.get_data(stations)
             self.concat_by_time_and_save_data(datasets,
                                               output_path_data)
-            logging.info(f"Data has been correctly downloaded"
-                         f" in {str(output_path_data)}")
+            logger.info(f"Data has been correctly downloaded"
+                        f" in {str(output_path_data)}")
         else:
-            logging.info(f"Data already exists"
-                         f" in {str(output_path_data)}")
+            logger.info(f"Data already exists"
+                        f" in {str(output_path_data)}")
         return output_path_data
 
     def get_closest_stations_to_location(self) -> pd.DataFrame:
@@ -134,6 +136,7 @@ class OpenAQDownloader:
                 is_in_temporal_range.append(
                     freq_of_user_in_openaq_dates / len(user_dates)
                 )
+        logger.info("All stations have been explored.")
         stations['distance'] = distances
         stations['is_in_temporal_range'] = is_in_temporal_range
         stations = stations[stations['is_in_temporal_range'] != -1]
@@ -163,6 +166,7 @@ class OpenAQDownloader:
 
         # Throw an exception if not stations are retrieved
         if len(stations) == 0:
+            log.error("No stations is retrieved.")
             raise Exception('There are no stations next to'
                             ' this location in OpenAQ for the'
                             ' variable of interest')

@@ -13,6 +13,9 @@ from dask import distributed
 from src.data.utils import Location
 
 
+logger = logging.getLogger("CAMS Processor")
+
+
 def remove_intermediary_paths(intermediary_paths: List[Path]):
     for path in intermediary_paths:
         if path.exists():
@@ -82,11 +85,11 @@ class CAMSProcessor:
                 ).replace('-', '')
             )
             data_location = total_data.sel(station_id=loc.location_id)
-            logging.info(f'Writing netcdf for location {i} out of '
+            logger.info(f'Writing netcdf for location {i} out of '
                          f'{len(self.locations_df)} with id: '
                          f'{location[1]["id"]}')
             write_netcdf(output_path_location, data_location)
-        logging.info(f'Deleting intermediary data')
+        logger.info(f'Deleting intermediary data')
         remove_intermediary_paths(intermediary_paths)
         return 'Data has been processed successfully'
 
@@ -122,7 +125,7 @@ class CAMSProcessor:
             for future in concurrent.futures.as_completed(future_to_entry):
                 intermediary_path_for_init_time = future.result()
                 intermediary_paths.append(intermediary_path_for_init_time)
-        logging.info(f'Opening the data for all the stations and times')
+        logger.info(f'Opening the data for all the stations and times')
         total_data = xr.open_mfdataset(intermediary_paths,
                                        concat_dim='time')
         return total_data, intermediary_paths
@@ -133,7 +136,7 @@ class CAMSProcessor:
         Get the data for one initialization_time of all the different locations
         of interest given in the .csv file
         """
-        logging.info(f'Getting data for initialization time'
+        logger.info(f'Getting data for initialization time'
                      f' {initialization_time}')
         try:
             intermediary_path = self.get_intermediary_path(initialization_time)
@@ -145,7 +148,7 @@ class CAMSProcessor:
                 write_netcdf(intermediary_path, data)
             return intermediary_path
         except Exception as ex:
-            logging.error(ex)
+            logger.error(ex)
 
     def get_paths_for_forecasted_variables(
             self,
