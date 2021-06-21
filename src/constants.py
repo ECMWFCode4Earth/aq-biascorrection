@@ -7,6 +7,6 @@ str2agg = {
 }
 
 
-ROOT_DIR = Path(os.path.dirname(os.path.abspath("setup.py")))
+ROOT_DIR = Path(__file__).parent.parent
 
 log_fmt = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
