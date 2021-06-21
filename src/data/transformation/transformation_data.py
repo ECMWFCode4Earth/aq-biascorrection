@@ -66,6 +66,7 @@ class DataTransformer:
                 logger.info(f'Extracting data for location: {str(loc)}')
                 inter_loc_path = self.get_output_path(loc)
                 if inter_loc_path.exists():
+                    logger.info(f"Station at {loc.city} is already computed.")
                     return inter_loc_path
                 data_for_location = LocationTransformer(
                     self.variable,

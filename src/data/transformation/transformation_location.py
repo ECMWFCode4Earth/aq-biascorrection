@@ -151,7 +151,7 @@ class LocationTransformer:
         # which corresponds with the same as Miligrams / Kilogram,
         # we want to transform it to micrograms / m³
         if self.variable == 'o3':
-            observations_data[self.variable] *= 10**3
+            observations_data[self.variable] *= 10 ** 3
             # The air density depends on temperature and pressure, but an
             # standard is known when 15K and 1 atmosphere of pressure
             air_density = 0.816
