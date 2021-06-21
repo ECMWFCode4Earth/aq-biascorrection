@@ -1,21 +1,21 @@
 data:
   variable: pm25
-  idir: /data/processed/
+  idir: data/processed/
   odir: ~/git/esowc/aq-biascorrection/models/weights_storage/
 models:
   - name: XGBoostRegressor
-    type: xgboostregressor
+    type: xgboost_regressor
     model_parameters:
-      - nthread: -1
-        objective: ['reg:squarederror']
-        learning_rate: [0.1, 0.2, 0.5, 0.7, 1]
-        max_depth: [5, 6, 7, 8]
-        min_child_weight: [4, 5, 6, 7, 8]
-        subsample: [0.7]
-        colsample_bytree: [0.7]
-        n_estimators: [500, 700]
+      nthread: -1
+      objective: ['reg:squarederror']
+      learning_rate: [0.1, 0.2, 0.5, 0.7, 1]
+      max_depth: [5, 6, 7, 8]  
+      min_child_weight: [4, 5, 6, 7, 8]
+      subsample: [0.7]
+      colsample_bytree: [0.7]
+      n_estimators: [500, 700]
     training_method:
-      - cv: 5
-        scoring: neg_mean_absolute_error
-        n_jobs: 1
-        verbose: 10
+      cv: 5
+      scoring: neg_mean_absolute_error
+      n_jobs: 1
+      verbose: 10
