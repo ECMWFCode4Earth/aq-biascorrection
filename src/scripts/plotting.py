@@ -53,7 +53,7 @@ def main_line(
             temp_agg = agg_by.capitalize() if agg_by else "Raw"
             output_folder = output_path / var / "StationBias" / temp_agg
             os.makedirs(output_folder, exist_ok=True)
-            logging.info(f"Processing plot for {varname} bias for {country}.")
+            logging.info(f"Processing plot for {var} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
                 country,
@@ -106,7 +106,7 @@ def main_corrs(
             temp_agg = agg_by.capitalize() if agg_by else "Raw"
             output_folder = output_path / var / "Correlations" / temp_agg  
             os.makedirs(output_folder, exist_ok=True)
-            logging.info(f"Processing correlation with {varname} bias for "
+            logging.info(f"Processing correlation with {var} bias for "
                         f"{country}.")
             StationTemporalSeriesPlotter(
                 var,
@@ -154,7 +154,7 @@ def main_hourly_bias(
     varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
     for var in varnames:
         for country in countries:
-            logging.info(f"Processing hourly {varname} bias for {country}.")
+            logging.info(f"Processing hourly {var} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
                 country,
@@ -204,7 +204,7 @@ def main_cdf_bias(
             temp_agg = agg_by.capitalize() if agg_by else "Raw"
             output_folder = output_path / var / "BiasDistribution" / temp_agg
             os.makedirs(output_folder, exist_ok=True)
-            logging.info(f"Processing CDF of {varname} bias for {country}.")
+            logging.info(f"Processing CDF of {var} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
                 country,
