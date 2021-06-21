@@ -4,6 +4,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 import pytz
+import logging
 import xarray as xr
 
 from src.data.utils import Location
@@ -71,9 +72,8 @@ class LocationTransformer:
         merged_pd = self.adding_local_time_hour(merged_pd)
         # There are some stations which has 0s, which seems to be NaN, drop
         # them
-        merged_pd['pm25_observed'] = merged_pd['pm25_observed'].where(
-            merged_pd['pm25_observed'] > 0
-        )
+        varname = f'{self.variable}_observed'
+        merged_pd[varname] = merged_pd[varname].where(merged_pd[varname] > 0)
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias

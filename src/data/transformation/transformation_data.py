@@ -89,10 +89,3 @@ class DataTransformer:
         if not intermediary_path.parent.exists():
             os.makedirs(intermediary_path.parent, exist_ok=True)
         return intermediary_path
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    DataTransformer('pm25').run()
-    DataTransformer('no2').run()
-    
