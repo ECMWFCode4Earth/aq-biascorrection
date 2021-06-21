@@ -10,29 +10,11 @@ import pandas as pd
 import xarray as xr
 from dask import distributed
 
+from src.data import utils
 from src.data.utils import Location
 
 
 logger = logging.getLogger("CAMS Processor")
-
-
-def remove_intermediary_paths(intermediary_paths: List[Path]):
-    for path in intermediary_paths:
-        if path.exists():
-            os.remove(path)
-
-
-def write_netcdf(output_path: Path,
-                 ds: xr.Dataset):
-    if not output_path.parent.exists():
-        os.makedirs(output_path.parent, exist_ok=True)
-    comp = dict(zlib=True,
-                complevel=1,
-                shuffle=True)
-    encoding = {var: comp for var in ds.data_vars}
-    ds.to_netcdf(path=output_path,
-                 unlimited_dims=None,
-                 encoding=encoding)
 
 
 class CAMSProcessor:
@@ -88,9 +70,9 @@ class CAMSProcessor:
             logger.info(f'Writing netcdf for location {i} out of '
                          f'{len(self.locations_df)} with id: '
                          f'{location[1]["id"]}')
-            write_netcdf(output_path_location, data_location)
+            utils.write_netcdf(output_path_location, data_location)
         logger.info(f'Deleting intermediary data')
-        remove_intermediary_paths(intermediary_paths)
+        utils.remove_intermediary_paths(intermediary_paths)
         return 'Data has been processed successfully'
 
     def get_initialization_times(self) -> List[str]:
@@ -145,7 +127,7 @@ class CAMSProcessor:
                     initialization_time
                 )
                 data = self.get_data(paths_for_forecast)
-                write_netcdf(intermediary_path, data)
+                utils.write_netcdf(intermediary_path, data)
             return intermediary_path
         except Exception as ex:
             logger.error(ex)

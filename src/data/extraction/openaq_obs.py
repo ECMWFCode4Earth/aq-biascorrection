@@ -11,24 +11,12 @@ import pandas as pd
 import xarray as xr
 
 from src.data.utils import Location
+from src.data import utils
 
 
 logger = logging.getLogger("OpenAQ Downloader")
 warnings.filterwarnings("ignore")
 
-
-def write_netcdf(output_path: Path,
-                 ds: xr.Dataset):
-    if not output_path.parent.exists():
-        os.makedirs(output_path.parent, exist_ok=True)
-    comp = dict(zlib=True,
-                complevel=1,
-                shuffle=True)
-    encoding = {var: comp for var in ds.data_vars}
-    ds.to_netcdf(path=output_path,
-                 unlimited_dims=None,
-                 encoding=encoding)
-    
 
 class OpenAQDownloader:
     """
@@ -166,7 +154,7 @@ class OpenAQDownloader:
 
         # Throw an exception if not stations are retrieved
         if len(stations) == 0:
-            log.error("No stations is retrieved.")
+            logger.error("No stations is retrieved.")
             raise Exception('There are no stations next to'
                             ' this location in OpenAQ for the'
                             ' variable of interest')
@@ -239,7 +227,7 @@ class OpenAQDownloader:
         This function saves the data in netcdf format
         """
         data = xr.concat(datasets, dim='station_id')
-        write_netcdf(output_path_data, data)
+        utils.write_netcdf(output_path_data, data)
 
     def create_xarray_dataset_with_attrs(self,
                                          data: pd.DataFrame,

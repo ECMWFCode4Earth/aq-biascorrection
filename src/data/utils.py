@@ -1,7 +1,9 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+import xarray as xr
 import pandas as pd
 import requests
 from tenacity import retry
@@ -82,3 +84,22 @@ def get_countries(data_path: Path = ROOT_DIR / "data/external") -> List[str]:
     """Get all the countries with stations available. """
     df = pd.read_csv(data_path / "stations.csv", usecols=['country'])
     return list(df.country.values)
+
+
+# Utilities for I/O disck operations
+def write_netcdf(output_path: Path, ds: xr.Dataset):
+    if not output_path.parent.exists():
+        os.makedirs(output_path.parent, exist_ok=True)
+    comp = dict(zlib=True,
+                complevel=1,
+                shuffle=True)
+    encoding = {var: comp for var in ds.data_vars}
+    ds.to_netcdf(path=output_path,
+                 unlimited_dims=None,
+                 encoding=encoding)
+
+
+def remove_intermediary_paths(intermediary_paths: List[Path]):
+    for path in intermediary_paths:
+        if path.exists():
+            os.remove(path)
