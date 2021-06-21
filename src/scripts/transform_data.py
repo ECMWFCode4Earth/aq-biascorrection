@@ -20,7 +20,7 @@ PATH = click.Path(exists=True, path_type=Path)
 @click.option("-o", '--output_dir', type=PATH, default=ROOT_DIR / 'data/processed/',
               help="Output directory where to store the data to")
 def main(
-    variable: str, 
+    var: str, 
     locations_csv_path: Path = ROOT_DIR / 'data/external/stations.csv',
     output_dir: Path = ROOT_DIR / 'data/processed/'
 ):
@@ -31,9 +31,17 @@ def main(
     logging.basicConfig(
         stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
 
-    DataTransformer(
-        variable,
-        locations_csv_path,
-        output_dir
-    ).run()
+    if var == 'all':
+        variables = ['no2', 'o3', 'pm25']
+    else:
+        variables = [var]
+
+    for variable in variables:
+        logging.info(f"Transforming {variable} variable for all locations.")
+        DataTransformer(
+            variable,
+            locations_csv_path,
+            output_dir
+        ).run()
+
     logging.info('Process finished!')
