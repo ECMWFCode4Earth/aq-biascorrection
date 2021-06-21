@@ -1,19 +1,17 @@
 import glob
 from pathlib import Path
+from src.constants import ROOT_DIR
 
 import pandas as pd
 from datacleaner import autoclean
 from sklearn.model_selection import train_test_split
+from pydantic.dataclasses import dataclass
 
 
+@dataclass
 class DataLoader:
-    def __init__(
-            self,
-            variable: str,
-            input_dir: Path
-    ):
-        self.variable = variable
-        self.input_dir = input_dir
+    variable: str
+    input_dir: Path = ROOT_DIR / "data" / "processed"
 
     def data_load(self):
         # Get the data for all the stations available for the given variable
