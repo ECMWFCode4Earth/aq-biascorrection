@@ -181,7 +181,7 @@ class LocationTransformer:
     def filter_observations_data(
         self, 
         data: xr.Dataset, 
-        rate_iqr: float = 20
+        rate_iqr: float = 10
     ) -> xr.Dataset:
         """ 
         Method for filtering extreme values for the air quality observed values.

@@ -14,14 +14,14 @@ PATH = click.Path(exists=True, path_type=Path)
 @click.command()
 @click.argument("var", type=click.Choice(['pm25', 'no2', 'o3', 'all']))
 @click.option("-l", '--locations_csv_path', type=PATH,
-              default=ROOT_DIR / 'data/external/stations_with_altitude.csv',
+              default=ROOT_DIR / 'data/external/stations.csv',
               help="Path to the file where the locations "
                    "of interest are defined")
 @click.option("-o", '--output_dir', type=PATH, default=ROOT_DIR / 'data/processed/',
               help="Output directory where to store the data to")
 def main(
     variable: str, 
-    locations_csv_path: Path = ROOT_DIR / 'data/external/stations_with_altitude.csv',
+    locations_csv_path: Path = ROOT_DIR / 'data/external/stations.csv',
     output_dir: Path = ROOT_DIR / 'data/processed/'
 ):
     """ Transform data.
