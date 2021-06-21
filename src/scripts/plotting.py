@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import click
+from pytz import NonExistentTimeError
 
 from src import constants
 from src.data import utils
@@ -51,8 +52,11 @@ def main_line(
     for var in varnames:
         for country in countries:
             temp_agg = agg_by.capitalize() if agg_by else "Raw"
-            output_folder = output_path / var / "StationBias" / temp_agg
-            os.makedirs(output_folder, exist_ok=True)
+            if output_path is not None:
+                output_folder = output_path / var / "StationBias" / temp_agg
+                os.makedirs(output_folder, exist_ok=True)
+            else:
+                output_folder = None
             logging.info(f"Processing plot for {var} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
@@ -104,8 +108,11 @@ def main_corrs(
     for var in varnames:
         for country in countries:
             temp_agg = agg_by.capitalize() if agg_by else "Raw"
-            output_folder = output_path / var / "Correlations" / temp_agg  
-            os.makedirs(output_folder, exist_ok=True)
+            if output_path is not None:
+                output_folder = output_path / var / "Correlations" / temp_agg  
+                os.makedirs(output_folder, exist_ok=True)
+            else:
+                output_folder = None
             logging.info(f"Processing correlation with {var} bias for "
                         f"{country}.")
             StationTemporalSeriesPlotter(
@@ -155,12 +162,17 @@ def main_hourly_bias(
     for var in varnames:
         for country in countries:
             logging.info(f"Processing hourly {var} bias for {country}.")
+            if output_path is not None:
+                output_folder = output_path / var / "HourlyBias"
+                os.makedirs(output_folder, exist_ok=True)
+            else:
+                output_folder = None
             StationTemporalSeriesPlotter(
                 var,
                 country,
                 data_path,
                 metadata_path
-            ).plot_hourly_bias(show_std, output_path / var / "HourlyBias")
+            ).plot_hourly_bias(show_std, output_folder)
     logging.info("The script finished!")
 
 
@@ -202,8 +214,11 @@ def main_cdf_bias(
     for var in varnames:
         for country in countries:
             temp_agg = agg_by.capitalize() if agg_by else "Raw"
-            output_folder = output_path / var / "BiasDistribution" / temp_agg
-            os.makedirs(output_folder, exist_ok=True)
+            if output_path is not None:
+                output_folder = output_path / var / "BiasDistribution" / temp_agg
+                os.makedirs(output_folder, exist_ok=True)
+            else:
+                output_folder = None
             logging.info(f"Processing CDF of {var} bias for {country}.")
             StationTemporalSeriesPlotter(
                 var,
