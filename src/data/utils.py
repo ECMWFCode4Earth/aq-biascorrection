@@ -1,4 +1,5 @@
 import os
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -9,6 +10,9 @@ import requests
 from tenacity import retry
 
 from src.constants import ROOT_DIR
+
+
+logger = logging.getLogger("Data utilities")
 
 
 @dataclass
@@ -94,6 +98,13 @@ def write_netcdf(output_path: Path, ds: xr.Dataset):
                 complevel=1,
                 shuffle=True)
     encoding = {var: comp for var in ds.data_vars}
+    statistics = []
+    for var in list(ds.data_vars):
+        mean = float(ds[var].mean())
+        std = float(ds[var].std())
+        statistics.append(f"{var}= {mean:.4f} ({std:.4f} std)")
+    logger.info('\n'.join(statistics))
+
     ds.to_netcdf(path=output_path,
                  unlimited_dims=None,
                  encoding=encoding)
