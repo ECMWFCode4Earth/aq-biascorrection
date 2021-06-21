@@ -1,9 +1,10 @@
+data:
+  variable: pm25
+  idir: /data/processed/
+  odir: ~/git/esowc/aq-biascorrection/models/weights_storage/
 models:
-  - name: xgboostregressor
+  - name: XGBoostRegressor
     type: xgboostregressor
-    variable: pm25
-    data_dir: ~/git/esowc/aq-biascorrection/data/processed/
-    output_dir: ~/git/esowc/aq-biascorrection/models/weights_storage/
     model_parameters:
       - nthread: -1
         objective: ['reg:squarederror']
