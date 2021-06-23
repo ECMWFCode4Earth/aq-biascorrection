@@ -54,8 +54,7 @@ class DataTransformer:
             for future in concurrent.futures.as_completed(future_to_entry):
                 result = future.result()
                 if type(result) is pathlib.PosixPath:
-                    logger.info(f'Intermediary data saved to:'
-                                 f' {result}')
+                    logger.info(f'Intermediary data saved to: {result}')
                     data_for_locations_paths.append(result)
                 else:
                     logger.error(result)

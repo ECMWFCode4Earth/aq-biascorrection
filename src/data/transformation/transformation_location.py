@@ -181,7 +181,7 @@ class LocationTransformer:
     def filter_observations_data(
         self, 
         data: xr.Dataset, 
-        rate_iqr: float = 10
+        rate_iqr: float = 20
     ) -> xr.Dataset:
         """ 
         Method for filtering extreme values for the air quality observed values.
@@ -202,8 +202,8 @@ class LocationTransformer:
 
         # Filter values over the specified threshold
         logger.debug(f"Filtering observations values over {thres:.2f}.")
-        data.where(data[f'{self.variable}_observed'] < thres).dropna('time')
-        return data
+        filtered_data = data.where(data[f'{self.variable}_observed'] < thres)
+        return filtered_data.dropna('time')
 
     def weight_average_with_distance(self, ds: xr.Dataset) -> xr.Dataset:
         """
