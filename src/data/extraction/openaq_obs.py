@@ -12,6 +12,7 @@ import xarray as xr
 
 from src.data.utils import Location
 from src.data import utils
+from src.constants import ROOT_DIR
 
 
 logger = logging.getLogger("OpenAQ Downloader")
@@ -53,20 +54,16 @@ class OpenAQDownloader:
         """
         output_path_data = self.location.get_observations_path(
             self.output_dir, self.variable,
-            '_'.join(
-                self.time_range.values()
-            ).replace('-', '')
+            '_'.join(self.time_range.values()).replace('-', '')
         )
         if not output_path_data.exists():
             stations = self.get_closest_stations_to_location()
             datasets = self.get_data(stations)
-            self.concat_by_time_and_save_data(datasets,
-                                              output_path_data)
+            self.concat_filter_and_save_data(datasets, output_path_data)
             logger.info(f"Data has been correctly downloaded"
                         f" in {str(output_path_data)}")
         else:
-            logger.info(f"Data already exists"
-                        f" in {str(output_path_data)}")
+            logger.info(f"Data already exists in {str(output_path_data)}")
         return output_path_data
 
     def get_closest_stations_to_location(self) -> pd.DataFrame:
@@ -167,9 +164,9 @@ class OpenAQDownloader:
     def get_data(self, stations: pd.DataFrame) -> List[xr.Dataset]:
         stations_downloaded = 0
         xr_datasets = []
-        for station in stations.iterrows():
+        for i, station in stations.iterrows():
             try:
-                xr_data = self._get_data(station[1])
+                xr_data = self._get_data(station)
                 xr_datasets.append(xr_data)
                 stations_downloaded += 1
                 if stations_downloaded == 5:
@@ -203,10 +200,7 @@ class OpenAQDownloader:
                             ' this location of interest')
 
         data = data.sort_index()
-        xr_data = self.create_xarray_dataset_with_attrs(
-            data,
-            station
-        )
+        xr_data = self.create_xarray_dataset_with_attrs(data, station)
         return xr_data
 
     def check_variable_in_station(self, station: pd.Series):
@@ -218,7 +212,7 @@ class OpenAQDownloader:
             raise Exception('The variable intended to extraction is not'
                             ' available for the nearest / exact location')
 
-    def concat_by_time_and_save_data(
+    def concat_filter_and_save_data(
             self,
             datasets: List[xr.Dataset],
             output_path_data: Path
@@ -227,6 +221,21 @@ class OpenAQDownloader:
         This function saves the data in netcdf format
         """
         data = xr.concat(datasets, dim='station_id')
+        
+        if ('o3' in data.data_vars) and (data.o3.attrs['units'] == 'ppm'):
+            # https://www.teesing.com/en/page/library/tools/ppm-mg3-converter
+            molecular_weight_o3 = 48.00  # g/mol
+            data['o3'] *= 0.0409 * molecular_weight_o3  # this is mg/m3
+            data['o3'] *= 1e3  # this is ug/m3
+            data.o3.attrs['units'] == 'µg/m³'
+            
+        if ('no2' in data.data_vars) and (data.no2.attrs['units'] == 'ppm'):
+            # https://www.teesing.com/en/page/library/tools/ppm-mg3-converter
+            molecular_weight_no2 = 46.01  # g/mol
+            data['n02'] *= 0.0409 * molecular_weight_no2  # this is mg/m3
+            data['n02'] *= 1e3  # this is ug/m3
+            data.n02.attrs['units'] == 'µg/m³'
+        
         utils.write_netcdf(output_path_data, data)
 
     def create_xarray_dataset_with_attrs(self,
@@ -280,9 +289,16 @@ class OpenAQDownloader:
             'o3': 'Ozone',
             'pm25': 'Particulate matter (PM2.5)'
         }
-        xr_ds[self.variable].attrs['units'] = station['parameters'][0]['unit']
-        xr_ds[self.variable].attrs['standard_name'] = self.variable
-        xr_ds[self.variable].attrs['long_name'] = long_name[self.variable]
+        
+        units = data.unit.unique()
+        if len(units) == 1:
+            xr_ds[self.variable].attrs['units'] = units[0]
+            xr_ds[self.variable].attrs['standard_name'] = self.variable
+            xr_ds[self.variable].attrs['long_name'] = long_name[self.variable]
+        else:
+            logger.error(f"Units of {self.variable} observations downloaded "
+                         f"from OpenAQ are not homgeneous")
+            raise ValueError(f"Observations extracted are not homgeneous.")
 
         xr_ds.attrs['featureType'] = "timeSeries"
         xr_ds.attrs['Conventions'] = "CF-1.4"
@@ -311,3 +327,11 @@ def get_distance_between_two_points_on_earth(
     distance = R * c
     return distance
 
+
+if __name__ == '__main__':
+    OpenAQDownloader(
+        Location(
+            'NP001', 'Kathmandu', 'Nepal', 27.70169, 85.3206, 
+            'Asia/Kathmandu', 1297),
+            ROOT_DIR / "data/interim/observations",
+        "o3").run()
