@@ -326,12 +326,3 @@ def get_distance_between_two_points_on_earth(
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     return distance
-
-
-if __name__ == '__main__':
-    OpenAQDownloader(
-        Location(
-            'NP001', 'Kathmandu', 'Nepal', 27.70169, 85.3206, 
-            'Asia/Kathmandu', 1297),
-            ROOT_DIR / "data/interim/observations",
-        "o3").run()
