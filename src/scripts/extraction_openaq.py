@@ -19,7 +19,7 @@ PATH = click.Path(exists=True, path_type=Path)
               help="Path to the file where the locations "
                    "of interest are defined in .csv format")
 @click.option("-o", '--output_dir', type=PATH,
-              default=constants.ROOT_DIR / "data/interim",
+              default=constants.ROOT_DIR / "data/interim/observations",
               help="Output directory where to store the data to")
 def main(
     var: str,
@@ -60,20 +60,15 @@ def main(
                 location[1]['timezone'],
                 location[1]['elevation']
             )
-            logger.info(f"Starting process for location of"
-                        f" interest {str(loc)}")
-            downloader = OpenAQDownloader(
-                loc,
-                output_dir,
-                variable,
-            )
+            logger.info(f"Starting process for location of interest {str(loc)}")
+            downloader = OpenAQDownloader(loc, output_dir, variable)
             try:
                 output_path = downloader.run()
                 number_of_successful_locations += 1
             except Exception as ex:
                 logger.error(str(ex))
                 continue
-        logger.info(f'The number of locations which has been correctly downloaded'
-                    f' is {number_of_successful_locations} out of'
+        logger.info(f'The number of locations which has been correctly '
+                    f'downloaded is {number_of_successful_locations} out of'
                     f' {len(locations_df)} for variable {variable}')
         logger.info('Process finished!')

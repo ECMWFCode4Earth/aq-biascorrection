@@ -129,8 +129,7 @@ class OpenAQDownloader:
             'combination_dist_and_is_in_temporal_range'
         ] = stations['distance'] / stations['is_in_temporal_range']
         stations = stations.sort_values(
-            'combination_dist_and_is_in_temporal_range',
-            ascending=True
+            'combination_dist_and_is_in_temporal_range', ascending=True
         )
         return stations
 
@@ -152,9 +151,8 @@ class OpenAQDownloader:
         # Throw an exception if not stations are retrieved
         if len(stations) == 0:
             logger.error("No stations is retrieved.")
-            raise Exception('There are no stations next to'
-                            ' this location in OpenAQ for the'
-                            ' variable of interest')
+            raise Exception('There are no stations next to this location in '
+                            'OpenAQ for the variable of interest')
 
         # Preference of 'reference grade' sensor types over 'low-cost'
         if len(stations[stations['sensorType'] == 'reference grade']) >= 1:
@@ -235,6 +233,9 @@ class OpenAQDownloader:
             data['n02'] *= 0.0409 * molecular_weight_no2  # this is mg/m3
             data['n02'] *= 1e3  # this is ug/m3
             data.n02.attrs['units'] == 'µg/m³'
+
+        if ('pm25' in data.data_vars) and (data.pm25.attrs['units'] == 'ppm'):
+            raise ValueError("The observed pm25 are in ppm.")
         
         utils.write_netcdf(output_path_data, data)
 
