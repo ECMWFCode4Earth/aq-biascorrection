@@ -4,6 +4,7 @@ import tempfile
 import xarray as xr
 
 from src.data.extraction.openaq_obs import OpenAQDownloader
+from src.scripts.extraction_openaq import main
 from src.data.utils import Location
 from tests.file_provider import get_remote_file
 
@@ -36,3 +37,8 @@ def test_download_aq():
     assert bool((ds1.x == ds2.x).values)
     assert bool((ds1.y == ds2.y).values)
     assert bool((ds1 == ds2).all()[var].values)
+
+def test_cli_download_openaq():
+    runner = CliRunner()
+    result = runner.invoke(main, ['o3'])
+    assert result.exit_code == 0
