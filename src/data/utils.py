@@ -1,4 +1,5 @@
 import os
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -9,6 +10,9 @@ import requests
 from tenacity import retry
 
 from src.constants import ROOT_DIR
+
+
+logger = logging.getLogger("Data utilities")
 
 
 @dataclass
@@ -90,13 +94,16 @@ def get_countries(data_path: Path = ROOT_DIR / "data/external") -> List[str]:
 def write_netcdf(output_path: Path, ds: xr.Dataset):
     if not output_path.parent.exists():
         os.makedirs(output_path.parent, exist_ok=True)
-    comp = dict(zlib=True,
-                complevel=1,
-                shuffle=True)
+    comp = dict(zlib=True, complevel=1, shuffle=True)
     encoding = {var: comp for var in ds.data_vars}
-    ds.to_netcdf(path=output_path,
-                 unlimited_dims=None,
-                 encoding=encoding)
+    statistics = []
+    for var in list(ds.data_vars):
+        mean = float(ds[var].mean())
+        std = float(ds[var].std())
+        statistics.append(f"{var}= {mean:.4f} ({std:.4f} std)")
+    logger.info('\n'.join(statistics))
+
+    ds.to_netcdf(path=output_path, unlimited_dims=None, encoding=encoding)
 
 
 def remove_intermediary_paths(intermediary_paths: List[Path]):

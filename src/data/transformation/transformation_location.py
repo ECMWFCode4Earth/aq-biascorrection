@@ -46,15 +46,11 @@ class LocationTransformer:
         self.observations_path = location.get_observations_path(
             observations_dir,
             self.variable,
-            '_'.join(
-                self.time_range.values()
-            ).replace('-', '')
+            '_'.join(self.time_range.values()).replace('-', '')
         )
         self.forecast_path = location.get_forecast_path(
             forecast_dir,
-            '_'.join(
-                self.time_range.values()
-            ).replace('-', '')
+            '_'.join(self.time_range.values()).replace('-', '')
         )
 
     def run(self) -> pd.DataFrame:
@@ -96,10 +92,9 @@ class LocationTransformer:
         # Interpolate time axis to 1h data
         logger.info("Interpolating time data to hourly resolution.")
         hourly_times = pd.date_range(forecast_data.time.values[0],
-                                  forecast_data.time.values[-1],
-                                  freq='1H')
-        forecast_data = forecast_data.interp(time=hourly_times,
-                                             method='linear')
+                                     forecast_data.time.values[-1],
+                                     freq='1H')
+        forecast_data = forecast_data.interp(time=hourly_times, method='linear')
 
         # Transform units of concentration variables
         for variable in ['pm25', 'o3', 'no2', 'so2', 'pm10']:
@@ -147,16 +142,7 @@ class LocationTransformer:
         """
         # Open the data
         observations_data = xr.open_dataset(self.observations_path)
-        # The variable 'o3' is in units of 'ppm' for the observations
-        # which corresponds with the same as Miligrams / Kilogram,
-        # we want to transform it to micrograms / m³
-        if self.variable == 'o3':
-            observations_data[self.variable] *= 10**3
-            # The air density depends on temperature and pressure, but an
-            # standard is known when 15K and 1 atmosphere of pressure
-            air_density = 0.816
-            # Now, we use the air density to transform to Micrograms / m³
-            observations_data[self.variable] /= air_density
+
         # Resample the values in order to have the same time frequency as
         # CAMS model forecast
         observations_data = observations_data.resample(
@@ -202,8 +188,8 @@ class LocationTransformer:
 
         # Filter values over the specified threshold
         logger.debug(f"Filtering observations values over {thres:.2f}.")
-        data.where(data[f'{self.variable}_observed'] < thres).dropna('time')
-        return data
+        filtered_data = data.where(data[f'{self.variable}_observed'] < thres)
+        return filtered_data.dropna('time')
 
     def weight_average_with_distance(self, ds: xr.Dataset) -> xr.Dataset:
         """
