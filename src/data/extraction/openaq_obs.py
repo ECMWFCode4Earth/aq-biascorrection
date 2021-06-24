@@ -232,10 +232,10 @@ class OpenAQDownloader:
         if ('no2' in data.data_vars) and (data.no2.attrs['units'] == 'ppm'):
             # https://www.teesing.com/en/page/library/tools/ppm-mg3-converter
             molecular_weight_no2 = 46.01  # g/mol
-            data['n02'] *= 0.0409 * molecular_weight_no2  # this is mg/m3
-            data['n02'] *= 1e3  # this is ug/m3
+            data['no2'] *= 0.0409 * molecular_weight_no2  # this is mg/m3
+            data['no2'] *= 1e3  # this is ug/m3
             data.n02.attrs['units'] = 'microgram / m^3'
-            logger.info(f"O3 has been converted from ppm to micrograms / m^3")
+            logger.info(f"NO2 has been converted from ppm to micrograms / m^3")
 
         if ('pm25' in data.data_vars) and (data.pm25.attrs['units'] == 'ppm'):
             raise ValueError("The observed pm25 are in ppm.")
