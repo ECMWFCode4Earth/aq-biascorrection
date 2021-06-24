@@ -71,4 +71,5 @@ def main(
         logger.info(f'The number of locations which has been correctly '
                     f'downloaded is {number_of_successful_locations} out of'
                     f' {len(locations_df)} for variable {variable}')
-        logger.info('Process finished!')
+
+    logger.info('Process finished!')
