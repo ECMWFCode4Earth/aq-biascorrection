@@ -174,7 +174,7 @@ class OpenAQDownloader:
                 continue
 
         if len(xr_datasets) == 0:
-            raise Exception('Not data was retrieved')
+            raise Exception('No data was retrieved')
 
         return xr_datasets
 
