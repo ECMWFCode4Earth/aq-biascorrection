@@ -12,11 +12,12 @@ import xarray as xr
 
 from src.data.utils import Location
 from src.data import utils
-from src.constants import ROOT_DIR
+from src.constants import ROOT_DIR, units2str, var2longstr
 
 
 logger = logging.getLogger("OpenAQ Downloader")
 warnings.filterwarnings("ignore")
+
 
 
 class OpenAQDownloader:
@@ -225,14 +226,16 @@ class OpenAQDownloader:
             molecular_weight_o3 = 48.00  # g/mol
             data['o3'] *= 0.0409 * molecular_weight_o3  # this is mg/m3
             data['o3'] *= 1e3  # this is ug/m3
-            data.o3.attrs['units'] == 'µg/m³'
+            data.o3.attrs['units'] = 'microgram / m^3'
+            logger.info(f"O3 has been converted from ppm to micrograms / m^3")
             
         if ('no2' in data.data_vars) and (data.no2.attrs['units'] == 'ppm'):
             # https://www.teesing.com/en/page/library/tools/ppm-mg3-converter
             molecular_weight_no2 = 46.01  # g/mol
             data['n02'] *= 0.0409 * molecular_weight_no2  # this is mg/m3
             data['n02'] *= 1e3  # this is ug/m3
-            data.n02.attrs['units'] == 'µg/m³'
+            data.n02.attrs['units'] = 'microgram / m^3'
+            logger.info(f"O3 has been converted from ppm to micrograms / m^3")
 
         if ('pm25' in data.data_vars) and (data.pm25.attrs['units'] == 'ppm'):
             raise ValueError("The observed pm25 are in ppm.")
@@ -284,18 +287,13 @@ class OpenAQDownloader:
 
         xr_ds.station_id.attrs['long_name'] = 'station name'
         xr_ds.station_id.attrs['cf_role'] = 'timeseries_id'
-
-        long_name = {
-            'no2': 'Nitrogen dioxide',
-            'o3': 'Ozone',
-            'pm25': 'Particulate matter (PM2.5)'
-        }
         
         units = data.unit.unique()
         if len(units) == 1:
-            xr_ds[self.variable].attrs['units'] = units[0]
+            xr_ds[self.variable].attrs['units'] = units2str[units[0]]
             xr_ds[self.variable].attrs['standard_name'] = self.variable
-            xr_ds[self.variable].attrs['long_name'] = long_name[self.variable]
+            xr_ds[self.variable].attrs['long_name'] = var2longstr[self.variable]
+            logger.info(f"Dataset of {self.variable} is in {units[0]}.")
         else:
             logger.error(f"Units of {self.variable} observations downloaded "
                          f"from OpenAQ are not homgeneous")
