@@ -171,6 +171,7 @@ class OpenAQDownloader:
                 if stations_downloaded == 5:
                     break
             except Exception as ex:
+                logger.error(ex)
                 continue
 
         if len(xr_datasets) == 0:
@@ -234,7 +235,7 @@ class OpenAQDownloader:
             molecular_weight_no2 = 46.01  # g/mol
             data['no2'] *= 0.0409 * molecular_weight_no2  # this is mg/m3
             data['no2'] *= 1e3  # this is ug/m3
-            data.n02.attrs['units'] = 'microgram / m^3'
+            data.no2.attrs['units'] = 'microgram / m^3'
             logger.info(f"NO2 has been converted from ppm to micrograms / m^3")
 
         if ('pm25' in data.data_vars) and (data.pm25.attrs['units'] == 'ppm'):
@@ -290,6 +291,7 @@ class OpenAQDownloader:
         
         units = data.unit.unique()
         if len(units) == 1:
+            if isinstance(units[0], bytes): units[0] = units[0].decode("utf-8")
             xr_ds[self.variable].attrs['units'] = units2str[units[0]]
             xr_ds[self.variable].attrs['standard_name'] = self.variable
             xr_ds[self.variable].attrs['long_name'] = var2longstr[self.variable]
@@ -325,3 +327,11 @@ def get_distance_between_two_points_on_earth(
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     return distance
+
+if __name__ == '__main__':
+    OpenAQDownloader(
+        Location('AT001','Vienna','Austria',48.20849,16.37208,'Europe/Vienna',189),
+        "data/interim/observations",
+        "o3"
+    ).run()
+    
