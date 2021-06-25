@@ -327,11 +327,3 @@ def get_distance_between_two_points_on_earth(
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     return distance
-
-if __name__ == '__main__':
-    OpenAQDownloader(
-        Location('AT001','Vienna','Austria',48.20849,16.37208,'Europe/Vienna',189),
-        "data/interim/observations",
-        "o3"
-    ).run()
-    
