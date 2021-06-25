@@ -68,8 +68,8 @@ class CAMSProcessor:
             )
             data_location = total_data.sel(station_id=loc.location_id)
             logger.info(f'Writing netcdf for location {i} out of '
-                         f'{len(self.locations_df)} with id: '
-                         f'{location[1]["id"]}')
+                        f'{len(self.locations_df)} with id: '
+                        f'{location[1]["id"]}')
             utils.write_netcdf(output_path_location, data_location)
         logger.info(f'Deleting intermediary data')
         utils.remove_intermediary_paths(intermediary_paths)
