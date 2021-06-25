@@ -28,17 +28,13 @@ class DataLoader:
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=1
         )
-        return {'train': (X_train, y_train),
-                'test': (X_test, y_test)}
+        return {'train': (X_train, y_train), 'test': (X_test, y_test)}
 
     def get_data_for_all_stations_available(self):
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
         data = None
         for file in files:
             dataset = pd.read_csv(file, index_col=0)
-            if data is None:
-                data = dataset
-            else:
-                data = data.append(dataset)
+            data = data.append(dataset) if data else dataset
         return data
 
