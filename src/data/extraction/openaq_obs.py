@@ -151,7 +151,7 @@ class OpenAQDownloader:
 
         # Throw an exception if not stations are retrieved
         if len(stations) == 0:
-            logger.error("No stations is retrieved.")
+            logger.error("No stations are retrieved.")
             raise Exception('There are no stations next to this location in '
                             'OpenAQ for the variable of interest')
 
