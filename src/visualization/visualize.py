@@ -118,10 +118,12 @@ class StationTemporalSeriesPlotter:
             info = self.sts_df[self.sts_df.id == st_code]
             log.debug(f"Plotting data for {info.city.values[0]}")
             df = self.data[st_code].set_index('index')
-            df.index.name = 'Date'
             df.index = pd.to_datetime(df.index)
             df_grouped = df[f'{self.varname}_bias'].groupby(df.index.month)
             df = df_grouped.agg(['mean', 'std', 'count'])
+            months = pd.DataFrame(index=list(range(1, 13)))
+            df = months.join(df)
+            df.index.name = 'Date'
 
             plt.figure(figsize=(10, 7))
             ax = sns.lineplot(data=df.set_index(df.index-1), y='mean', x='Date')
@@ -136,16 +138,18 @@ class StationTemporalSeriesPlotter:
             ax2 = ax.twinx()
             ax2.set_ylim((0, df['count'].max() * 4))
 
-            df.plot.bar(y='count', align='center', ax=ax2, color='red', alpha=0.2)
+            df.fillna(0).plot.bar(y='count', align='center', ax=ax2, 
+                                  color='red', alpha=0.2)
             ax2.set_ylabel("Number observations", color='r', fontsize='x-large')
             ax.legend(['Mean', r'$\pm$ Std'], title=self.varname.upper(), 
                        fontsize='x-large', title_fontsize='x-large')
             ax2.legend().set_visible(False)
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
-            ax2.set_yticks(df['count'].values)
+            ax2.set_yticks(df['count'].dropna().values)
             min_and_max = df['count'].agg(['max', 'min']).values
-            max_count = df['count'].where(df['count'].isin(min_and_max), "")
+            max_count = df['count'].dropna().where(
+                df['count'].isin(min_and_max), "")
             ax2.set_yticklabels(max_count.values)
             ax2.tick_params(axis='y', labelcolor='r')
             ax.set_xlabel("Month", fontsize='x-large')
@@ -184,28 +188,27 @@ class StationTemporalSeriesPlotter:
                 + np.sin(2 * pi * df['local_time_hour'] / 24)
 
             # Deseasonalize the time series
-            vars_to_not_deseasonalize = ['local_time_hour']
+            df = df.drop('local_time_hour', axis=1)
+            vars_to_not_deseasonalize = [f'{self.varname} Error\nDeseasonalized']
             df.index = pd.to_datetime(df.index)
-            df = df.set_index(df.index.month, append=True)
-            monthly_mean = df.groupby(df.index.month).mean()
+            months = df.index.month
+            df = df.set_index(months, append=True)
+            df[f'{self.varname} Error Raw'] = df[f'{self.varname}_bias']
+            df = df.rename({f'{self.varname}_bias': 
+                            f'{self.varname} Error\nDeseasonalized'}, axis=1)
+            monthly_mean = df.groupby(months).mean()
             monthly_mean[vars_to_not_deseasonalize] = 0
             df = df.subtract(monthly_mean, level=1)
 
             if agg:
-                df = df.drop('local_time_hour', axis=1)
-                df = aggregate_df(df, agg)
+                df = aggregate_df(df.droplevel(1), agg)
 
-            df = df.rename({f'{self.varname}_bias' : f'{self.varname} Bias',
-                            'local_time_hour': 'Local time'}, axis=1)
-            df.columns = [col.split('_')[0].upper() for col in df.columns]
-            plt.figure(figsize=(26, 14))
+            df.columns = [col.split('_')[0] for col in df.columns]
+            plt.figure(figsize=(18, 12))
             mask = np.triu(np.ones(df.shape[1], dtype=np.bool))
-            ax = sns.heatmap(df.corr(), vmin=-1, vmax=1, cmap='RdBu', mask=mask, 
-                             annot=True)
+            ax = sns.heatmap(df.corr().iloc[:, :-2], vmin=-1, vmax=1,
+                             cmap='RdBu', mask=mask[:, :-2], annot=True)
             plt.setp(ax.get_yticklabels()[0], visible=False)  
-            plt.setp(ax.get_xticklabels()[-1], visible=False)
-            xticks = ax.xaxis.get_major_ticks()
-            xticks[-1].set_visible(False)
             yticks = ax.yaxis.get_major_ticks()
             yticks[0].set_visible(False)
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
@@ -217,6 +220,7 @@ class StationTemporalSeriesPlotter:
                 plt.text(x_pos, y_pos, annot, fontsize='large', ha='center')
             plt.xticks(rotation=65, fontsize='x-large')
             plt.yticks(rotation=0, fontsize='x-large')
+            plt.tight_layout()
 
             if output_path:
                 city = ''.join(info.city.values[0].split(' ')).lower()
