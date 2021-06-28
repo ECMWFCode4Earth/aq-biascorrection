@@ -21,7 +21,7 @@ class StationTemporalSeriesPlotter:
             self,
             varname: str,
             country: str,
-            data_path: Path,
+            data_path: Path = Path("data/processed"),
             metadata_path: Path = Path("data/external/stations.csv"), 
             stations: List[str] = None
     ):
@@ -75,16 +75,18 @@ class StationTemporalSeriesPlotter:
                 df = aggregate_df(df, agg)
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
-            df.index = pd.to_datetime(df.index).strftime('%Y-%m-%d %HH')
+            df.index = pd.to_datetime(df.index).strftime('%d %b, %Y')
 
             df[[f'{self.varname}_forecast',
-                f'{self.varname}_observed']].plot(figsize=(23, 12))
+                f'{self.varname}_observed']].plot(figsize=(12, 8))
             plt.legend(["Forecast", "Observed"], title=self.varname.upper(), 
                        fontsize='x-large', title_fontsize='x-large')
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
             plt.xticks(fontsize='x-large')
             plt.yticks(fontsize='x-large')
+            plt.ylabel(f"{self.varname.upper()} " + r'($\mu g / m^3$)', 
+                       fontsize='x-large')
             plt.xlabel("Date", fontsize='x-large')
             if agg: 
                 x_pos = float(np.mean(plt.gca().get_xlim()))
@@ -99,6 +101,60 @@ class StationTemporalSeriesPlotter:
                 country = ''.join(info.country.values[0].split(' ')).lower()
                 freq = f'{agg}_' if agg else ''
                 filename = f"{freq}{self.varname}_bias_{city}_{country}.png"
+                output_filename = output_path / filename
+                log.info(f"Plot saved to {output_filename}.")
+                plt.savefig(output_filename)
+        if not output_path:
+            plt.show()
+
+    def plot_monthly_bias(self, output_path: Path = None) -> NoReturn:
+        """ Plot the bias for the variable requested in the stations whose position 
+        is specified.
+
+        Args:
+            output_path (Path): the output folder at which save the images.
+        """
+        for st_code in self.codes:
+            info = self.sts_df[self.sts_df.id == st_code]
+            log.debug(f"Plotting data for {info.city.values[0]}")
+            df = self.data[st_code].set_index('index')
+            df.index.name = 'Date'
+            df.index = pd.to_datetime(df.index)
+            df_grouped = df[f'{self.varname}_bias'].groupby(df.index.month)
+            df = df_grouped.agg(['mean', 'std', 'count'])
+
+            plt.figure(figsize=(10, 7))
+            ax = sns.lineplot(data=df.set_index(df.index-1), y='mean', x='Date')
+            ax.fill_between(df.index - 1, df['mean'] - df['std'],
+                            df['mean'] + df['std'], alpha=0.2)
+            ax.axhline(0, c='k', ls='--', lw=2)
+            ax.tick_params(axis='y', labelcolor='b')
+            ax.set_ylabel(f'{self.varname.upper()} bias ' + r'($\mu g / m^3$)', 
+                          fontsize='x-large', color='b')
+            plt.yticks(fontsize='x-large')
+            plt.xticks(fontsize='x-large')
+            ax2 = ax.twinx()
+            ax2.set_ylim((0, df['count'].max() * 4))
+
+            df.plot.bar(y='count', align='center', ax=ax2, color='red', alpha=0.2)
+            ax2.set_ylabel("Number observations", color='r', fontsize='x-large')
+            ax.legend(['Mean', r'$\pm$ Std'], title=self.varname.upper(), 
+                       fontsize='x-large', title_fontsize='x-large')
+            ax2.legend().set_visible(False)
+            plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
+                      fontsize='xx-large')
+            ax2.set_yticks(df['count'].values)
+            min_and_max = df['count'].agg(['max', 'min']).values
+            max_count = df['count'].where(df['count'].isin(min_and_max), "")
+            ax2.set_yticklabels(max_count.values)
+            ax2.tick_params(axis='y', labelcolor='r')
+            ax.set_xlabel("Month", fontsize='x-large')
+            plt.tight_layout()
+
+            if output_path:
+                city = ''.join(info.city.values[0].split(' ')).lower()
+                country = ''.join(info.country.values[0].split(' ')).lower()
+                filename = f"{self.varname}_bias_{city}_{country}.png"
                 output_filename = output_path / filename
                 log.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
@@ -126,6 +182,14 @@ class StationTemporalSeriesPlotter:
             df = df.drop(f'{self.varname}_observed', axis=1)
             df['local_time_hour'] = np.cos(2 * pi * df['local_time_hour'] / 24)\
                 + np.sin(2 * pi * df['local_time_hour'] / 24)
+
+            # Deseasonalize the time series
+            vars_to_not_deseasonalize = ['local_time_hour']
+            df.index = pd.to_datetime(df.index)
+            df = df.set_index(df.index.month, append=True)
+            monthly_mean = df.groupby(df.index.month).mean()
+            monthly_mean[vars_to_not_deseasonalize] = 0
+            df = df.subtract(monthly_mean, level=1)
 
             if agg:
                 df = df.drop('local_time_hour', axis=1)
@@ -198,12 +262,15 @@ class StationTemporalSeriesPlotter:
         m = pd.DataFrame(means, index=agg_h.index)
         s = pd.DataFrame(stds, index=agg_h.index)
         if show_std:
-            m.plot.bar(yerr=s, capsize=4, rot=0, figsize=(20, 14))
+            m.plot.bar(yerr=s, capsize=4, rot=0, figsize=(10, 7))
         else:
-            m.plot.bar(figsize=(26, 14))
+            m.plot.bar(figsize=(10, 7))
         plt.axhline(0, ls='--', lw=2, c='k')
         plt.xlabel("Local Time", fontsize='x-large')
-        plt.title(f"{self.varname.upper()} bias in {info.country.values[0]}")
+        plt.ylabel(f"{self.varname.upper()} bias " + r'($\mu g / m^3$)',
+                   fontsize='x-large')
+        plt.title(f"CAMS biases in {info.country.values[0]}",
+                  fontsize='xx-large')
         plt.tight_layout()
         plt.legend(title='City', fontsize='x-large', title_fontsize='x-large')
         if output_path:
@@ -256,8 +323,8 @@ class StationTemporalSeriesPlotter:
         plt.legend(labels, title='City (days available)', 
                    title_fontsize='x-large', fontsize='x-large')
         plt.ylabel("Probability", fontsize='x-large')
-        plt.xlabel(freq + target.replace("_", " ").capitalize(), 
-                   fontsize='x-large')
+        plt.xlabel(freq.capitalize() + self.varname.upper() \
+             + r" bias ($\mu g / m^3$)", fontsize='x-large')
         plt.tight_layout()
         if output_path:
             country = ''.join(info.country.values[0].split(' ')).lower()
