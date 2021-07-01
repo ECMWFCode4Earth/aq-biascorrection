@@ -1,0 +1,43 @@
+site_name: Bias correction of CAMS model forecasts for air quality variables by using in-situ observations
+site_url: https://esowc.github.io/aq-biascorrection
+repo_url: https://github.com/esowc/aq-biascorrection
+
+theme:
+  name: material
+  palette:
+    primary: grey
+  font:
+    text: Raleway
+    code: Roboto Mono
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+
+copyright: Copyright &copy; 2021 Mario Santa Cruz López & Antonio Pérez Velasco
+
+extra:
+  social:
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:santacruzm@predictia.es
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/mariosanta98
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/mariosanta-cruz/
+    - icon: fontawesome/brands/github
+      link: https://github.com/JPXKQX
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:pereza@predictia.es
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/antonioperez_97
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/antonio-perez-velasco/
+    - icon: fontawesome/brands/github
+      link: https://github.com/aperezvelasco
+  alternate:
+  # Switch to Spanish
+  - name: Spanish
+    link: <your-site>/es/
+    lang: es
+
+plugins:
+  - git-revision-date
