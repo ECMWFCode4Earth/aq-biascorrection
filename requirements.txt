@@ -3,7 +3,8 @@
 
 # external requirements
 click~=8.0.0
-Sphinx
+mkdocs~=1.2.1
+mkdocs-git-revision-date-plugin~=0.3.1
 coverage
 awscli
 flake8~=3.9.2
