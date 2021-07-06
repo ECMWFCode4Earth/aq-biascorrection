@@ -1,5 +1,6 @@
 import glob
 from pathlib import Path
+from src.data.utils import Location, get_location_by_id
 from src.constants import ROOT_DIR
 
 import pandas as pd
@@ -48,13 +49,20 @@ class DatasetLoader:
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
         train_data = None
         test_data = None
+        
+        # Iterate over all stations
         for station_file in files:
-            train_ds, test_ds = self._generate_station_dataset(station_file)
+            loc = get_location_by_id(station_file.split('/')[-1].split('_')[2])
+            train_ds, test_ds = self._generate_station_dataset(station_file, loc)
             train_data = train_ds if train_data is None else train_data.append(train_ds)
             test_data = test_ds if test_data is None else test_data.append(test_ds)
         return train_data, test_data
 
-    def _generate_station_dataset(self, filename: str) -> pd.DataFrame:
+    def _generate_station_dataset(
+        self, 
+        filename: str, 
+        loc: Location = None
+    ) -> pd.DataFrame:
         dataset = pd.read_csv(filename, index_col=1, parse_dates=True)
         aux = get_features_hour_and_month(dataset[['local_time_hour']])
         dataset = dataset.drop(['Unnamed: 0', 'local_time_hour'], 
@@ -63,6 +71,8 @@ class DatasetLoader:
         # Skip if there is no the minimum number of observations required.
         if len(dataset.index) < self.min_st_obs:
             return pd.DataFrame(), pd.DataFrame()
+        
+        # TODO: Get dataframe with each row being an instance. Add loc. metadata
 
         return dataset
 
