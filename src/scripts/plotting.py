@@ -227,3 +227,53 @@ def main_cdf_bias(
                 metadata_path
             ).plot_bias_cdf(output_folder, agg=agg_by)
     logging.info("The script finished!")
+
+
+@click.command()
+@click.argument('varname', type=click.Choice(['pm25', 'o3', 'no2', 'all'], 
+                                             case_sensitive=True))
+@click.argument('country', type=click.STRING)
+@click.option('-d', '--data_path', type=PATH, required=True)
+@click.option('-m', '--metadata_path', type=PATH,
+              default=Path(f"{constants.ROOT_DIR}/data/external/stations.csv"))
+@click.option('-s', '--station', type=click.STRING, default=None)
+@click.option('-o', '--output_path', type=PATH, 
+              default=None, help="Output path of the figure to be saved.")
+def main_monthly_bias(
+    varname: str, 
+    country: str, 
+    data_path: Path, 
+    metadata_path: Path,
+    station: str,
+    output_path: Path = None
+):
+    """ Generates a plot for the variable specified for all stations located in 
+    the country chosen. This plots shows the montly distribution of the bias.
+
+    Args:
+
+        varname (str): The name of the variable to consider. Specify 'all' for 
+        selecting all variables. Choiches are: 'pm25', 'o3', 'no2'. \n
+        country (str): The country to consider. Specify 'all' for selecting
+        all countries with processed data.
+    """
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
+    countries = utils.get_countries() if country == 'all' else [country]
+    varnames = ['pm25', 'o3', 'no2'] if varname == 'all' else [varname]
+    for var in varnames:
+        for country in countries:
+            if output_path is not None:
+                output_folder = output_path / var / "MonthlyBias"
+                os.makedirs(output_folder, exist_ok=True)
+            else:
+                output_folder = None
+            logging.info(f"Processing bias plot for {var} bias for {country}.")
+            StationTemporalSeriesPlotter(
+                var,
+                country,
+                data_path,
+                metadata_path, 
+                [station] if station else station
+            ).plot_monthly_bias(output_folder)
+    logging.info("The script finished!")
