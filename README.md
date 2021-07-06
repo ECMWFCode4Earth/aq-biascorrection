@@ -4,6 +4,9 @@
 
 </br>
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) ![Continuous Integration](https://github.com/JPXKQX/dl-fx-forecasting/actions/workflows/project-ci.yml/badge.svg) 
+
+
 <p align="center"> 
   <img src="reports/images/esowc_logo.png" alt="ESoWC logo" width="90%" height="90%">
 </p>
@@ -514,7 +517,7 @@ plot_station_hourly_bias pm25 Spain -d data/processed -o reports/figures
   <section>
     <ul style="list-style-type:none;" id="a">
       <li>
-          <img style="float: left" src="reports/images/mario.png" alt="" width=160px id="pic_mario">
+          <img style="float: left" src="reports/images/mario.png" align="left" width=160px id="pic_mario">
           <p>
             :man: <b> Mario Santa Cruz López</b> <br>
             BSc in <strong>Mathematics</strong> at Universidad de Cantabria <br>
@@ -530,7 +533,7 @@ plot_station_hourly_bias pm25 Spain -d data/processed -o reports/figures
   <section>
     <ul style="list-style-type:none;" id="b">
       <li>
-          <img style="float: left" src="reports/images/antonio.jpg" alt="" width=160px id="pic_antonio">
+          <img style="float: left" src="reports/images/antonio.jpg" align="left" width=160px id="pic_antonio">
           <p>
             :man: <b> Antonio Pérez Velasco</b> <br>
             BSc in <strong>Physics</strong> at Universidad de Cantabria <br>
