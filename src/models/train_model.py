@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
 
-from src.data.load.load_data import DataLoader
+from src.features.load_dataset import DatasetLoader
 from src.models.inception_time import InceptionTime
 from src.models.utils import read_yaml
 from src.constants import ROOT_DIR
@@ -49,12 +49,15 @@ class ModelTrain:
         self.variable = config['data']['variable']
         self.idir = config['data']['idir']
         self.odir = config['data']['odir']
+        self.n_prev_obs = config['data']['n_prev_obs']
+        self.n_future = config['data']['n_future']
+        self.min_st_obs = config['data']['min_station_observations']
         self.models = config['models']
 
         logger.info(f'Loading data for variable {self.variable}')
-        data_dict = DataLoader(self.variable, self.idir).data_load()
-        self.X_train, self.y_train = data_dict['train']
-        self.X_test, self.y_test = data_dict['test']
+        ds_loader = DatasetLoader(self.variable, self.n_prev_obs, self.n_future, 
+                                  self.min_st_obs, input_dir=self.idir)
+        self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
 
     def run(self):
         # Iterate over each model.
@@ -187,4 +190,4 @@ def get_metric_results(preds, labels) -> tuple[float, ...] :
 
 
 if __name__ == '__main__':
-    ModelTrain("model_config.yml").run()
+    ModelTrain("inceptiontime_config.yml").run()
