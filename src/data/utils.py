@@ -86,7 +86,7 @@ def get_location_by_id(location_id: str) -> Location:
     metadata = pd.read_csv(ROOT_DIR / "data/external/stations.csv", index_col=0, 
                            usecols=list(range(1, 8)))
     vals = metadata.loc[location_id].values
-    loc = Location(location_id, **vals)
+    loc = Location(location_id, *vals)
     return loc
 
 
