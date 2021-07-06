@@ -35,6 +35,6 @@ class DataLoader:
         data = None
         for file in files:
             dataset = pd.read_csv(file, index_col=0)
-            data = data.append(dataset) if data else dataset
+            data = data.append(dataset) if data is not None else dataset
         return data
 
