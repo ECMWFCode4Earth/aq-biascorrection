@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv, find_dotenv
 
+load_dotenv(find_dotenv())
 
 str2agg = {
     'daily': 'D',
@@ -21,6 +23,6 @@ units2str = {
 }
 
 
-ROOT_DIR = Path(os.path.dirname(os.path.abspath("setup.py")))
+ROOT_DIR = Path(os.getenv('ROOT_DIR', os.path.dirname(os.path.abspath("setup.py"))))
 
 log_fmt = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
