@@ -6,7 +6,7 @@ import click
 import pandas as pd
 
 from src import constants
-from src.data.extraction.openaq_obs import OpenAQDownloader
+from src.data.openaq_obs import OpenAQDownloader
 from src.data.utils import Location
 
 PATH = click.Path(exists=True, path_type=Path)

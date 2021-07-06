@@ -7,7 +7,7 @@ from typing import Tuple
 import click
 
 from src import constants
-from src.data.extraction.cams_forecast import CAMSProcessor
+from src.data.cams_forecast import CAMSProcessor
 
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()

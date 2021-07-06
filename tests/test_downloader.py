@@ -6,9 +6,7 @@ import pytest
 import pandas as pd
 import xarray as xr
 
-from src.data.extraction.openaq_obs import OpenAQDownloader
 from src.scripts import extraction_openaq, extraction_cams
-from src.data.utils import Location
 from tests.file_provider import get_remote_file
 
 from pytest_mock import MockerFixture

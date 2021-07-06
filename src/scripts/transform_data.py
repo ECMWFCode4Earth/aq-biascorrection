@@ -6,7 +6,7 @@ import click
 
 from src import constants
 from src.constants import ROOT_DIR
-from src.data.transformation.transformation_data import DataTransformer
+from src.data.transformation_data import DataTransformer
 
 PATH = click.Path(exists=True, path_type=Path)
 
