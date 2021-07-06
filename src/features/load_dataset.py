@@ -1,13 +1,11 @@
 import glob
 from pathlib import Path
 from src.features.build_features import FeatureBuilder
-from src.data.utils import Location
 from src.constants import ROOT_DIR
 
 import pandas as pd
 import numpy as np
 from datacleaner import autoclean
-from sklearn.model_selection import train_test_split
 from pydantic.dataclasses import dataclass
 
 
@@ -33,31 +31,25 @@ class DatasetLoader:
     def __post_init__(self):
         self.fb = FeatureBuilder(self.n_prev_obs, self.n_future, self.min_st_obs)
 
-    def load(self) -> tuple[pd.DataFrame, ...]:
+    def load(
+        self,
+        split_ratio: float = 0.8
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Get the data for all the stations available for the given variable
-        data = self._join_each_station_dataset()
-        # Shuffle the data
-        data = data.sample(frac=1).reset_index(drop=True)
-        data.drop(columns=['index'], inplace=True)
-        data = autoclean(data)
-        y_columns = [f'{self.variable}_bias', f'{self.variable}_observed']
-        X = data.loc[:, ~data.columns.isin(y_columns)]
-        for column in X.columns:
-            X[column] = X[column].astype(float)
-        y = data.loc[:, data.columns.isin([f'{self.variable}_bias'])]
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=1
-        )
-        return X_train, y_train, X_test, y_test
-
-    def _join_each_station_dataset(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
-        train_data = None
-        test_data = None
-        
+        X_train, y_train, X_test, y_test = None, None, None, None
+
         # Iterate over all stations
         for station_file in files:
-            train_ds, test_ds = self.fb.build(station_file)
-            train_data = train_ds if train_data is None else train_data.append(train_ds)
-            test_data = test_ds if test_data is None else test_data.append(test_ds)
-        return train_data, test_data
+            X, y = self.fb.build(station_file)
+            if X is None: continue  # Stations not satisfying min obs. requirement.
+            threshold = int(len(X.index) * split_ratio)
+            if X_train is None:
+                X_train, y_train = X.iloc[:threshold, :], y.iloc[:threshold, :]
+                X_test, y_test = X.iloc[threshold:, :], y.iloc[threshold:, :]
+            else:
+                X_train = X_train.append(X.iloc[:threshold, :])
+                y_train = y_train.append(y.iloc[:threshold, :])
+                X_test = X_test.append(X.iloc[threshold:, :])
+                y_test = y_test.append(y.iloc[threshold:, :])
+        return X_train, y_train, X_test, y_test
