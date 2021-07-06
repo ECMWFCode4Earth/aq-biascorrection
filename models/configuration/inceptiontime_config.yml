@@ -1,0 +1,17 @@
+data:
+  variable: pm25
+  idir: data/processed/
+  odir: ~/git/esowc/aq-biascorrection/models/weights_storage/
+models:
+  - name: InceptionTime
+    type: inception_itme
+    model_parameters:
+      depth: [3]
+      n_filters: [32]
+      batch_size: [64]
+      n_epochs: [200]
+      bottleneck_size: [32]
+    training_method:
+      cv: 4
+      scoring: neg_mean_absolute_error
+      n_jobs: 1
