@@ -72,6 +72,24 @@ class Location:
         )
         return output_path
 
+
+def get_location_by_id(location_id: str) -> Location:
+    """ Get the Location object from the station id.
+    
+    Args:
+        location_id (str): ID of the location. Style is AA000: two capital letters, 
+        followed by three numbers.
+
+    Returns:
+        Location: Location object corresponding to the ID.
+    """
+    metadata = pd.read_csv(ROOT_DIR / "data/external/stations.csv", index_col=0, 
+                           usecols=list(range(1, 8)))
+    vals = metadata.loc[location_id].values
+    loc = Location(location_id, **vals)
+    return loc
+
+
 @retry
 def get_elevation_for_location(latitude: float, longitude:float):
     """
