@@ -12,7 +12,7 @@ import xarray as xr
 
 from src.data.utils import Location
 from src.data import utils
-from src.constants import ROOT_DIR, units2str, var2longstr
+from src.constants import units2str, var2longstr
 
 
 logger = logging.getLogger("OpenAQ Downloader")

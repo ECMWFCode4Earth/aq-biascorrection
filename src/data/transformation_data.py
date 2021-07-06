@@ -7,7 +7,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from src.data.transformation.transformation_location import LocationTransformer
+from src.data.transformation_location import LocationTransformer
 from src.data.utils import Location
 from src.constants import ROOT_DIR
 
