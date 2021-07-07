@@ -190,4 +190,5 @@ def get_metric_results(preds, labels) -> tuple[float, ...] :
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     ModelTrain("inceptiontime_config.yml").run()
