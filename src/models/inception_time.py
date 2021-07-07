@@ -9,7 +9,7 @@ from typing import List, NoReturn, Union
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
-    Activation, Input, GlobalAveragePooling1D, BatchNormalization, Permute
+    Activation, Input, GlobalAveragePooling1D, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
 
