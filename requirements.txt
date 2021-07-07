@@ -3,12 +3,9 @@
 
 # external requirements
 click~=8.0.0
-<<<<<<< HEAD
 python-dotenv~=0.18.0
-=======
 mkdocs~=1.2.1
 mkdocs-git-revision-date-plugin~=0.3.1
->>>>>>> c56c7bf6df3de40cd43aacb442bdb5af14778e68
 flake8~=3.9.2
 python-dotenv>=0.5.1
 
@@ -36,3 +33,4 @@ scikit-learn~=0.24.2
 requests~=2.25.1
 xgboost~=1.4.2
 datacleaner~=0.1.5
+tensorflow~=2.5.0
