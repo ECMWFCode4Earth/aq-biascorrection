@@ -183,6 +183,7 @@ class StationTemporalSeriesPlotter:
             df = self.data[st_code].set_index('index')
             df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
                 df[f'{self.varname}_bias']
+            mean_obs = df[f'{self.varname}_observed'].mean()
             df = df.drop(f'{self.varname}_observed', axis=1)
             df['local_time_hour'] = np.cos(2 * pi * df['local_time_hour'] / 24)\
                 + np.sin(2 * pi * df['local_time_hour'] / 24)
@@ -213,11 +214,20 @@ class StationTemporalSeriesPlotter:
             yticks[0].set_visible(False)
             plt.title(f"{info.city.values[0]} ({info.country.values[0]})", 
                       fontsize='xx-large')
+
+            # Print absolute and relative bias values
+            abs_bias = -df[f'{self.varname} Error Raw'].mean()
+            rel_bias = abs_bias / mean_obs
+            x_pos = len(df.columns) / 2
+            plt.text(x_pos, 1, f"Absolute bias: {abs_bias:.4f}", fontsize='large', 
+                     ha='center')
+            plt.text(x_pos, 1.8, f"Relative bias: {rel_bias:.4f}", fontsize='large', 
+                     ha='center')
+
             if agg: 
-                x_pos = len(df.columns) / 2
-                y_pos = 1
                 annot = agg.capitalize() + " aggregated data"
-                plt.text(x_pos, y_pos, annot, fontsize='large', ha='center')
+                plt.text(x_pos, 2.6, annot, fontsize='large', ha='center')
+
             plt.xticks(rotation=65, fontsize='x-large')
             plt.yticks(rotation=0, fontsize='x-large')
             plt.tight_layout()
