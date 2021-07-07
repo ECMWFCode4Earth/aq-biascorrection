@@ -7,7 +7,7 @@ data:
   min_station_observations: 10
 models:
   - name: InceptionTime
-    type: inception_itme
+    type: inception_time
     model_parameters:
       depth: [3]
       n_filters: [32]
@@ -18,3 +18,4 @@ models:
       cv: 4
       scoring: neg_mean_absolute_error
       n_jobs: 1
+      verbose: 2
