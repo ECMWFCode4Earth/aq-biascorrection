@@ -73,13 +73,8 @@ class LocationTransformer:
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias
-        merged_pd[
-            f'{self.variable}_bias'
-        ] = merged_pd[
-            f'{self.variable}_forecast'
-        ] - merged_pd[
-            f'{self.variable}_observed'
-        ]
+        merged_pd[f'{self.variable}_bias'] = merged_pd[f'{self.variable}_forecast'] \
+            - merged_pd[f'{self.variable}_observed']
         merged_pd.reset_index(inplace=True)
         return merged_pd
 
