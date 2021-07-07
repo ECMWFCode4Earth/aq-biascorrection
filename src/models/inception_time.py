@@ -1,11 +1,19 @@
+
+import logging 
+import numpy as np
+import pandas as pd
+
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
-from typing import List, NoReturn
+from typing import List, NoReturn, Union
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
     Activation, Input, GlobalAveragePooling1D, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
+
+logger = logging.getLogger("InceptionTime")
 
 
 @dataclass
@@ -15,15 +23,20 @@ class InceptionTime:
     batch_size: int = 64
     n_epochs: int = 200
     bottleneck_size: int = 32
+    verbose: int = 2
     optimizer: str = 'adam'
     loss: str = 'mse'
     metrics: List[str] = field(default_factory=lambda: ['mae'])
 
     def __post_init__(self) -> NoReturn:
+        self.attr_scaler = StandardScaler()
+        self.aq_vars_scaler = StandardScaler()
         self.output_directory = ROOT_DIR / "models" / "results" / "InceptionTime"
         self._set_callbacks()
 
     def _set_callbacks(self):
+        logger.info("Two callbacks have been added to the model fitting: "
+                    "ModelCheckpoint and ReduceLROnPlateau.")
         reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
                                       min_lr=0.0001)
         file_path = self.output_directory / 'best_inceptionTime.hdf5'
@@ -78,8 +91,17 @@ class InceptionTime:
         x = Activation('relu')(x)
         return x
 
-    def build_model(self, input_shape):
+    def build_model(self, input_shape: tuple, aux_shape: tuple = None) -> Model:
+        logger.debug(f'Input data has shaper {input_shape}')
         input_layer = Input(input_shape)
+        
+        if aux_shape is not None:
+            logger.debug(f'Auxiliary input data has shape {aux_shape}')
+            input_aux = Input(aux_shape)
+
+            # Aux layer
+            x_aux = Dense(64, activation='relu')(input_aux)
+            x_aux = Dense(1, activation='relu')(x_aux)
 
         x = input_layer
         input_res = input_layer
@@ -92,27 +114,78 @@ class InceptionTime:
                 input_res = x = self._shortcut_layer(input_res, x)
 
         gap_layer = GlobalAveragePooling1D()(x)
-        output_layer = Dense(100, activation='relu')(gap_layer)
+        
+        if aux_shape is None:
+            concatenated = gap_layer
+        else:
+            concatenated = Concatenate()([gap_layer, x_aux])
+        output_layer = Dense(100, activation='relu')(concatenated)
         output_layer = Dense(1, activation='linear')(output_layer)
 
-        self.model = Model(inputs=input_layer, outputs=output_layer)
+        if aux_shape:
+            self.model = Model(inputs=[input_layer, input_aux], outputs=output_layer)
+        else:
+            self.model = Model(inputs=input_layer, outputs=output_layer)
+
+        logger.info(self.model.summary())
         self.model.compile(loss=self.loss, optimizer=self.optimizer, 
                            metrics=['accuracy'])
         return self.model
 
     def fit(self,
-        X,
-        y,
+        X: pd.DataFrame,
+        y: pd.DataFrame,
         epochs: int = 200
     ):
-        n_features = X.shape[1] if len(X.shape) > 1 else 1
-        n_labels = y.shape[1] if len(y.shape) > 1 else 1
-        self.compile(n_features, n_labels)
-        return self.model.fit(X, y, epochs=epochs, verbose=2, 
-                              callbacks=[self.callbacks])
+        features = self.reshape_data(X)
+        self.build_model()
+        return self.model.fit(
+            features, y, epochs=epochs, verbose=self.verbose, callbacks=[self.callbacks])
 
     def predict(self, X):
-        return self.model.predict(X)
+        return self.model.predict(self.reshape_data(X, test=True))
+
+    def reshape_data(
+        self, 
+        X: pd.DataFrame, 
+        test: bool = False
+    ) -> Union[pd.DataFrame, List[pd.DataFrame]]:
+        attr_df = X.filter(regex="_attr$", axis=1)
+        aux_df = X.filter(regex="_aux")
+        if len(attr_df.columns):
+            if test:
+                logger.debug("Attribute variables have been scaled with fitted scaler.")
+                attr_df = self.attr_scaler.transform(attr_df)
+            else:
+                logger.debug("Attribute variables have been scaled.")
+                attr_df = self.attr_scaler.fit_transform(attr_df)
+            aux_values = pd.concat([attr_df, aux_df], axis=1).values
+        else:
+            aux_values = aux_df.values
+
+        # Process temporal feaures. Including scaling
+        temporal_df = X.filter(regex="_\d$", axis=1)
+        n_time_steps = len(set(map(lambda x: x.split("_")[-1], temporal_df.columns)))
+        n_temporal_var = len(temporal_df.columns) // n_time_steps
+        temp_values = temporal_df.values.reshape((-1, n_time_steps, n_temporal_var))
+        temp_values = temp_values.reshape((-1, n_temporal_var))
+        if test:
+            logger.debug("Air Quality variables have been scaled with fitted scaler.")
+            temp_values = self.aq_vars_scaler.transform(temp_values)
+        else:
+            logger.debug("Air Quality variables have been scaled.")
+            temp_values = self.aq_vars_scaler.fit_transform(temp_values)
+        temp_values = temp_values.reshape((-1, n_time_steps, n_temporal_var))
+        temp_values = np.transpose(temp_values, (0, 2, 1))
+
+        if aux_values.size:
+            logger.info("The input data is separated in temporal features (air quality"
+                        " variables) and auxiliary features.")
+            return [temp_values, aux_values]
+        else:
+            logger.info("The input data is contains only temporal features (air quality"
+                        " variables).")
+            return temp_values
 
     def get_params(self, deep=True):
         return {
