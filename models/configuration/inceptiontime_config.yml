@@ -2,15 +2,16 @@ data:
   variable: pm25
   idir: data/processed/
   odir: ~/git/esowc/aq-biascorrection/models/weights_storage/
-  n_prev_obs: 5
-  n_future: 2
-  min_station_observations: 10
+  n_prev_obs: 42
+  n_future: 6
+  min_station_observations: 48
 models:
   - name: InceptionTime
     type: inception_time
     model_parameters:
+      inception_kernels: [[2, 4, 8]]
       depth: [3]
-      n_filters: [32]
+      n_filters: [4]
       batch_size: [64]
       n_epochs: [200]
       bottleneck_size: [32]

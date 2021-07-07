@@ -9,7 +9,7 @@ from typing import List, NoReturn, Union
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
-    Activation, Input, GlobalAveragePooling1D, BatchNormalization
+    Activation, Input, GlobalAveragePooling1D, BatchNormalization, Permute
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
 
@@ -22,6 +22,7 @@ class InceptionTime:
     n_filters: int = 32
     batch_size: int = 64
     n_epochs: int = 200
+    inception_kernels: List[int] = field(default_factory=lambda: [2, 4, 8])
     bottleneck_size: int = 32
     verbose: int = 2
     optimizer: str = 'adam'
@@ -45,7 +46,7 @@ class InceptionTime:
         self.callbacks = [reduce_lr, model_checkpoint]
 
     def _inception_module(self, input_tensor, stride=1, activation='linear'):
-        if int(input_tensor.shape[-1]) > 1:
+        if int(input_tensor.shape[-2]) > 1:
             input_inception = Conv1D(
                 filters=self.bottleneck_size, kernel_size=1, padding='same', 
                 activation=activation, use_bias=False
@@ -55,14 +56,15 @@ class InceptionTime:
 
         # As presented in original paper InceptionTime: Finding AlexNet for Time Series 
         # Classification. https://arxiv.org/pdf/1909.04939.pdf
-        kernel_size_s = [10, 20, 40]
-
         conv_list = []
-        for i in range(len(kernel_size_s)):
-            conv_list.append(Conv1D(
-                filters=self.n_filters, kernel_size=kernel_size_s[i], strides=stride, 
-                padding='same', activation=activation, use_bias=False
-            )(input_inception))
+        for kernel_size in self.inception_kernels:
+            conv_list.append(
+                Conv1D(
+                    filters=self.n_filters, kernel_size=kernel_size, 
+                    strides=stride, padding='same', activation=activation,
+                    use_bias=False
+                )(input_inception)
+            )
 
         max_pool_1 = MaxPool1D(
             pool_size=3, strides=stride, padding='same'
@@ -75,7 +77,7 @@ class InceptionTime:
 
         conv_list.append(conv_6)
 
-        x = Concatenate(axis=2)(conv_list)
+        x = Concatenate(axis=-1)(conv_list)
         x = BatchNormalization()(x)
         x = Activation(activation='relu')(x)
         return x
@@ -110,7 +112,7 @@ class InceptionTime:
 
             x = self._inception_module(x)
 
-            if self.use_residual and d % 3 == 2:
+            if d % 3 == 2:
                 input_res = x = self._shortcut_layer(input_res, x)
 
         gap_layer = GlobalAveragePooling1D()(x)
@@ -137,8 +139,8 @@ class InceptionTime:
         y: pd.DataFrame,
         epochs: int = 200
     ):
-        features = self.reshape_data(X)
-        self.build_model()
+        features, shapes = self.reshape_data(X)
+        self.build_model(*shapes)
         return self.model.fit(
             features, y, epochs=epochs, verbose=self.verbose, callbacks=[self.callbacks])
 
@@ -149,22 +151,22 @@ class InceptionTime:
         self, 
         X: pd.DataFrame, 
         test: bool = False
-    ) -> Union[pd.DataFrame, List[pd.DataFrame]]:
+    ) -> Union[tuple[pd.DataFrame], tuple[List[pd.DataFrame]]]:
         attr_df = X.filter(regex="_attr$", axis=1)
         aux_df = X.filter(regex="_aux")
         if len(attr_df.columns):
             if test:
                 logger.debug("Attribute variables have been scaled with fitted scaler.")
-                attr_df = self.attr_scaler.transform(attr_df)
+                attr_values = self.attr_scaler.transform(attr_df)
             else:
                 logger.debug("Attribute variables have been scaled.")
-                attr_df = self.attr_scaler.fit_transform(attr_df)
-            aux_values = pd.concat([attr_df, aux_df], axis=1).values
+                attr_values = self.attr_scaler.fit_transform(attr_df)
+            aux_values = np.concatenate([attr_values, aux_df.values], axis=1)
         else:
             aux_values = aux_df.values
 
-        # Process temporal feaures. Including scaling
-        temporal_df = X.filter(regex="_\d$", axis=1)
+        # Process temporal feaures. Including scaling ignoring timestep.
+        temporal_df = X.filter(regex="_\d+$", axis=1)
         n_time_steps = len(set(map(lambda x: x.split("_")[-1], temporal_df.columns)))
         n_temporal_var = len(temporal_df.columns) // n_time_steps
         temp_values = temporal_df.values.reshape((-1, n_time_steps, n_temporal_var))
@@ -176,16 +178,16 @@ class InceptionTime:
             logger.debug("Air Quality variables have been scaled.")
             temp_values = self.aq_vars_scaler.fit_transform(temp_values)
         temp_values = temp_values.reshape((-1, n_time_steps, n_temporal_var))
-        temp_values = np.transpose(temp_values, (0, 2, 1))
 
         if aux_values.size:
             logger.info("The input data is separated in temporal features (air quality"
                         " variables) and auxiliary features.")
-            return [temp_values, aux_values]
+            return [temp_values, aux_values], \
+                (temp_values.shape[1:], aux_values.shape[1:])
         else:
             logger.info("The input data is contains only temporal features (air quality"
                         " variables).")
-            return temp_values
+            return temp_values, temp_values.shape[1:]
 
     def get_params(self, deep=True):
         return {
