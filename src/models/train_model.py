@@ -66,9 +66,18 @@ class ModelTrain:
             logger.info(f'Training and validating model {i+1} '
                          f'out of {len(self.models)}')
             logger.info(f'Training model with method {model["name"]}')
-            self.train_and_validate(model)
+ 
+            if model['model_selection']:
+                self.selection_traininig_and_evalution(model)
+            else:
+                self.training_and_evaluation(model)
 
-    def train_and_validate(self, model: Dict):
+    def training_and_evaluation(self, model: Dict):
+        mo = models_dict[model['type']](**model['model_parameters'])
+        self.evaluate_model(mo)
+        return mo
+
+    def selection_traininig_and_evalution(self, model: Dict):
         training_params = model['training_method']
 
         gridsearch = GridSearchCV(
