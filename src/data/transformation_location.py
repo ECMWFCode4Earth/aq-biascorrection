@@ -14,21 +14,6 @@ from src.constants import ROOT_DIR
 logger = logging.getLogger('Location Transformer')
 
 
-def forecast_accumulated_variables_disaggregation(forecast_data):
-    vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
-    for variable in vars_to_temp_diss:
-        ds_variable = forecast_data[variable].copy()
-        ds_variable_diff = ds_variable.differentiate(
-            'time', 1, 'h'
-        )
-        ds_variable_diff = ds_variable_diff.where(
-            ds_variable_diff >= 0,
-            0
-        )
-        forecast_data[variable] = ds_variable_diff
-    return forecast_data
-
-
 class LocationTransformer:
     def __init__(
             self,
@@ -54,6 +39,12 @@ class LocationTransformer:
         )
 
     def run(self) -> pd.DataFrame:
+        """
+        Main workflow for the LocationTransformer class
+
+        Returns:
+            pd.DataFrame: observations and forecasts merged
+        """
         # Open forecast and observational data
         forecast_data = self.opening_and_transforming_forecast()
         try:
@@ -79,9 +70,17 @@ class LocationTransformer:
         return merged_pd
 
     def opening_and_transforming_forecast(self) -> xr.Dataset:
+        """
+        Open the forecasts given the path specified in the object
+        declaration. It also transforms the units of the air quality variables
+        and disaggregate some variables temporally.
+
+        Returns:
+            xr.Dataset: the forecast dataset
+        """
         # Open the data
         forecast_data = xr.open_dataset(self.forecast_path)
-        #Rename some of the variables
+        # Rename some of the variables
         forecast_data = forecast_data.rename({'pm2p5': 'pm25',
                                               'go3': 'o3'})
         # Interpolate time axis to 1h data
@@ -111,7 +110,7 @@ class LocationTransformer:
         # Some forecast variables are aggregated daily, so a temporal
         # disaggregation is needed
         logger.info(f"Dissaggregate forecast variables.")
-        forecast_data = forecast_accumulated_variables_disaggregation(
+        forecast_data = self.forecast_accumulated_variables_disaggregation(
             forecast_data
         )
         # Rename all the variables to "{variable}_forecast" in order to
@@ -129,7 +128,7 @@ class LocationTransformer:
     def opening_and_transforming_observations(self) -> xr.Dataset:
         """
         Open the observations given the path specified in the object 
-        declaration. It also transgforms the units of the air quality variables
+        declaration. It also transforms the units of the air quality variables
         and filter the outliers.
 
         Returns:
@@ -256,6 +255,21 @@ class LocationTransformer:
         df['local_time_hour'] = local_time_hour
         return df
 
+    @staticmethod
+    def forecast_accumulated_variables_disaggregation(forecast_data):
+        vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
+        for variable in vars_to_temp_diss:
+            ds_variable = forecast_data[variable].copy()
+            ds_variable_diff = ds_variable.differentiate(
+                'time', 1, 'h'
+            )
+            ds_variable_diff = ds_variable_diff.where(
+                ds_variable_diff >= 0,
+                0
+            )
+            forecast_data[variable] = ds_variable_diff
+        return forecast_data
+
     def calculate_surface_pressure_by_msl(
         self,
         temp: xr.DataArray,
@@ -279,8 +293,8 @@ class LocationTransformer:
         surface_pressure = mslp * factor
         return surface_pressure
 
+    @staticmethod
     def calculate_air_density(
-        self,
         pressure: xr.DataArray,
         temperature: xr.DataArray
     ) -> xr.DataArray:

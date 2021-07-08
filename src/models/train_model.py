@@ -55,8 +55,11 @@ class ModelTrain:
         self.models = config['models']
 
         logger.info(f'Loading data for variable {self.variable}')
-        ds_loader = DatasetLoader(self.variable, self.n_prev_obs, self.n_future, 
-                                  self.min_st_obs, input_dir=self.idir)
+        ds_loader = DatasetLoader(self.variable,
+                                  self.n_prev_obs,
+                                  self.n_future,
+                                  self.min_st_obs,
+                                  input_dir=self.idir)
         self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
 
     def run(self):
@@ -94,8 +97,8 @@ class ModelTrain:
         return gridsearch.best_estimator_
     
     def evaluate_model(self, model) -> NoReturn:
-        """ Evaluate the model performance of a model in both trainig and test dataset.
-        
+        """
+        Evaluate the model performance of a model in both trainig and test dataset.
         """
         # Model retraining with all training dataset.
         model.fit(self.X_train, self.y_train)
@@ -164,38 +167,38 @@ class ModelTrain:
         plt.tight_layout()
         plt.savefig(outfile)
 
-    def update_model_output_dir(self, model_name: str) -> Path:
+    def update_model_output_dir(self, model_name: str) -> NoReturn:
         self.model_name = model_name
         self.results_output_dir = ROOT_DIR / "models" / "results" / model_name
         os.makedirs(self.results_output_dir, exist_ok=True)
 
+    @staticmethod
+    def get_metric_results(preds, labels) -> tuple[float, ...]:
+        """ Computes different metrics given the predictions and the true values.
 
-def get_metric_results(preds, labels) -> tuple[float, ...] :
-    """ Computes different metrics given the predictions and the true values.
+        Args:
+            preds: predictions of any model.
+            labels: true values of the predictions made.
 
-    Args: 
-        preds: predictions of any model.
-        labels: true values of the predictions made.
-
-    Returns:
-        exp_var (float): the explained variance of the predictions.
-        maxerr (float): the maximum error of the predictions.
-        mae (float): the mean absolute error of the predictions.
-        mse (float): the mean square error of the predictions.
-        r2 (float): the R-squared value of the predictions.
-        r2time (float): the R-squared with time structure value of the predictions. It
-        only makes sense when the predictions correspond to a time series.
-    """
-    # Compute metrics
-    exp_var = float(metrics.explained_variance_score(labels, preds))
-    maxerr = float(metrics.max_error(labels, preds))
-    mae = float(metrics.mean_absolute_error(labels, preds))
-    mse = float(metrics.mean_squared_error(labels, preds))
-    r2 = float(metrics.r2_score(labels, preds))    
-    ssd = ((labels - preds.reshape(-1, 1)) ** 2).cumsum()
-    sst = (labels ** 2).cumsum()
-    r2time = (sst - ssd) / sst.iloc[-1]
-    return exp_var, maxerr, mae, mse, r2, r2time
+        Returns:
+            exp_var (float): the explained variance of the predictions.
+            maxerr (float): the maximum error of the predictions.
+            mae (float): the mean absolute error of the predictions.
+            mse (float): the mean square error of the predictions.
+            r2 (float): the R-squared value of the predictions.
+            r2time (float): the R-squared with time structure value of the predictions. It
+            only makes sense when the predictions correspond to a time series.
+        """
+        # Compute metrics
+        exp_var = float(metrics.explained_variance_score(labels, preds))
+        maxerr = float(metrics.max_error(labels, preds))
+        mae = float(metrics.mean_absolute_error(labels, preds))
+        mse = float(metrics.mean_squared_error(labels, preds))
+        r2 = float(metrics.r2_score(labels, preds))
+        ssd = ((labels - preds.reshape(-1, 1)) ** 2).cumsum()
+        sst = (labels ** 2).cumsum()
+        r2time = (sst - ssd) / sst.iloc[-1]
+        return exp_var, maxerr, mae, mse, r2, r2time
 
 
 if __name__ == '__main__':

@@ -19,7 +19,6 @@ logger = logging.getLogger("OpenAQ Downloader")
 warnings.filterwarnings("ignore")
 
 
-
 class OpenAQDownloader:
     """
     Class to extraction data from the OpenAQ platform for a specific location
@@ -82,7 +81,7 @@ class OpenAQDownloader:
         is_in_temporal_range = []
         for station in stations.iterrows():
             station = station[1]
-            distance = get_distance_between_two_points_on_earth(
+            distance = self.get_distance_between_two_points_on_earth(
                 station['coordinates.latitude'],
                 self.location.latitude,
                 station['coordinates.longitude'],
@@ -212,8 +211,8 @@ class OpenAQDownloader:
             raise Exception('The variable intended to extraction is not'
                             ' available for the nearest / exact location')
 
+    @staticmethod
     def concat_filter_and_save_data(
-            self,
             datasets: List[xr.Dataset],
             output_path_data: Path
     ):
@@ -305,25 +304,25 @@ class OpenAQDownloader:
         xr_ds.attrs['Conventions'] = "CF-1.4"
         return xr_ds
 
-
-def get_distance_between_two_points_on_earth(
-        lat1: float,
-        lat2: float,
-        lon1: float,
-        lon2: float
-):
-    """
-    Function to calculate the distance between an station from OpenAQ
-    and the coordinates of interest. Use Haversine distance.
-    """
-    R = 6373.0
-    lat1 = radians(lat1)
-    lon1 = radians(lon1)
-    lat2 = radians(lat2)
-    lon2 = radians(lon2)
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    distance = R * c
-    return distance
+    @staticmethod
+    def get_distance_between_two_points_on_earth(
+            lat1: float,
+            lat2: float,
+            lon1: float,
+            lon2: float
+    ):
+        """
+        Function to calculate the distance between an station from OpenAQ
+        and the coordinates of interest. Use Haversine distance.
+        """
+        R = 6373.0
+        lat1 = radians(lat1)
+        lon1 = radians(lon1)
+        lat2 = radians(lat2)
+        lon2 = radians(lon2)
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        distance = R * c
+        return distance

@@ -92,7 +92,7 @@ class CAMSProcessor:
 
     def get_total_data(
             self,
-            initialization_times: List[str]) -> Tuple[xr.Dataset, Path]:
+            initialization_times: List[str]) -> Tuple[xr.Dataset, List[Path]]:
         """
         Get the data for the whole time_range defined as an argument and all
         the locations of interest given in the .csv file concatenated
