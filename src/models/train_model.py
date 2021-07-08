@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, NoReturn
 
 import xgboost as xg
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
@@ -32,8 +33,8 @@ class ModelTrain:
     
     Attributes:
         variable (str): Air quality variable to correct.
-        idir (str): Directory of the input data for the model.
-        odir (str): Directory to the output data for the model.
+        idir (Path): Directory of the input data for the model.
+        results_output_dir (Path): Directory to the output data for the model.
         models (dict): collection of Models to train and validate.
         X_train (pd.DataFrame): features used for training purposes.
         y_train (pd.DataFrame): labels of the training instances.
@@ -47,8 +48,7 @@ class ModelTrain:
     ):
         config = read_yaml(config_folder / config_yml_filename)
         self.variable = config['data']['variable']
-        self.idir = config['data']['idir']
-        self.odir = config['data']['odir']
+        self.idir = Path(config['data']['idir'])
         self.n_prev_obs = config['data']['n_prev_obs']
         self.n_future = config['data']['n_future']
         self.min_st_obs = config['data']['min_station_observations']
@@ -99,7 +99,7 @@ class ModelTrain:
         """
         # Model retraining with all training dataset.
         model.fit(self.X_train, self.y_train)
-        model.save(self.odir / self.model_name / f"{self.variable}_inception_time.h5")
+        self.save_model_and_predictions(model)
 
         # Evaluating performance in test dataset.
         logger.info("Evaluating performance on test set.")
@@ -108,11 +108,11 @@ class ModelTrain:
 
         exp_var, maxerr, mae, mse, r2, r2time = get_metric_results(preds, labels)
         # self.save_r2_with_time_structure(r2time, False)
-       
+
         logger.info("Evaluating performance on train set.")
         labels = self.y_train
         preds = model.predict(self.X_train)
-        
+
         # Compute metrics
         tr_exp_var, tr_maxerr, tr_mae, tr_mse, tr_r2, tr_r2time = get_metric_results(
             preds, labels
@@ -152,6 +152,20 @@ class ModelTrain:
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
+    def save_model_and_predictions(self, model) -> NoReturn:
+        """ Save model fitted to the whole training dataset and its predictions for
+        the test datasets considered.
+
+        Args:
+            model: model to save its weights, architecture and predictions of test set.        
+        """
+        # Save model 
+        data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
+        filename = f"{data_attrs}_{str(model)}"
+        model.save(filename)
+        # Save model predictions on test set.
+        y_hat = model.predict(self.X_test, filename=filename)
+
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
         outfile = self.results_output_dir / \
             f'plot_{"test" if test else "train"}_{self.variable}_" \
@@ -170,7 +184,7 @@ class ModelTrain:
         os.makedirs(self.results_output_dir, exist_ok=True)
 
 
-def get_metric_results(preds, labels) -> tuple[float, ...] :
+def get_metric_results(preds: pd.DataFrame, labels: pd.DataFrame) -> tuple[float, ...]:
     """ Computes different metrics given the predictions and the true values.
 
     Args: 
