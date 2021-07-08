@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, NoReturn, Union
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
@@ -158,7 +159,8 @@ class InceptionTime:
         filename: Union[Path, str] = None
     ) -> pd.DataFrame:
         y_hat = self.model.predict(self.reshape_data(X, test=True)[0])
-        y_hat = pd.DataFrame(y_hat, index=X.index)
+        y_hat = pd.DataFrame(
+            y_hat, index=X.index, columns=list(range(self.output_dims)))
         if filename is not None:
             y_hat.to_csv(self.output_predictions / f"{filename}.csv")
         return y_hat
