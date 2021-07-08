@@ -160,7 +160,7 @@ class InceptionTime:
     ) -> pd.DataFrame:
         y_hat = self.model.predict(self.reshape_data(X, test=True)[0])
         y_hat = pd.DataFrame(
-            y_hat, index=X.index, columns=list(range(self.output_dims)))
+            y_hat, index=X.index, columns=list(range(1, self.output_dims + 1)))
         if filename is not None:
             y_hat.to_csv(self.output_predictions / f"{filename}.csv")
         return y_hat
