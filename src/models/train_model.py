@@ -202,7 +202,7 @@ def get_metric_results(preds: pd.DataFrame, labels: pd.DataFrame) -> tuple[float
     """
     # Compute metrics
     exp_var = float(metrics.explained_variance_score(labels, preds))
-    maxerr = float(metrics.max_error(labels, preds))
+    maxerr = (labels - preds).abs().max().values
     mae = float(metrics.mean_absolute_error(labels, preds))
     mse = float(metrics.mean_squared_error(labels, preds))
     r2 = float(metrics.r2_score(labels, preds))    
