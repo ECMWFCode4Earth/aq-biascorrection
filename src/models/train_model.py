@@ -121,7 +121,7 @@ class ModelTrain:
 
         print(
             f"Exp. Var (test): {tr_exp_var:.4f}({exp_var:.4f})\n"
-            f"Max error (test): {tr_maxerr:.4f}({maxerr:.4f})\n"
+            f"Max error (test): {tr_maxerr}({maxerr})\n"
             f"MAE (test): {tr_mae:.4f}({mae:.4f})\n"
             f"MSE (test): {tr_mse:.4f}({mse:.4f})\n"
             f"R2 (test): {tr_r2:.4f}({r2:.4f})")
@@ -202,11 +202,11 @@ def get_metric_results(preds: pd.DataFrame, labels: pd.DataFrame) -> tuple[float
     """
     # Compute metrics
     exp_var = float(metrics.explained_variance_score(labels, preds))
-    maxerr = (labels - preds).abs().max().values
+    maxerr = (labels - preds).abs().max().round(4).values
     mae = float(metrics.mean_absolute_error(labels, preds))
     mse = float(metrics.mean_squared_error(labels, preds))
     r2 = float(metrics.r2_score(labels, preds))    
-    ssd = ((labels - preds.reshape(-1, 1)) ** 2).cumsum()
+    ssd = ((labels - preds) ** 2).cumsum()
     sst = (labels ** 2).cumsum()
     r2time = (sst - ssd) / sst.iloc[-1]
     return exp_var, maxerr, mae, mse, r2, r2time
