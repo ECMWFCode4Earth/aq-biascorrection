@@ -36,7 +36,15 @@
         <li><a href="#ensemble"> Ensemble </a></li>
       </ul>
     </li>
-    <li><a href="#results"> Results </a></li>
+    <li>
+      <a href="#results">  Results </a>
+      <ul>
+        <li><a href="#linear-regression-results"> Linear Regression </a></li>
+        <li><a href="#inception-time-results"> InceptionTime </a></li>
+        <li><a href="#gradient-boosting-results"> Gradient Boosting </a></li>
+        <li><a href="#ensemble-results"> Ensemble </a></li>
+      </ul>
+    </li>
     <li><a href="#project-organization"> Project Organization </a></li>
     <li><a href="#faq">  FAQ</a></li>
     <li><a href="#references"> References</a></li>
