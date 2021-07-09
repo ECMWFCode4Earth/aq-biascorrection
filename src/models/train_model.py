@@ -43,7 +43,7 @@ class ModelTrain:
     """
     def __init__(
         self,
-        config_yml_filename: Path,
+        config_yml_filename: str,
         config_folder: str = ROOT_DIR / "models" / "configuration"
     ):
         config = read_yaml(config_folder / config_yml_filename)
@@ -62,9 +62,8 @@ class ModelTrain:
                                   input_dir=self.idir)
         self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
 
-    def __post_init__(self):
         # Shuffle train dataset.
-        columns_X = len(self.X_train)
+        columns_X = len(self.X_train.columns)
         df = pd.concat([self.X_train, self.y_train], axis=1)
         df = df.sample(frac=1)
         self.X_train = df.iloc[:, :columns_X]
@@ -131,9 +130,9 @@ class ModelTrain:
         # self.save_r2_with_time_structure(tr_r2time, True)
 
         print(
-            f"-----------------------------------------------"\n
-            f"--------{self.model_name:^31}--------"\n
-            f"-----------------------------------------------"\n
+            f"-----------------------------------------------\n"
+            f"--------{self.model_name:^31}--------\n"
+            f"-----------------------------------------------\n"
             f"Exp. Var (test): {tr_exp_var:.4f}({exp_var:.4f})\n"
             f"Max error (test): {tr_maxerr} ({maxerr})\n"
             f"MAE (test): {tr_mae:.4f} ({mae:.4f})\n"
@@ -208,9 +207,9 @@ class ModelTrain:
         rmse = (self.y_test ** 2).mean() ** 0.5
 
         print(
-            f"-----------------------------------------------"\n
-            f"--------       CAMS predictions        --------"\n
-            f"-----------------------------------------------"\n
+            f"-----------------------------------------------\n"
+            f"--------       CAMS predictions        --------\n"
+            f"-----------------------------------------------\n"
             f"MAX ERR: {max_err}\n"
             f"MAE: {mae:.4f}\n"
             f"MSE: {mse:.4f}\n"
@@ -244,3 +243,7 @@ class ModelTrain:
         sst = (labels ** 2).cumsum()
         r2time = (sst - ssd) / sst.iloc[-1]
         return exp_var, maxerr, mae, rmse, r2, r2time
+
+
+if __name__ == '__main__':
+    ModelTrain("config_inceptiontime_depth3.yml").run()
