@@ -67,7 +67,7 @@ class ModelTrain:
         for i, model in enumerate(self.models):
             self.update_model_output_dir(model['name'])
             logger.info(f'Training and validating model {i+1} '
-                         f'out of {len(self.models)}')
+                        f'out of {len(self.models)}')
             logger.info(f'Training model with method {model["name"]}')
  
             if model['model_selection']:
@@ -123,11 +123,16 @@ class ModelTrain:
         # self.save_r2_with_time_structure(tr_r2time, True)
 
         print(
+            f"-----------------------------------------------"\n
+            f"--------{self.model_name:^31}--------"\n
+            f"-----------------------------------------------"\n
             f"Exp. Var (test): {tr_exp_var:.4f}({exp_var:.4f})\n"
-            f"Max error (test): {tr_maxerr}({maxerr})\n"
-            f"MAE (test): {tr_mae:.4f}({mae:.4f})\n"
-            f"RMSE (test): {tr_rmse:.4f}({rmse:.4f})\n"
-            f"R2 (test): {tr_r2:.4f}({r2:.4f})")
+            f"Max error (test): {tr_maxerr} ({maxerr})\n"
+            f"MAE (test): {tr_mae:.4f} ({mae:.4f})\n"
+            f"RMSE (test): {tr_rmse:.4f} ({rmse:.4f})\n"
+            f"R2 (test): {tr_r2:.4f} ({r2:.4f})\n")
+
+        cams_max, cams_mae, cams_rmse = self.show_predictions_result()
 
         data = {
             'model': self.model_name,
@@ -144,10 +149,13 @@ class ModelTrain:
                 'max_errors': maxerr,
                 'mean_absolute_error': mae,
                 'root_mean_squared_error': rmse,
-                'r2': r2
+                'r2': r2,
+                'cams_max_err': cams_max,
+                'cams_mae': cams_mae,
+                'cams_rmse': cams_rmse
             }
         }
-        
+
         # Save results.
         filename = f'allstations_{self.variable}_inception_time'
         logger.debug(f"Saving result of {self.model_name} to {self.results_output_dir}/"
@@ -185,6 +193,21 @@ class ModelTrain:
         self.model_name = model_name
         self.results_output_dir = ROOT_DIR / "models" / "results" / model_name
         os.makedirs(self.results_output_dir, exist_ok=True)
+
+    def show_prediction_results(self):
+        max_err = self.y_test.abs().max().round(4).values.tolist()
+        mae = self.y_test.abs().mean()
+        rmse = (self.y_test ** 2).mean() ** 0.5
+
+        print(
+            f"-----------------------------------------------"\n
+            f"--------       CAMS predictions        --------"\n
+            f"-----------------------------------------------"\n
+            f"MAX ERR: {max_err}\n"
+            f"MAE: {mae:.4f}\n"
+            f"MSE: {mse:.4f}\n"
+        )
+        return max_err, mae, rmse
 
     @staticmethod
     def get_metric_results(preds: pd.DataFrame, labels: pd.DataFrame) -> tuple[float, ...]:
