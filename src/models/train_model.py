@@ -55,6 +55,7 @@ class ModelTrain:
         self.n_future = config['data']['n_future']
         self.min_st_obs = config['data']['min_station_observations']
         self.models = config['models']
+        self.categorical_to_numeric = True
 
         logger.info(f'Loading data for variable {self.variable}')
         ds_loader = DatasetLoader(self.variable,
@@ -62,7 +63,12 @@ class ModelTrain:
                                   self.n_future,
                                   self.min_st_obs,
                                   input_dir=self.idir)
-        self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
+        self.__build_datasets()
+
+    def __build_datasets(self):
+        self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load(
+            self.categorical_to_numeric
+        )
 
         # Shuffle train dataset.
         columns_X = len(self.X_train.columns)
@@ -75,6 +81,7 @@ class ModelTrain:
         # Iterate over each model.
         for i, model in enumerate(self.models):
             self.update_model_output_dir(model['name'])
+            self.update_datasets(model)
             logger.info(f'Training and validating model {i+1} '
                         f'out of {len(self.models)}')
             logger.info(f'Training model with method {model["name"]}')
@@ -202,6 +209,16 @@ class ModelTrain:
         self.model_name = model_name
         self.results_output_dir = ROOT_DIR / "models" / "results" / model_name
         os.makedirs(self.results_output_dir, exist_ok=True)
+
+    def update_datasets(self, model: Dict) -> NoReturn:
+        if 'categorical_to_numerical' in model.keys():
+            new = model['categorical_to_numeric']
+        else:
+            new = True  # default option
+
+        if new != self.categorical_to_numeric:
+            self.categorical_to_numeric = new
+            self.__build_datasets()
 
     def show_prediction_results(self):
         max_err = self.y_test.abs().max().round(4).values.tolist()
