@@ -1,4 +1,10 @@
 import pickle
+import os
+import pandas as pd
+from typing import Union, NoReturn
+
+from pathlib import Path
+from src.constants import ROOT_DIR
 from sklearn.linear_model import ElasticNet
 from sklearn.preprocessing import StandardScaler
 
@@ -11,7 +17,7 @@ class ElasticNetRegr(ElasticNet):
         super(ElasticNetRegr, self).__init__(alpha=alpha, l1_ratio=l1_ratio)
         self.scale = StandardScaler()
         self.output_models = ROOT_DIR / "models" / "results" / "ElasticNet"
-        self.output_predictions = ROOT_DIR / "data" / "predictions" / "ElasticNet"
+        self.output_predictions = ROOT_DIR / "data" / "predictions" / "ElasticNet"        
         os.makedirs(self.output_models, exist_ok=True)
         os.makedirs(self.output_predictions, exist_ok=True)
 
@@ -22,7 +28,7 @@ class ElasticNetRegr(ElasticNet):
     def predict(
         self, 
         X: pd.DataFrame,
-        filename: Union[str, path] = None
+        filename: Union[str, Path] = None
     ) -> pd.DataFrame:
         X = self.scale.transform(X)
         y_hat = pd.DataFrame(super(ElasticNetRegr, self).predict(X), index=X.index)
