@@ -1,4 +1,4 @@
-from src.data.utils import get_location_by_id
+from src.data.utils import Location
 
 import logging
 import pandas as pd
@@ -59,7 +59,7 @@ class FeatureBuilder:
         logger.info(f"Reading data from {filename}")
         dataset = pd.read_csv(filename, index_col=1, parse_dates=True)
         var, st_code = filename.replace(".csv", "").split('_')[-2:]
-        loc = get_location_by_id(st_code)
+        loc = Location.get_location_by_id(st_code)
         aux = self.get_features_hour_and_month(dataset[['local_time_hour']])
         dataset = dataset.drop(['Unnamed: 0', 'local_time_hour'],
                                axis=1, errors='ignore')
