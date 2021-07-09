@@ -11,7 +11,6 @@ from src.data.transformation_location import LocationTransformer
 from src.data.utils import Location
 from src.constants import ROOT_DIR
 
-
 logger = logging.getLogger("Data Transformer")
 
 
@@ -37,14 +36,14 @@ class DataTransformer:
     def run(self) -> List[Path]:
         data_for_locations_paths = []
         locations = [Location(
-                location[1]['id'],
-                location[1]['city'],
-                location[1]['country'],
-                location[1]['latitude'],
-                location[1]['longitude'],
-                location[1]['timezone'],
-                location[1]['elevation']
-            ) for location in self.locations.iterrows()]
+            location[1]['id'],
+            location[1]['city'],
+            location[1]['country'],
+            location[1]['latitude'],
+            location[1]['longitude'],
+            location[1]['timezone'],
+            location[1]['elevation']
+        ) for location in self.locations.iterrows()]
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             future_to_entry = {
                 executor.submit(
@@ -61,23 +60,23 @@ class DataTransformer:
         return data_for_locations_paths
 
     def _data_transform(self, loc) -> Path or Exception:
-            try:
-                logger.info(f'Extracting data for location: {str(loc)}')
-                inter_loc_path = self.get_output_path(loc)
-                if inter_loc_path.exists():
-                    logger.info(f"Station at {loc.city} is already computed.")
-                    return inter_loc_path
-                data_for_location = LocationTransformer(
-                    self.variable,
-                    loc,
-                    observations_dir=self.observations_dir,
-                    forecast_dir=self.forecast_dir,
-                    time_range=self.time_range
-                ).run()
-                data_for_location.to_csv(str(inter_loc_path))
+        try:
+            logger.info(f'Extracting data for location: {str(loc)}')
+            inter_loc_path = self.get_output_path(loc)
+            if inter_loc_path.exists():
+                logger.info(f"Station at {loc.city} is already computed.")
                 return inter_loc_path
-            except Exception as ex:
-                return ex
+            data_for_location = LocationTransformer(
+                self.variable,
+                loc,
+                observations_dir=self.observations_dir,
+                forecast_dir=self.forecast_dir,
+                time_range=self.time_range
+            ).run()
+            data_for_location.to_csv(str(inter_loc_path))
+            return inter_loc_path
+        except Exception as ex:
+            return ex
 
     def get_output_path(self, loc: Location) -> Path:
         ext = '.csv'
