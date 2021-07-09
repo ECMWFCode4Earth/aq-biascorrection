@@ -173,6 +173,7 @@ class InceptionTime:
         y_hat = pd.DataFrame(
             y_hat, index=X.index, columns=list(range(1, self.output_dims + 1)))
         if filename is not None:
+            if isinstance(filename, str): filename = Path(filename)
             y_hat.to_csv(self.output_predictions / f"{filename}.csv")
         return y_hat
 
