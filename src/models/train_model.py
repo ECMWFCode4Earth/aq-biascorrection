@@ -244,8 +244,3 @@ class ModelTrain:
         sst = (labels ** 2).cumsum()
         r2time = (sst - ssd) / sst.iloc[-1]
         return exp_var, maxerr, mae, rmse, r2, r2time
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    ModelTrain("inceptiontime_config.yml").run()
