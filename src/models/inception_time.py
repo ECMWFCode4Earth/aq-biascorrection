@@ -149,7 +149,7 @@ class InceptionTime:
         self.output_dims = len(y.columns)
         self.build_model(*shapes)
         history = self.model.fit(
-            features, y, validation_spit=0.2, epochs=self.n_epochs, 
+            features, y, validation_split=0.2, epochs=self.n_epochs, 
             verbose=self.verbose, callbacks=[self.callbacks]
         )
 
