@@ -48,7 +48,7 @@ class ModelTrain:
     ):
         config = read_yaml(config_folder / config_yml_filename)
         self.variable = config['data']['variable']
-        self.idir = Path(config['data']['idir'])
+        self.idir = ROOT_DIR / config['data']['idir']
         self.n_prev_obs = config['data']['n_prev_obs']
         self.n_future = config['data']['n_future']
         self.min_st_obs = config['data']['min_station_observations']
