@@ -11,11 +11,12 @@ models:
     model_selection: False
     model_parameters:
       inception_kernels: [2, 4, 8]
-      depth: 3
+      depth: 9
       n_filters: 4
       batch_size: 64
       n_epochs: 200
       bottleneck_size: 32
+      verbose: 0
     training_method:
       cv: 4
       scoring: neg_mean_absolute_error
