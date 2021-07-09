@@ -112,7 +112,7 @@ class InceptionTime:
 
             # Aux layer
             x_aux = Dense(64, activation='relu')(input_aux)
-            x_aux = Dense(128, activation='relu')(input_aux)
+            x_aux = Dense(128, activation='relu')(x_aux)
             x_aux = Dense(1, activation='relu')(x_aux)
 
         x = input_layer
