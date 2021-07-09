@@ -13,6 +13,7 @@ from sklearn.model_selection import GridSearchCV
 
 from src.features.load_dataset import DatasetLoader
 from src.models.inception_time import InceptionTime
+from src.models.regression import ElasticNetRegr
 from src.models.utils import read_yaml
 from src.constants import ROOT_DIR
 
@@ -22,7 +23,8 @@ logger = logging.getLogger("Model trainer")
 
 models_dict = {
     'xgboost_regressor': xg.XGBRegressor, 
-    'inception_time': InceptionTime
+    'inception_time': InceptionTime,
+    'elasticnet_regressor': ElasticNetRegr
 }
 
 
@@ -243,7 +245,3 @@ class ModelTrain:
         sst = (labels ** 2).cumsum()
         r2time = (sst - ssd) / sst.iloc[-1]
         return exp_var, maxerr, mae, rmse, r2, r2time
-
-
-if __name__ == '__main__':
-    ModelTrain("config_inceptiontime_depth3.yml").run()
