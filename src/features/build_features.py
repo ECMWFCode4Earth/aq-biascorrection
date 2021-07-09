@@ -32,7 +32,8 @@ class FeatureBuilder:
             self,
             filename: str,
             include_time_attrs: bool = True,
-            include_station_attrs: bool = True,
+            categorical_to_numeric: bool = True,
+            include_station_attrs: bool = True
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Generates features and labels dataset. The columns are labeled using the
@@ -60,7 +61,8 @@ class FeatureBuilder:
         dataset = pd.read_csv(filename, index_col=1, parse_dates=True)
         var, st_code = filename.replace(".csv", "").split('_')[-2:]
         loc = Location.get_location_by_id(st_code)
-        aux = self.get_features_hour_and_month(dataset[['local_time_hour']])
+        aux = self.get_features_hour_and_month(
+            dataset[['local_time_hour']], categorical_to_numeric)
         dataset = dataset.drop(['Unnamed: 0', 'local_time_hour'],
                                axis=1, errors='ignore')
 
@@ -103,7 +105,10 @@ class FeatureBuilder:
         return df.dropna()
 
     @staticmethod
-    def get_features_hour_and_month(dataset: pd.DataFrame) -> pd.DataFrame:
+    def get_features_hour_and_month(
+        dataset: pd.DataFrame,
+        categorical_to_numeric: bool = True
+    ) -> pd.DataFrame:
         """
         Computes a dataframe with the sine and cosine decompositions of the month and
         local hour variables.
@@ -118,8 +123,12 @@ class FeatureBuilder:
                           decompositions of the month and hour variables.
         """
         df = pd.DataFrame(index=dataset.index)
-        df['hour_cos_aux'] = np.cos(dataset[['local_time_hour']] * (2 * np.pi / 24))
-        df['hour_sin_aux'] = np.sin(dataset[['local_time_hour']] * (2 * np.pi / 24))
-        df['month_cos_aux'] = np.cos(dataset.index.month * (2 * np.pi / 12))
-        df['month_sin_aux'] = np.sin(dataset.index.month * (2 * np.pi / 12))
+        if categorical_to_numeric:
+            df['hour_cos_aux'] = np.cos(dataset[['local_time_hour']] * (2 * np.pi / 24))
+            df['hour_sin_aux'] = np.sin(dataset[['local_time_hour']] * (2 * np.pi / 24))
+            df['month_cos_aux'] = np.cos(dataset.index.month * (2 * np.pi / 12))
+            df['month_sin_aux'] = np.sin(dataset.index.month * (2 * np.pi / 12))
+        else:
+            df['hour'] = dataset[['local_time_hour']]
+            df['month'] = dataset.index.month
         return df
