@@ -25,4 +25,6 @@ units2str = {
 
 ROOT_DIR = Path(os.getenv('ROOT_DIR', os.path.dirname(os.path.abspath("setup.py"))))
 
+print(f"Project directory (ROOT_DIR): \'{ROOT_DIR}\'")
+
 log_fmt = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
