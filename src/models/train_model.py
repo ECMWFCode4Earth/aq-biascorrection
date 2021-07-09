@@ -205,7 +205,7 @@ class ModelTrain:
         """
         # Compute metrics
         exp_var = float(metrics.explained_variance_score(labels, preds))
-        maxerr = (labels - preds).abs().max().round(4).values
+        maxerr = (labels - preds).abs().max().round(4).values.tolist()
         mae = float(metrics.mean_absolute_error(labels, preds))
         mse = float(metrics.mean_squared_error(labels, preds))
         r2 = float(metrics.r2_score(labels, preds))    
