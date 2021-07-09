@@ -148,10 +148,21 @@ class InceptionTime:
         # Update output dim
         self.output_dims = len(y.columns)
         self.build_model(*shapes)
-        return self.model.fit(
-            features, y, epochs=self.n_epochs, verbose=self.verbose, 
-            callbacks=[self.callbacks]
+        history = self.model.fit(
+            features, y, validation_spit=0.2, epochs=self.n_epochs, 
+            verbose=self.verbose, callbacks=[self.callbacks]
         )
+
+        # Save fig with results
+        plt.figure((12, 9))
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel(self.loss.upper())
+        plt.xlabel('Epoch')
+        plt.legend(['train', 'valid'], loc='upper left')
+        plt.savefig(self.output_models / f"history_{str(self)}.png")
+        return history
 
     def predict(
         self, 
