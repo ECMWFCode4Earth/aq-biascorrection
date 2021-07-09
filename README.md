@@ -394,7 +394,7 @@ plot_station_hourly_bias pm25 Spain -d data/processed -o reports/figures
 
 The main task of this project is to predict the CAMS bias in the following M predictions based on the CAMS predictions in the past N predictions, and the OpenAQ stations attributes. 
 
-<h3 id="inceptiontime"> InceptionTime modified <\h2>
+<h3 id="inceptiontime"> InceptionTime modified </h3>
   
 The [InceptionTime](https://github.com/hfawaz/InceptionTime) model is a neural network used for time series classification with inception modules and residual connections. Its main architecture has been used for extraction of the most relevant features of our CAMS predictions series. A Multi Layer Perceptron (MLP) has been used for the features without temporal variability (for example, hour, month, latitude, longitude or altitude). The output of both modules is passed to another MLP whose last layer is a Dense layer with M neurons.
   
