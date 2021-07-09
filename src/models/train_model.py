@@ -109,7 +109,7 @@ class ModelTrain:
         labels = self.y_test
         preds = model.predict(self.X_test)
 
-        exp_var, maxerr, mae, mse, r2, r2time = get_metric_results(preds, labels)
+        exp_var, maxerr, mae, rmse, r2, r2time = get_metric_results(preds, labels)
         # self.save_r2_with_time_structure(r2time, False)
 
         logger.info("Evaluating performance on train set.")
@@ -117,7 +117,7 @@ class ModelTrain:
         preds = model.predict(self.X_train)
 
         # Compute metrics
-        tr_exp_var, tr_maxerr, tr_mae, tr_mse, tr_r2, tr_r2time = get_metric_results(
+        tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2, tr_r2time = get_metric_results(
             preds, labels
         )
         # self.save_r2_with_time_structure(tr_r2time, True)
@@ -126,7 +126,7 @@ class ModelTrain:
             f"Exp. Var (test): {tr_exp_var:.4f}({exp_var:.4f})\n"
             f"Max error (test): {tr_maxerr}({maxerr})\n"
             f"MAE (test): {tr_mae:.4f}({mae:.4f})\n"
-            f"MSE (test): {tr_mse:.4f}({mse:.4f})\n"
+            f"RMSE (test): {tr_rmse:.4f}({rmse:.4f})\n"
             f"R2 (test): {tr_r2:.4f}({r2:.4f})")
 
         data = {
@@ -137,13 +137,13 @@ class ModelTrain:
                 'explained_variance': tr_exp_var,
                 'max_errors': tr_maxerr,
                 'mean_absolute_error': tr_mae,
-                'mean_squared_error': tr_mse,
+                'root_mean_squared_error': tr_rmse,
                 'r2': tr_r2
             }, 'test' : {
                 'explained_variance': exp_var,
                 'max_errors': maxerr,
                 'mean_absolute_error': mae,
-                'mean_squared_error': mse,
+                'root_mean_squared_error': rmse,
                 'r2': r2
             }
         }
@@ -207,12 +207,12 @@ class ModelTrain:
         exp_var = float(metrics.explained_variance_score(labels, preds))
         maxerr = (labels - preds).abs().max().round(4).values.tolist()
         mae = float(metrics.mean_absolute_error(labels, preds))
-        mse = float(metrics.mean_squared_error(labels, preds))
+        rmse = float(metrics.mean_squared_error(labels, preds, squared=False))
         r2 = float(metrics.r2_score(labels, preds))    
         ssd = ((labels - preds) ** 2).cumsum()
         sst = (labels ** 2).cumsum()
         r2time = (sst - ssd) / sst.iloc[-1]
-        return exp_var, maxerr, mae, mse, r2, r2time
+        return exp_var, maxerr, mae, rmse, r2, r2time
 
 
 if __name__ == '__main__':
