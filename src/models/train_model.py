@@ -62,6 +62,14 @@ class ModelTrain:
                                   input_dir=self.idir)
         self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
 
+    def __post_init__(self):
+        # Shuffle train dataset.
+        columns_X = len(self.X_train)
+        df = pd.concat([self.X_train, self.y_train], axis=1)
+        df = df.sample(frac=1)
+        self.X_train = df.iloc[:, :columns_X]
+        self.y_train = df.iloc[:, columns_X:]
+
     def run(self):
         # Iterate over each model.
         for i, model in enumerate(self.models):
