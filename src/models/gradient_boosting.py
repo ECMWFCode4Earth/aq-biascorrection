@@ -6,7 +6,8 @@ import tensorflow as tf
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, NoReturn, Union, Callable
+from typing import NoReturn, Callable
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
@@ -22,11 +23,13 @@ NUM_SAMPLES = 100000
 class GradientBoosting:
     def __init__(self,
                  n_batches: int = 1,
-                 n_epochs: int = 50):
+                 n_epochs: int = 50,
+                 num_samples: int = 100000):
         self.n_batches = n_batches
         self.n_epochs = n_epochs
+        self.num_samples = num_samples
 
-    def build_model(self, df: pd.DataFrame):
+    def build_model(self, df: pd.DataFrame) -> NoReturn:
         numerical_columns = []
         categorical_columns = []
         for col_name in df.columns:
@@ -55,15 +58,18 @@ class GradientBoosting:
     def fit(self,
             X: pd.DataFrame,
             y: pd.DataFrame,
-            validation_split: float = 0.8):
+            validation_split: float = 0.8) -> NoReturn:
         self.build_model(X)
-        # TODO: implement validation split
-        X_val, y_val = pd.DataFrame, pd.DataFrame
+        X_train, X_val, y_train, y_val = train_test_split(X, y,
+                                                          test_size=validation_split)
         train_input_fn = self.make_input_function(X, y)
         eval_input_fn = self.make_input_function(
-            X_val, y_val,
+            X_val,
+            y_val,
             shuffle=False,
-            n_epochs=self.n_epochs)
+            n_epochs=self.n_epochs,
+            num_samples=self.num_samples
+        )
         self.model.train(train_input_fn, max_steps=100)
         result = self.model.evaluate(eval_input_fn)
         print(pd.Series(result))
@@ -76,16 +82,17 @@ class GradientBoosting:
         X: pd.DataFrame,
         y: pd.DataFrame,
         n_epochs: int = None,
-        shuffle: bool = True
+        shuffle: bool = True,
+        num_samples: int = 100000
     ) -> Callable:
         def func():
             dataset = tf.data.Dataset.from_tensor_slices((dict(X), y))
             if shuffle:
-                dataset = dataset.shuffle(NUM_SAMPLES)
+                dataset = dataset.shuffle(num_samples)
             # For training, cycle thru dataset as many times as need (n_epochs=None).
             dataset = dataset.repeat(n_epochs)
             # In memory training doesn't use batching.
-            dataset = dataset.batch(NUM_SAMPLES)
+            dataset = dataset.batch(num_samples)
             return dataset
         return func
 
