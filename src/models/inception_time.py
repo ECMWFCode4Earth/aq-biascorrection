@@ -2,6 +2,7 @@ import os
 import logging 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
@@ -223,7 +224,8 @@ class InceptionTime:
         return {
             "n_filters": self.n_filters, "bottleneck_size": self.bottleneck_size,
             "optimizer": self.optimizer, "loss": self.loss, 
-            'batch_size': self.batch_size, "n_epochs": self.n_epochs}
+            'batch_size': self.batch_size, "n_epochs": self.n_epochs
+        }
 
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
