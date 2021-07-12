@@ -58,8 +58,7 @@ class ModelTrain:
         ds_loader = DatasetLoader(self.variable,
                                   self.n_prev_obs,
                                   self.n_future,
-                                  self.min_st_obs,
-                                  input_dir=self.idir)
+                                  self.min_st_obs)
         self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
 
     def run(self):
@@ -109,7 +108,7 @@ class ModelTrain:
         labels = self.y_test
         preds = model.predict(self.X_test)
 
-        exp_var, maxerr, mae, mse, r2, r2time = get_metric_results(preds, labels)
+        exp_var, maxerr, mae, mse, r2, r2time = self.get_metric_results(preds, labels)
         # self.save_r2_with_time_structure(r2time, False)
        
         logger.info("Evaluating performance on train set.")
@@ -117,9 +116,10 @@ class ModelTrain:
         preds = model.predict(self.X_train)
         
         # Compute metrics
-        tr_exp_var, tr_maxerr, tr_mae, tr_mse, tr_r2, tr_r2time = get_metric_results(
-            preds, labels
-        )
+        tr_exp_var, tr_maxerr, tr_mae, tr_mse, tr_r2, tr_r2time = \
+            self.get_metric_results(
+                preds, labels
+            )
         # self.save_r2_with_time_structure(tr_r2time, True)
 
         print(
@@ -203,4 +203,4 @@ class ModelTrain:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    ModelTrain("inceptiontime_config.yml").run()
+    ModelTrain(ROOT_DIR / "models/configuration/inceptiontime_config.yml").run()

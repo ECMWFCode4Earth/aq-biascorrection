@@ -11,7 +11,8 @@ from pydantic.dataclasses import dataclass
 
 @dataclass
 class DatasetLoader:
-    """ Class to handle the generation of dataset for both training and testing.
+    """
+    Class to handle the generation of dataset for both training and testing.
 
     Attributes:
         variable (str): Air quality variable to consider. Choices are: pm25, o3 and no2.
