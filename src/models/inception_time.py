@@ -1,10 +1,11 @@
-
+import os
 import logging 
 import numpy as np
 import pandas as pd
 
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, NoReturn, Union
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
@@ -18,6 +19,7 @@ logger = logging.getLogger("InceptionTime")
 
 @dataclass
 class InceptionTime:
+    output_dims: int = 1
     depth: int = 6
     n_filters: int = 32
     batch_size: int = 64
@@ -32,15 +34,22 @@ class InceptionTime:
     def __post_init__(self) -> NoReturn:
         self.attr_scaler = StandardScaler()
         self.aq_vars_scaler = StandardScaler()
-        self.output_directory = ROOT_DIR / "models" / "results" / "InceptionTime"
+        self.output_models = ROOT_DIR / "models" / "results" / "InceptionTime"
+        self.output_predictions = ROOT_DIR / "data" / "predictions" / "InceptionTime"
+        os.makedirs(self.output_models, exist_ok=True)
+        os.makedirs(self.output_predictions, exist_ok=True)
         self._set_callbacks()
+
+    def __str__(self):
+        return f"inceptionTime_{self.depth}depth_{self.n_filters}filters_" \
+               f"{'-'.join(map(str, self.inception_kernels))}kernels"
 
     def _set_callbacks(self):
         logger.info("Two callbacks have been added to the model fitting: "
                     "ModelCheckpoint and ReduceLROnPlateau.")
         reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
                                       min_lr=0.0001)
-        file_path = self.output_directory / 'best_inceptionTime.hdf5'
+        file_path = self.output_models / f'best_{str(self)}.h5'
         model_checkpoint = ModelCheckpoint(filepath=file_path, monitor='loss',
                                            save_best_only=True)
         self.callbacks = [reduce_lr, model_checkpoint]
@@ -103,7 +112,7 @@ class InceptionTime:
 
             # Aux layer
             x_aux = Dense(64, activation='relu')(input_aux)
-            x_aux = Dense(128, activation='relu')(input_aux)
+            x_aux = Dense(128, activation='relu')(x_aux)
             x_aux = Dense(1, activation='relu')(x_aux)
 
         x = input_layer
@@ -123,7 +132,7 @@ class InceptionTime:
         else:
             concatenated = Concatenate()([gap_layer, x_aux])
         output_layer = Dense(100, activation='relu')(concatenated)
-        output_layer = Dense(1, activation='linear')(output_layer)
+        output_layer = Dense(self.output_dims, activation='linear')(output_layer)
 
         if aux_shape:
             self.model = Model(inputs=[input_layer, input_aux], outputs=output_layer)
@@ -131,22 +140,42 @@ class InceptionTime:
             self.model = Model(inputs=input_layer, outputs=output_layer)
 
         logger.info(self.model.summary())
-        self.model.compile(loss=self.loss, optimizer=self.optimizer, 
-                           metrics=['accuracy'])
+        self.model.compile(loss=self.loss, optimizer=self.optimizer)
         return self.model
 
-    def fit(self,
-        X: pd.DataFrame,
-        y: pd.DataFrame,
-        epochs: int = 200
-    ):
+    def fit(self, X: pd.DataFrame, y: pd.DataFrame) -> NoReturn:
         features, shapes = self.reshape_data(X)
+        # Update output dim
+        self.output_dims = len(y.columns)
         self.build_model(*shapes)
-        return self.model.fit(
-            features, y, epochs=epochs, verbose=self.verbose, callbacks=[self.callbacks])
+        history = self.model.fit(
+            features, y, validation_split=0.2, epochs=self.n_epochs, 
+            verbose=self.verbose, callbacks=[self.callbacks]
+        )
 
-    def predict(self, X):
-        return self.model.predict(self.reshape_data(X, test=True))
+        # Save fig with results
+        plt.figure((12, 9))
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel(self.loss.upper())
+        plt.xlabel('Epoch')
+        plt.legend(['train', 'valid'], loc='upper left')
+        plt.savefig(self.output_models / f"history_{str(self)}.png")
+        return history
+
+    def predict(
+        self, 
+        X: pd.DataFrame,
+        filename: Union[Path, str] = None
+    ) -> pd.DataFrame:
+        y_hat = self.model.predict(self.reshape_data(X, test=True)[0])
+        y_hat = pd.DataFrame(
+            y_hat, index=X.index, columns=list(range(1, self.output_dims + 1)))
+        if filename is not None:
+            if isinstance(filename, str): filename = Path(filename)
+            y_hat.to_csv(self.output_predictions / f"{filename}.csv")
+        return y_hat
 
     def reshape_data(
         self, 
@@ -202,9 +231,9 @@ class InceptionTime:
         self.__post_init__()
         return self
 
-    def save(self, filename: str):
-        self.model.save(self.output_directory / f"{filename}.h5")
+    def save(self, filename: str) -> NoReturn:
+        self.model.save(self.output_models / f"{filename}.h5")
 
-    def load(self, filename: str):
-        self.model = load_model(self.output_directory / filename)
+    def load(self, filename: str) -> NoReturn:
+        self.model = load_model(self.output_models / filename)
         print(self.model.summary())

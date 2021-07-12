@@ -38,7 +38,8 @@ class DatasetLoader:
 
     def load(
         self,
-        split_ratio: float = 0.8
+        split_ratio: float = 0.8,
+        categorical_to_numeric: bool = True
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Get the data for all the stations available for the given variable
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
@@ -46,7 +47,8 @@ class DatasetLoader:
 
         # Iterate over all stations
         for station_file in files:
-            X, y = self.fb.build(station_file)
+            X, y = self.fb.build(
+                station_file, categorical_to_numeric=categorical_to_numeric)
             if X is None: continue  # Stations not satisfying min obs. requirement.
             threshold = int(len(X.index) * split_ratio)
             if X_train is None:

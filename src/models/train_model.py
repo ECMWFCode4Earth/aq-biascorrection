@@ -6,12 +6,14 @@ from pathlib import Path
 from typing import Dict, NoReturn
 
 import xgboost as xg
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
 
 from src.features.load_dataset import DatasetLoader
 from src.models.inception_time import InceptionTime
+from src.models.regression import ElasticNetRegr
 from src.models.utils import read_yaml
 from src.constants import ROOT_DIR
 
@@ -21,7 +23,8 @@ logger = logging.getLogger("Model trainer")
 
 models_dict = {
     'xgboost_regressor': xg.XGBRegressor, 
-    'inception_time': InceptionTime
+    'inception_time': InceptionTime,
+    'elasticnet_regressor': ElasticNetRegr
 }
 
 
@@ -32,8 +35,8 @@ class ModelTrain:
     
     Attributes:
         variable (str): Air quality variable to correct.
-        idir (str): Directory of the input data for the model.
-        odir (str): Directory to the output data for the model.
+        idir (Path): Directory of the input data for the model.
+        results_output_dir (Path): Directory to the output data for the model.
         models (dict): collection of Models to train and validate.
         X_train (pd.DataFrame): features used for training purposes.
         y_train (pd.DataFrame): labels of the training instances.
@@ -42,31 +45,45 @@ class ModelTrain:
     """
     def __init__(
         self,
-        config_yml_filename: Path,
+        config_yml_filename: str,
         config_folder: str = ROOT_DIR / "models" / "configuration"
     ):
         config = read_yaml(config_folder / config_yml_filename)
         self.variable = config['data']['variable']
-        self.idir = config['data']['idir']
-        self.odir = config['data']['odir']
+        self.idir = ROOT_DIR / config['data']['idir']
         self.n_prev_obs = config['data']['n_prev_obs']
         self.n_future = config['data']['n_future']
         self.min_st_obs = config['data']['min_station_observations']
         self.models = config['models']
+        self.categorical_to_numeric = True
 
         logger.info(f'Loading data for variable {self.variable}')
         ds_loader = DatasetLoader(self.variable,
                                   self.n_prev_obs,
                                   self.n_future,
-                                  self.min_st_obs)
-        self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load()
+                                  self.min_st_obs,
+                                  input_dir=self.idir)
+        self.__build_datasets()
+
+    def __build_datasets(self):
+        self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load(
+            self.categorical_to_numeric
+        )
+
+        # Shuffle train dataset.
+        columns_X = len(self.X_train.columns)
+        df = pd.concat([self.X_train, self.y_train], axis=1)
+        df = df.sample(frac=1)
+        self.X_train = df.iloc[:, :columns_X]
+        self.y_train = df.iloc[:, columns_X:]
 
     def run(self):
         # Iterate over each model.
         for i, model in enumerate(self.models):
             self.update_model_output_dir(model['name'])
+            self.update_datasets(model)
             logger.info(f'Training and validating model {i+1} '
-                         f'out of {len(self.models)}')
+                        f'out of {len(self.models)}')
             logger.info(f'Training model with method {model["name"]}')
  
             if model['model_selection']:
@@ -101,33 +118,37 @@ class ModelTrain:
         """
         # Model retraining with all training dataset.
         model.fit(self.X_train, self.y_train)
-        model.save(self.odir / self.model_name / f"{self.variable}_inception_time.h5")
+        self.save_model_and_predictions(model)
 
         # Evaluating performance in test dataset.
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
         preds = model.predict(self.X_test)
 
-        exp_var, maxerr, mae, mse, r2, r2time = self.get_metric_results(preds, labels)
+        exp_var, maxerr, mae, rmse, r2, r2time = get_metric_results(preds, labels)
         # self.save_r2_with_time_structure(r2time, False)
-       
+
         logger.info("Evaluating performance on train set.")
         labels = self.y_train
         preds = model.predict(self.X_train)
-        
+
         # Compute metrics
-        tr_exp_var, tr_maxerr, tr_mae, tr_mse, tr_r2, tr_r2time = \
-            self.get_metric_results(
-                preds, labels
-            )
+        tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2, tr_r2time = get_metric_results(
+            preds, labels
+        )
         # self.save_r2_with_time_structure(tr_r2time, True)
 
         print(
+            f"-----------------------------------------------\n"
+            f"--------{self.model_name:^31}--------\n"
+            f"-----------------------------------------------\n"
             f"Exp. Var (test): {tr_exp_var:.4f}({exp_var:.4f})\n"
-            f"Max error (test): {tr_maxerr:.4f}({maxerr:.4f})\n"
-            f"MAE (test): {tr_mae:.4f}({mae:.4f})\n"
-            f"MSE (test): {tr_mse:.4f}({mse:.4f})\n"
-            f"R2 (test): {tr_r2:.4f}({r2:.4f})")
+            f"Max error (test): {tr_maxerr} ({maxerr})\n"
+            f"MAE (test): {tr_mae:.4f} ({mae:.4f})\n"
+            f"RMSE (test): {tr_rmse:.4f} ({rmse:.4f})\n"
+            f"R2 (test): {tr_r2:.4f} ({r2:.4f})\n")
+
+        cams_max, cams_mae, cams_rmse = self.show_predictions_result()
 
         data = {
             'model': self.model_name,
@@ -137,23 +158,40 @@ class ModelTrain:
                 'explained_variance': tr_exp_var,
                 'max_errors': tr_maxerr,
                 'mean_absolute_error': tr_mae,
-                'mean_squared_error': tr_mse,
+                'root_mean_squared_error': tr_rmse,
                 'r2': tr_r2
             }, 'test' : {
                 'explained_variance': exp_var,
                 'max_errors': maxerr,
                 'mean_absolute_error': mae,
-                'mean_squared_error': mse,
-                'r2': r2
+                'root_mean_squared_error': rmse,
+                'r2': r2,
+                'cams_max_err': cams_max,
+                'cams_mae': cams_mae,
+                'cams_rmse': cams_rmse
             }
         }
-        
+
         # Save results.
         filename = f'allstations_{self.variable}_inception_time'
         logger.debug(f"Saving result of {self.model_name} to {self.results_output_dir}/"
                      f"test_{filename}.yml")
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
+
+    def save_model_and_predictions(self, model) -> NoReturn:
+        """ Save model fitted to the whole training dataset and its predictions for
+        the test datasets considered.
+
+        Args:
+            model: model to save its weights, architecture and predictions of test set.
+        """
+        # Save model
+        data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
+        filename = f"{data_attrs}_{str(model)}"
+        model.save(filename)
+        # Save model predictions on test set.
+        y_hat = model.predict(self.X_test, filename=filename)
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
         outfile = self.results_output_dir / \
@@ -172,8 +210,33 @@ class ModelTrain:
         self.results_output_dir = ROOT_DIR / "models" / "results" / model_name
         os.makedirs(self.results_output_dir, exist_ok=True)
 
+    def update_datasets(self, model: Dict) -> NoReturn:
+        if 'categorical_to_numerical' in model.keys():
+            new = model['categorical_to_numeric']
+        else:
+            new = True  # default option
+
+        if new != self.categorical_to_numeric:
+            self.categorical_to_numeric = new
+            self.__build_datasets()
+
+    def show_prediction_results(self):
+        max_err = self.y_test.abs().max().round(4).values.tolist()
+        mae = self.y_test.abs().mean()
+        rmse = (self.y_test ** 2).mean() ** 0.5
+
+        print(
+            f"-----------------------------------------------\n"
+            f"--------       CAMS predictions        --------\n"
+            f"-----------------------------------------------\n"
+            f"MAX ERR: {max_err}\n"
+            f"MAE: {mae:.4f}\n"
+            f"MSE: {mse:.4f}\n"
+        )
+        return max_err, mae, rmse
+
     @staticmethod
-    def get_metric_results(preds, labels) -> tuple[float, ...]:
+    def get_metric_results(preds: pd.DataFrame, labels: pd.DataFrame) -> tuple[float, ...]:
         """ Computes different metrics given the predictions and the true values.
 
         Args:
@@ -191,16 +254,11 @@ class ModelTrain:
         """
         # Compute metrics
         exp_var = float(metrics.explained_variance_score(labels, preds))
-        maxerr = float(metrics.max_error(labels, preds))
+        maxerr = (labels - preds).abs().max().round(4).values.tolist()
         mae = float(metrics.mean_absolute_error(labels, preds))
-        mse = float(metrics.mean_squared_error(labels, preds))
+        rmse = float(metrics.mean_squared_error(labels, preds, squared=False))
         r2 = float(metrics.r2_score(labels, preds))
-        ssd = ((labels - preds.reshape(-1, 1)) ** 2).cumsum()
+        ssd = ((labels - preds) ** 2).cumsum()
         sst = (labels ** 2).cumsum()
         r2time = (sst - ssd) / sst.iloc[-1]
-        return exp_var, maxerr, mae, mse, r2, r2time
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    ModelTrain(ROOT_DIR / "models/configuration/inceptiontime_config.yml").run()
+        return exp_var, maxerr, mae, rmse, r2, r2time
