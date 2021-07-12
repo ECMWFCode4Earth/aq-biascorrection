@@ -48,8 +48,11 @@ class DatasetLoader:
         # Iterate over all stations
         for station_file in files:
             X, y = self.fb.build(
-                station_file, categorical_to_numeric=categorical_to_numeric)
-            if X is None: continue  # Stations not satisfying min obs. requirement.
+                station_file,
+                categorical_to_numeric=categorical_to_numeric
+            )
+            if X is None:
+                continue  # Stations not satisfying min obs. requirement.
             threshold = int(len(X.index) * split_ratio)
             if X_train is None:
                 X_train, y_train = X.iloc[:threshold, :], y.iloc[:threshold, :]

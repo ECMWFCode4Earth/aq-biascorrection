@@ -2,7 +2,7 @@ import os
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, TypeVar
 
 import xarray as xr
 import pandas as pd
@@ -13,6 +13,8 @@ from src.constants import ROOT_DIR
 
 
 logger = logging.getLogger("Data utilities")
+
+L = TypeVar('L', bound='Location')
 
 
 @dataclass
@@ -72,23 +74,23 @@ class Location:
         )
         return output_path
 
+    @classmethod
+    def get_location_by_id(cls, location_id: str) -> L:
+        """ Get the Location object from the station id.
 
-def get_location_by_id(location_id: str) -> Location:
-    """ Get the Location object from the station id.
+        Args:
+            location_id (str): ID of the location. Style is AA000: two capital letters,
+            followed by three numbers.
 
-    Args:
-        location_id (str): ID of the location. Style is AA000: two capital letters,
-        followed by three numbers.
-
-    Returns:
-        Location: Location object corresponding to the ID.
-    """
-    metadata = pd.read_csv(ROOT_DIR / "data/external/stations.csv",
-                           index_col=0,
-                           usecols=list(range(1, 8)))
-    vals = metadata.loc[location_id].values
-    loc = Location(location_id, *vals)
-    return loc
+        Returns:
+            Location: Location object corresponding to the ID.
+        """
+        metadata = pd.read_csv(ROOT_DIR / "data/external/stations.csv",
+                               index_col=0,
+                               usecols=list(range(1, 8)))
+        vals = metadata.loc[location_id].values
+        loc = cls(location_id, *vals)
+        return loc
 
 
 @retry

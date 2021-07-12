@@ -35,7 +35,7 @@ class ModelTrain:
     
     Attributes:
         variable (str): Air quality variable to correct.
-        idir (Path): Directory of the input data for the model.
+        input_dir (Path): Directory of the input data for the model.
         results_output_dir (Path): Directory to the output data for the model.
         models (dict): collection of Models to train and validate.
         X_train (pd.DataFrame): features used for training purposes.
@@ -46,11 +46,11 @@ class ModelTrain:
     def __init__(
         self,
         config_yml_filename: str,
-        config_folder: str = ROOT_DIR / "models" / "configuration"
+        config_folder: Path = ROOT_DIR / "models" / "configuration"
     ):
         config = read_yaml(config_folder / config_yml_filename)
         self.variable = config['data']['variable']
-        self.idir = ROOT_DIR / config['data']['idir']
+        self.input_dir = ROOT_DIR / config['data']['idir']
         self.n_prev_obs = config['data']['n_prev_obs']
         self.n_future = config['data']['n_future']
         self.min_st_obs = config['data']['min_station_observations']
@@ -58,15 +58,16 @@ class ModelTrain:
         self.categorical_to_numeric = True
 
         logger.info(f'Loading data for variable {self.variable}')
-        ds_loader = DatasetLoader(self.variable,
-                                  self.n_prev_obs,
-                                  self.n_future,
-                                  self.min_st_obs,
-                                  input_dir=self.idir)
+        self.ds_loader = DatasetLoader(
+            self.variable,
+            self.n_prev_obs,
+            self.n_future,
+            self.min_st_obs,
+            input_dir=self.input_dir)
         self.__build_datasets()
 
     def __build_datasets(self):
-        self.X_train, self.y_train, self.X_test, self.y_test = ds_loader.load(
+        self.X_train, self.y_train, self.X_test, self.y_test = self.ds_loader.load(
             self.categorical_to_numeric
         )
 
@@ -87,16 +88,16 @@ class ModelTrain:
             logger.info(f'Training model with method {model["name"]}')
  
             if model['model_selection']:
-                self.selection_traininig_and_evalution(model)
+                self.selection_train_and_evaluation(model)
             else:
-                self.training_and_evaluation(model)
+                self.train_and_evaluation(model)
 
-    def training_and_evaluation(self, model: Dict):
+    def train_and_evaluation(self, model: Dict):
         mo = models_dict[model['type']](**model['model_parameters'])
         self.evaluate_model(mo)
         return mo
 
-    def selection_traininig_and_evalution(self, model: Dict):
+    def selection_train_and_evaluation(self, model: Dict):
         training_params = model['training_method']
 
         gridsearch = GridSearchCV(
@@ -125,7 +126,10 @@ class ModelTrain:
         labels = self.y_test
         preds = model.predict(self.X_test)
 
-        exp_var, maxerr, mae, rmse, r2, r2time = get_metric_results(preds, labels)
+        test_metrics = self.get_metric_results(
+            preds, labels
+        )
+        te_exp_var, te_maxerr, te_mae, te_rmse, te_r2, te_r2time = test_metrics
         # self.save_r2_with_time_structure(r2time, False)
 
         logger.info("Evaluating performance on train set.")
@@ -133,22 +137,23 @@ class ModelTrain:
         preds = model.predict(self.X_train)
 
         # Compute metrics
-        tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2, tr_r2time = get_metric_results(
+        training_metrics = self.get_metric_results(
             preds, labels
         )
+        tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2, tr_r2time = training_metrics
         # self.save_r2_with_time_structure(tr_r2time, True)
 
         print(
             f"-----------------------------------------------\n"
             f"--------{self.model_name:^31}--------\n"
             f"-----------------------------------------------\n"
-            f"Exp. Var (test): {tr_exp_var:.4f}({exp_var:.4f})\n"
-            f"Max error (test): {tr_maxerr} ({maxerr})\n"
-            f"MAE (test): {tr_mae:.4f} ({mae:.4f})\n"
-            f"RMSE (test): {tr_rmse:.4f} ({rmse:.4f})\n"
-            f"R2 (test): {tr_r2:.4f} ({r2:.4f})\n")
+            f"Exp. Var (test): {tr_exp_var:.4f}({te_exp_var:.4f})\n"
+            f"Max error (test): {tr_maxerr} ({te_maxerr})\n"
+            f"MAE (test): {tr_mae:.4f} ({te_mae:.4f})\n"
+            f"RMSE (test): {tr_rmse:.4f} ({te_rmse:.4f})\n"
+            f"R2 (test): {tr_r2:.4f} ({te_r2:.4f})\n")
 
-        cams_max, cams_mae, cams_rmse = self.show_predictions_result()
+        cams_max, cams_mae, cams_rmse = self.show_prediction_results()
 
         data = {
             'model': self.model_name,
@@ -160,12 +165,13 @@ class ModelTrain:
                 'mean_absolute_error': tr_mae,
                 'root_mean_squared_error': tr_rmse,
                 'r2': tr_r2
-            }, 'test' : {
-                'explained_variance': exp_var,
-                'max_errors': maxerr,
-                'mean_absolute_error': mae,
-                'root_mean_squared_error': rmse,
-                'r2': r2,
+            },
+            'test': {
+                'explained_variance': te_exp_var,
+                'max_errors': te_maxerr,
+                'mean_absolute_error': te_mae,
+                'root_mean_squared_error': te_rmse,
+                'r2': te_r2,
                 'cams_max_err': cams_max,
                 'cams_mae': cams_mae,
                 'cams_rmse': cams_rmse
@@ -231,12 +237,15 @@ class ModelTrain:
             f"-----------------------------------------------\n"
             f"MAX ERR: {max_err}\n"
             f"MAE: {mae:.4f}\n"
-            f"MSE: {mse:.4f}\n"
+            f"RMSE: {rmse:.4f}\n"
         )
         return max_err, mae, rmse
 
     @staticmethod
-    def get_metric_results(preds: pd.DataFrame, labels: pd.DataFrame) -> tuple[float, ...]:
+    def get_metric_results(
+            preds: pd.DataFrame,
+            labels: pd.DataFrame
+    ) -> tuple[float, ...]:
         """ Computes different metrics given the predictions and the true values.
 
         Args:

@@ -50,6 +50,8 @@ class FeatureBuilder:
             filename (str): name of the file containing the data for the station.
             include_time_attrs (bool): whether to include the hour and the month as 
             features.
+            categorical_to_numeric (bool): whether to transform categorical variables
+            (month or hour) to numeric.
             include_station_attrs (bool): whether to include the station attributes like
             longitude, latitude and altitude as features.
 
@@ -62,9 +64,12 @@ class FeatureBuilder:
         var, st_code = filename.replace(".csv", "").split('_')[-2:]
         loc = Location.get_location_by_id(st_code)
         aux = self.get_features_hour_and_month(
-            dataset[['local_time_hour']], categorical_to_numeric)
-        dataset = dataset.drop(['Unnamed: 0', 'local_time_hour'],
-                               axis=1, errors='ignore')
+            dataset[['local_time_hour']], categorical_to_numeric
+        )
+        dataset = dataset.drop(
+            ['Unnamed: 0', 'local_time_hour'],
+            axis=1, errors='ignore'
+        )
 
         # Skip if there is no the minimum number of observations required.
         if len(dataset.index) < self.min_st_obs:
