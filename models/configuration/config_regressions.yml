@@ -2,8 +2,8 @@ data:
   variable: pm25
   idir: data/processed/
   odir: ~/git/esowc/aq-biascorrection/models/weights_storage/
-  n_prev_obs: 40
-  n_future: 6
+  n_prev_obs: 24
+  n_future: 24
   min_station_observations: 46
 models:
   - name: ElasticNet
