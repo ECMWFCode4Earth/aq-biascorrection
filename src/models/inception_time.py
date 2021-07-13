@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, NoReturn, Union
+from typing import List, NoReturn, Union, Tuple
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
@@ -16,6 +16,11 @@ from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
 
 logger = logging.getLogger("InceptionTime")
+
+import tensorflow
+physical_devices = tensorflow.config.experimental.list_physical_devices('GPU')
+assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+config = tensorflow.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 @dataclass
@@ -29,8 +34,8 @@ class InceptionTime:
     bottleneck_size: int = 32
     verbose: int = 2
     optimizer: str = 'adam'
-    loss: str = 'mse'
-    metrics: List[str] = field(default_factory=lambda: ['mae'])
+    loss: str = 'mae'
+    metrics: List[str] = field(default_factory=lambda: ['rmse'])
 
     def __post_init__(self) -> NoReturn:
         self.attr_scaler = StandardScaler()
@@ -150,8 +155,13 @@ class InceptionTime:
         self.output_dims = len(y.columns)
         self.build_model(*shapes)
         history = self.model.fit(
-            features, y, validation_split=0.2, epochs=self.n_epochs, 
-            verbose=self.verbose, callbacks=[self.callbacks]
+            features,
+            y,
+            validation_split=0.2,
+            batch_size=self.batch_size,
+            epochs=self.n_epochs,
+            verbose=self.verbose,
+            callbacks=[self.callbacks]
         )
 
         # Save fig with results
@@ -182,7 +192,7 @@ class InceptionTime:
         self, 
         X: pd.DataFrame, 
         test: bool = False
-    ) -> Union[tuple[pd.DataFrame], tuple[List[pd.DataFrame]]]:
+    ) -> Union[Tuple[pd.DataFrame], Tuple[List[pd.DataFrame]]]:
         attr_df = X.filter(regex="_attr$", axis=1)
         aux_df = X.filter(regex="_aux")
         if len(attr_df.columns):

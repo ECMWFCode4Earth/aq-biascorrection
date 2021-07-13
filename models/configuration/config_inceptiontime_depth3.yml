@@ -1,7 +1,7 @@
 data:
   variable: pm25
-  idir: ~/git/esowc/aq-biascorrection/data/processed/
-  odir: ~/git/esowc/aq-biascorrection/models/weights_storage/
+  idir: data/processed/
+  odir: models/weights_storage/
   n_prev_obs: 24
   n_future: 24
   min_station_observations: 48
@@ -13,10 +13,10 @@ models:
       inception_kernels: [2, 4, 8]
       depth: 3
       n_filters: 4
-      batch_size: 64
+      batch_size: 1024
       n_epochs: 200
-      bottleneck_size: 32
-      verbose: 0
+      bottleneck_size: 4
+      verbose: 2
     training_method:
       cv: 4
       scoring: neg_mean_absolute_error

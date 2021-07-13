@@ -4,8 +4,7 @@ from src.features.build_features import FeatureBuilder
 from src.constants import ROOT_DIR
 
 import pandas as pd
-import numpy as np
-from datacleaner import autoclean
+from typing import Tuple
 from pydantic.dataclasses import dataclass
 
 
@@ -40,7 +39,7 @@ class DatasetLoader:
         self,
         split_ratio: float = 0.8,
         categorical_to_numeric: bool = True
-    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Get the data for all the stations available for the given variable
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
         X_train, y_train, X_test, y_test = None, None, None, None

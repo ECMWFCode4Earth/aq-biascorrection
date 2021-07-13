@@ -3,6 +3,7 @@ from src.data.utils import Location
 import logging
 import pandas as pd
 import numpy as np
+from typing import Tuple
 from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger("Feature Builder")
@@ -34,11 +35,11 @@ class FeatureBuilder:
             include_time_attrs: bool = True,
             categorical_to_numeric: bool = True,
             include_station_attrs: bool = True
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Generates features and labels dataset. The columns are labeled using the
         following guideline:
-            - { variable }_{ type }_ { freq }
+            - { variable }_{ type }_{ freq }
         where the variable represents the air quality variable, the type represents 
         whether it corresponds to a forecast or a observation, and the freq represents 
         the previous time (if it is a number). If freq = 'attr' then the column 
