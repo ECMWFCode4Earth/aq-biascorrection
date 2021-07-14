@@ -68,7 +68,7 @@ class ModelTrain:
 
     def __build_datasets(self):
         self.X_train, self.y_train, self.X_test, self.y_test = self.ds_loader.load(
-            self.categorical_to_numeric
+            categorical_to_numeric=self.categorical_to_numeric
         )
 
         # Shuffle train dataset.
@@ -112,31 +112,37 @@ class ModelTrain:
         self.evaluate_model(gridsearch.best_estimator_)
 
         return gridsearch.best_estimator_
+
+    def train_model(self, model) -> NoReturn:
+        """
+        Train the model using the training dataset. If the model is stored in .h5
+        format, it only loads the model without training it.
+        """
+        output_path = self.get_model_output_path(model)
+        if output_path.exists():
+            model.load(output_path)
+        else:
+            model.fit(self.X_train, self.y_train)
+            model.save(output_path)
     
     def evaluate_model(self, model) -> NoReturn:
         """
-        Evaluate the model performance of a model in both trainig and test dataset.
+        Evaluate the model performance of a model in both training and test dataset.
         """
-        # Model retraining with all training dataset.
-        model.fit(self.X_train, self.y_train)
-        self.save_model_and_predictions(model)
-
         # Evaluating performance in test dataset.
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
         preds = model.predict(self.X_test)
-
         test_metrics = self.get_metric_results(
             preds, labels
         )
         te_exp_var, te_maxerr, te_mae, te_rmse, te_r2, te_r2time = test_metrics
         # self.save_r2_with_time_structure(r2time, False)
 
+        # Evaluating performance in train dataset.
         logger.info("Evaluating performance on train set.")
         labels = self.y_train
         preds = model.predict(self.X_train)
-
-        # Compute metrics
         training_metrics = self.get_metric_results(
             preds, labels
         )
@@ -185,19 +191,17 @@ class ModelTrain:
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
-    def save_model_and_predictions(self, model) -> NoReturn:
-        """ Save model fitted to the whole training dataset and its predictions for
-        the test datasets considered.
+    def get_model_output_path(self, model) -> Path:
+        """
+        Save model fitted to the whole training dataset.
 
         Args:
-            model: model to save its weights, architecture and predictions of test set.
+            model: model to save its weights and architecture.
         """
         # Save model
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
-        filename = f"{data_attrs}_{str(model)}"
-        model.save(filename)
-        # Save model predictions on test set.
-        y_hat = model.predict(self.X_test, filename=filename)
+        filename = Path(f"{data_attrs}_{str(model)}")
+        return filename
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
         outfile = self.results_output_dir / \

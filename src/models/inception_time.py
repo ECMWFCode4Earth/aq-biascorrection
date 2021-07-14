@@ -165,7 +165,7 @@ class InceptionTime:
         )
 
         # Save fig with results
-        plt.figure((12, 9))
+        plt.figure(figsize=(12, 9))
         plt.plot(history.history['loss'])
         plt.plot(history.history['val_loss'])
         plt.title('model loss')

@@ -28,6 +28,7 @@ def main(
 
     logger.info('Process finished!')
 
+
 if __name__ == '__main__':
     main(Path('/home/pereza/git/esowc/aq-biascorrection/models/configuration/'
               'config_inceptiontime_depth6.yml'))
