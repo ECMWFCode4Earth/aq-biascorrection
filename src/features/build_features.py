@@ -6,7 +6,8 @@ import numpy as np
 from typing import Tuple
 from pydantic.dataclasses import dataclass
 
-logger = logging.getLogger("Feature Builder")
+from src.logging import get_logger
+logger = get_logger("Feature Builder")
 
 
 @dataclass

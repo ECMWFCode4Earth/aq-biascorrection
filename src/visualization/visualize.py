@@ -12,7 +12,8 @@ import seaborn as sns
 
 from src import constants
 
-log = logging.getLogger("Station Plotter")
+from src.logging import get_logger
+logger = get_logger("Station Plotter")
 preprocess = lambda ds: ds.expand_dims(['station_id', 'latitude', 'longitude'])
 
 

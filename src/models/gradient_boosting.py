@@ -8,14 +8,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import NoReturn, Callable
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
-    Activation, Input, GlobalAveragePooling1D, BatchNormalization
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
-
-logger = logging.getLogger("InceptionTime")
+from src.logging import getLogger
+logger = getLogger("InceptionTime")
 
 NUM_SAMPLES = 100000
 

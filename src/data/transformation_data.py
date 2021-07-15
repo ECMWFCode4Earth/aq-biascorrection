@@ -11,7 +11,8 @@ from src.data.transformation_location import LocationTransformer
 from src.data.utils import Location
 from src.constants import ROOT_DIR
 
-logger = logging.getLogger("Data Transformer")
+from src.logging import get_logger
+logger = get_logger("Data Transformer")
 
 
 class DataTransformer:

@@ -14,7 +14,8 @@ from src.data import utils
 from src.data.utils import Location
 
 
-logger = logging.getLogger("CAMS Processor")
+from src.logging import get_logger
+logger = get_logger("CAMS Processor")
 
 
 class CAMSProcessor:

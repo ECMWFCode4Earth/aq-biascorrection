@@ -14,13 +14,14 @@ from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, 
     Activation, Input, GlobalAveragePooling1D, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
+from src.logging import get_logger
+logger = get_logger("InceptionTime")
 
-logger = logging.getLogger("InceptionTime")
 
-import tensorflow
-physical_devices = tensorflow.config.experimental.list_physical_devices('GPU')
+import tensorflow as tf
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-config = tensorflow.config.experimental.set_memory_growth(physical_devices[0], True)
+config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 @dataclass
@@ -184,7 +185,6 @@ class InceptionTime:
         y_hat = pd.DataFrame(
             y_hat, index=X.index, columns=list(range(1, self.output_dims + 1)))
         if filename is not None:
-            if isinstance(filename, str): filename = Path(filename)
             y_hat.to_csv(self.output_predictions / f"{filename}.csv")
         return y_hat
 
@@ -232,9 +232,12 @@ class InceptionTime:
 
     def get_params(self, deep=True):
         return {
-            "n_filters": self.n_filters, "bottleneck_size": self.bottleneck_size,
-            "optimizer": self.optimizer, "loss": self.loss, 
-            'batch_size': self.batch_size, "n_epochs": self.n_epochs
+            "n_filters": self.n_filters,
+            "bottleneck_size": self.bottleneck_size,
+            "optimizer": self.optimizer,
+            "loss": self.loss,
+            'batch_size': self.batch_size,
+            "n_epochs": self.n_epochs
         }
 
     def set_params(self, **parameters):
@@ -244,7 +247,7 @@ class InceptionTime:
         return self
 
     def save(self, filename: str) -> NoReturn:
-        self.model.save(self.output_models / f"{filename}.h5")
+        self.model.save(self.output_models / filename)
 
     def load(self, filename: str) -> NoReturn:
         self.model = load_model(self.output_models / filename)

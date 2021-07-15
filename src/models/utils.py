@@ -2,8 +2,8 @@ import logging
 
 import yaml
 
-
-logger = logging.getLogger("Model utilities")
+from src.logging import get_logger
+logger = get_logger("Model utilities")
 
 
 def read_yaml(yaml_path):

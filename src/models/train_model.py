@@ -19,7 +19,8 @@ from src.constants import ROOT_DIR
 
 warnings.filterwarnings('ignore')
 
-logger = logging.getLogger("Model trainer")
+from src.logging import get_logger
+logger = get_logger("Model trainer")
 
 models_dict = {
     'gradient_boosting': GradientBoosting,
@@ -94,6 +95,7 @@ class ModelTrain:
 
     def train_and_evaluation(self, model: Dict):
         mo = models_dict[model['type']](**model['model_parameters'])
+        self.train_model(mo)
         self.evaluate_model(mo)
         return mo
 
@@ -118,12 +120,12 @@ class ModelTrain:
         Train the model using the training dataset. If the model is stored in .h5
         format, it only loads the model without training it.
         """
-        output_path = self.get_model_output_path(model)
-        if output_path.exists():
-            model.load(output_path)
+        model_output_path = self.get_model_output_path(model, 'h5')
+        if model_output_path.exists():
+            model.load(model_output_path)
         else:
             model.fit(self.X_train, self.y_train)
-            model.save(output_path)
+            model.save(model_output_path)
     
     def evaluate_model(self, model) -> NoReturn:
         """
@@ -132,7 +134,8 @@ class ModelTrain:
         # Evaluating performance in test dataset.
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
-        preds = model.predict(self.X_test)
+        predictions_output_path = self.get_model_output_path(model, 'csv')
+        preds = model.predict(self.X_test, filename=predictions_output_path)
         test_metrics = self.get_metric_results(
             preds, labels
         )
@@ -191,17 +194,18 @@ class ModelTrain:
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
-    def get_model_output_path(self, model) -> Path:
+    def get_model_output_path(self, model, ext) -> Path:
         """
         Save model fitted to the whole training dataset.
 
         Args:
             model: model to save its weights and architecture.
+            ext: extension of the file (h5, csv, ...)
         """
-        # Save model
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
-        filename = Path(f"{data_attrs}_{str(model)}")
-        return filename
+        filename = f"{data_attrs}_{str(model)}"
+        file_path = self.results_output_dir / f"{filename}.{ext}"
+        return file_path
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
         outfile = self.results_output_dir / \

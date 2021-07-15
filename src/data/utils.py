@@ -12,7 +12,8 @@ from tenacity import retry
 from src.constants import ROOT_DIR
 
 
-logger = logging.getLogger("Data utilities")
+from src.logging import get_logger
+logger = get_logger("Data utilities")
 
 L = TypeVar('L', bound='Location')
 

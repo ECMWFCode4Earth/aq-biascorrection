@@ -14,7 +14,7 @@ models:
       depth: 6
       n_filters: 8
       batch_size: 256
-      n_epochs: 500
+      n_epochs: 30
       bottleneck_size: 8
       verbose: 2
     training_method:

@@ -8,7 +8,8 @@ from src.models.train_model import ModelTrain
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()
 
-logger = logging.getLogger("Model trainer")
+from src.logging import get_logger
+logger = get_logger("Model trainer")
 
 
 # @click.command()
@@ -30,5 +31,7 @@ def main(
 
 
 if __name__ == '__main__':
-    main(Path('/home/pereza/git/esowc/aq-biascorrection/models/configuration/'
-              'config_inceptiontime_depth6.yml'))
+    main(
+        Path('/home/pereza/git/esowc/aq-biascorrection/models/configuration/'
+             'config_inceptiontime_depth6.yml')
+    )

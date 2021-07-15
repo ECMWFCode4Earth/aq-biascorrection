@@ -7,6 +7,8 @@ import pandas as pd
 from typing import Tuple
 from pydantic.dataclasses import dataclass
 
+from src.logging import get_logger
+logger = get_logger("Dataset Loader")
 
 @dataclass
 class DatasetLoader:

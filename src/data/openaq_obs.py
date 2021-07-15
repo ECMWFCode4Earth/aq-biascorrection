@@ -15,7 +15,8 @@ from src.data import utils
 from src.constants import units2str, var2longstr
 
 
-logger = logging.getLogger("OpenAQ Downloader")
+from src.logging import get_logger
+logger = get_logger("OpenAQ Downloader")
 warnings.filterwarnings("ignore")
 
 
