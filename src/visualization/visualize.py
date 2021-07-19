@@ -54,11 +54,11 @@ class StationTemporalSeriesPlotter:
         self.codes = []
         for i, path in enumerate(paths):
             if os.path.exists(path):
-                log.debug(f"Data for station {ids[i]} is found.")
+                logger.debug(f"Data for station {ids[i]} is found.")
                 self.data[ids[i]] = pd.read_csv(path, index_col=0)
                 self.codes.append(ids[i])
             else:
-                log.info(f"Data for station {ids[i]} is not found.")
+                logger.info(f"Data for station {ids[i]} is not found.")
 
     def plot_data(self, output_path: Path = None, agg: str = None) -> NoReturn:
         """Plot the for the variable requested in the stations whose position
@@ -70,10 +70,10 @@ class StationTemporalSeriesPlotter:
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
-            log.debug(f"Plotting data for {info.city.values[0]}")
-            df = self.data[st_code].set_index("index")
-            df.index.name = "Date"
-            if agg:
+            logger.debug(f"Plotting data for {info.city.values[0]}")
+            df = self.data[st_code].set_index('index')
+            df.index.name = 'Date'
+            if agg: 
                 df = aggregate_df(df, agg)
             df[f"{self.varname}_forecast"] = (
                 df[f"{self.varname}_observed"] + df[f"{self.varname}_bias"]
@@ -111,7 +111,7 @@ class StationTemporalSeriesPlotter:
                 freq = f"{agg}_" if agg else ""
                 filename = f"{freq}{self.varname}_bias_{city}_{country}.png"
                 output_filename = output_path / filename
-                log.info(f"Plot saved to {output_filename}.")
+                logger.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
         if not output_path:
             plt.show()
@@ -125,8 +125,8 @@ class StationTemporalSeriesPlotter:
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
-            log.debug(f"Plotting data for {info.city.values[0]}")
-            df = self.data[st_code].set_index("index")
+            logger.debug(f"Plotting data for {info.city.values[0]}")
+            df = self.data[st_code].set_index('index')
             df.index = pd.to_datetime(df.index)
             df_grouped = df[f"{self.varname}_bias"].groupby(df.index.month)
             df = df_grouped.agg(["mean", "std", "count"])
@@ -178,7 +178,7 @@ class StationTemporalSeriesPlotter:
                 country = "".join(info.country.values[0].split(" ")).lower()
                 filename = f"{self.varname}_bias_{city}_{country}.png"
                 output_filename = output_path / filename
-                log.info(f"Plot saved to {output_filename}.")
+                logger.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
         if not output_path:
             plt.show()
@@ -193,20 +193,18 @@ class StationTemporalSeriesPlotter:
         """
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
-            log.debug(f"Plotting data for {info.city.values[0]}")
-            df = self.data[st_code].set_index("index")
-            df[f"{self.varname}_forecast"] = (
-                df[f"{self.varname}_observed"] + df[f"{self.varname}_bias"]
-            )
-            mean_obs = df[f"{self.varname}_observed"].mean()
-            df = df.drop(f"{self.varname}_observed", axis=1)
-            df["local_time_hour"] = np.cos(
-                2 * pi * df["local_time_hour"] / 24
-            ) + np.sin(2 * pi * df["local_time_hour"] / 24)
+            logger.debug(f"Plotting data for {info.city.values[0]}")
+            df = self.data[st_code].set_index('index')
+            df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
+                df[f'{self.varname}_bias']
+            mean_obs = df[f'{self.varname}_observed'].mean()
+            df = df.drop(f'{self.varname}_observed', axis=1)
+            df['local_time_hour'] = np.cos(2 * pi * df['local_time_hour'] / 24)\
+                + np.sin(2 * pi * df['local_time_hour'] / 24)
 
             # Deseasonalize the time series
-            df = df.drop("local_time_hour", axis=1)
-            vars_to_not_deseasonalize = [f"{self.varname} Error\nDeseasonalized"]
+            df = df.drop('local_time_hour', axis=1)
+            vars_to_not_deseasonalize = [f'{self.varname} Error Raw']
             df.index = pd.to_datetime(df.index)
             months = df.index.month
             df = df.set_index(months, append=True)
@@ -222,8 +220,8 @@ class StationTemporalSeriesPlotter:
             if agg:
                 df = aggregate_df(df.droplevel(1), agg)
 
-            df.columns = [col.split("_")[0] for col in df.columns]
-            plt.figure(figsize=(18, 12))
+            df.columns = [col.split('_')[0] for col in df.columns]
+            plt.figure(figsize=(12, 9))
             mask = np.triu(np.ones(df.shape[1], dtype=np.bool))
             ax = sns.heatmap(
                 df.corr().iloc[:, :-2],
@@ -275,7 +273,7 @@ class StationTemporalSeriesPlotter:
                     f"_bias_{city}_{country}.png"
                 )
                 output_filename = output_path / filename
-                log.info(f"Plot saved to {output_filename}.")
+                logger.info(f"Plot saved to {output_filename}.")
                 plt.savefig(output_filename)
 
         if not output_path:
@@ -298,14 +296,14 @@ class StationTemporalSeriesPlotter:
         stds = pd.DataFrame(index=list(range(24)))
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
-            log.debug(f"Plotting data for {info.city.values[0]}")
+            logger.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
             agg_h = data.groupby("local_time_hour").agg(stats)[bias_var]
             means[info.city.values[0]] = agg_h["mean"]
             stds[info.city.values[0]] = agg_h["std"]
 
         if len(means.columns) == 0:
-            log.error(f"No data available for any station in {self.country}")
+            logger.error(f"No data available for any station in {self.country}")
             return None
 
         m = pd.DataFrame(means, index=agg_h.index)
@@ -326,7 +324,7 @@ class StationTemporalSeriesPlotter:
             country = "".join(info.country.values[0].split(" ")).lower()
             filename = f"hourly_{self.varname}_bias_{country}.png"
             output_filename = output_path / filename
-            log.info(f"Plot saved to {output_filename}.")
+            logger.info(f"Plot saved to {output_filename}.")
             plt.savefig(output_filename)
         else:
             plt.show()
@@ -344,21 +342,19 @@ class StationTemporalSeriesPlotter:
         labels = []
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
-            log.debug(f"Plotting data for {info.city.values[0]}")
+            logger.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
-            ndays = len(aggregate_df(data, "daily", "index").index)
-            log.debug(
-                f"There are {len(data.index)} observation which corresponds to a total of {ndays} days."
-            )
-
-            if agg:
-                data = aggregate_df(data, agg, "index")
-            data["City"] = f"{info.city.values[0]} ({ndays:.0f})"
+            ndays = len(aggregate_df(data, 'daily', 'index').index)
+            logger.debug(f"There are {len(data.index)} observation which corresponds to a total of {ndays} days.")
+            
+            if agg: 
+                data = aggregate_df(data, agg, 'index')
+            data['City'] = f"{info.city.values[0]} ({ndays:.0f})"
             dfs.append(data)
             labels.append(f"{info.city.values[0]} ({ndays:.0f})")
 
         if len(dfs) == 0:
-            log.error(f"No data available for any station in {self.country}")
+            logger.error(f"No data available for any station in {self.country}")
             return None
         df = pd.concat(dfs)
         g = sns.FacetGrid(df, hue="City", height=8, aspect=1.6, legend_out=True)
@@ -386,7 +382,7 @@ class StationTemporalSeriesPlotter:
             freq = freq.replace(" ", "_")
             filename = f"{freq}bias_cdf_{self.varname}_bias_{country}.png"
             output_filename = output_path / filename
-            log.info(f"Plot saved to {output_filename}.")
+            logger.info(f"Plot saved to {output_filename}.")
             plt.savefig(output_filename)
         else:
             plt.show()
@@ -410,3 +406,7 @@ def aggregate_df(df, agg, index_col: str = None) -> pd.DataFrame:
         df = df.resample(constants.str2agg[agg])
 
     return df.mean().dropna()
+
+
+if __name__ == '__main__':
+    StationTemporalSeriesPlotter('pm25', 'Spain').plot_correlations()
