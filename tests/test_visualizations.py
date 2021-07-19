@@ -20,59 +20,59 @@ def mock_metadata():
 
 def test_line_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd, 
-        'read_csv', 
-        side_effect=[mock_metadata(), mock_data()])
+        visualize.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
+    )
     visualize.StationTemporalSeriesPlotter(
-        'pm25',
-        'Canada',
+        "pm25",
+        "Canada",
         Path(constants.ROOT_DIR) / "data" / "processed",
-        stations=['Montreal']
+        stations=["Montreal"],
     ).plot_data()
     visualize.pd.read_csv.assert_called()
 
 
 def test_heatmap_corrs(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd, 
-        'read_csv', 
-        side_effect=[mock_metadata(), mock_data()])
+        visualize.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
+    )
     visualize.StationTemporalSeriesPlotter(
-        'pm25',
-        'Canada',
+        "pm25",
+        "Canada",
         Path(constants.ROOT_DIR) / "data" / "processed",
-        stations=['Montreal']
+        stations=["Montreal"],
     ).plot_correlations()
     visualize.pd.read_csv.assert_called()
 
 
 def test_hourly_bias_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd, 
-        'read_csv', 
-        side_effect=[mock_metadata(), mock_data(), mock_data(), mock_data()])
+        visualize.pd,
+        "read_csv",
+        side_effect=[mock_metadata(), mock_data(), mock_data(), mock_data()],
+    )
     visualize.StationTemporalSeriesPlotter(
-        'pm25',
-        'Canada',
-        Path(constants.ROOT_DIR) / "data" / "processed"
+        "pm25", "Canada", Path(constants.ROOT_DIR) / "data" / "processed"
     ).plot_hourly_bias()
     visualize.pd.read_csv.assert_called()
 
- 
+
 def test_cli_line_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd,
-        'read_csv',
-        side_effect=[mock_metadata(), mock_data()]
+        visualize.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
     )
     runner = CliRunner()
     result = runner.invoke(
-            main_line,
-            ['pm25', 'Canada',
-             '-d', str(Path(constants.ROOT_DIR) / "data" / "processed"),
-             '-s', 'Montreal']
+        main_line,
+        [
+            "pm25",
+            "Canada",
+            "-d",
+            str(Path(constants.ROOT_DIR) / "data" / "processed"),
+            "-s",
+            "Montreal",
+        ],
     )
-    
+
     assert result.exit_code == 0
 
 
@@ -80,24 +80,29 @@ def test_cli_plot_heatmap():
     runner = CliRunner()
     result = runner.invoke(
         main_corrs,
-        ['pm25', 'Canada', 
-         '-d', str(Path(constants.ROOT_DIR) / "data" / "processed"),
-         '-s', 'Montreal']
+        [
+            "pm25",
+            "Canada",
+            "-d",
+            str(Path(constants.ROOT_DIR) / "data" / "processed"),
+            "-s",
+            "Montreal",
+        ],
     )
-    
+
     assert result.exit_code == 0
 
 
 def test_cli_hourly_bias_plot(mocker: MockerFixture):
     mocker.patch.object(
-    visualize.pd, 
-    'read_csv', 
-    side_effect=[mock_metadata(), mock_data(), mock_data(), mock_data()])
+        visualize.pd,
+        "read_csv",
+        side_effect=[mock_metadata(), mock_data(), mock_data(), mock_data()],
+    )
     runner = CliRunner()
     result = runner.invoke(
         main_hourly_bias,
-        ['pm25', 'Canada', 
-         '-d', str(Path(constants.ROOT_DIR) / "data" / "processed")]
+        ["pm25", "Canada", "-d", str(Path(constants.ROOT_DIR) / "data" / "processed")],
     )
-    
+
     assert result.exit_code == 0
