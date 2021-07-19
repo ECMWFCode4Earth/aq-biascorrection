@@ -34,7 +34,9 @@ class DatasetLoader:
     fb: FeatureBuilder = None
 
     def __post_init__(self):
-        self.fb = FeatureBuilder(self.n_prev_obs, self.n_future, self.min_st_obs)
+        self.fb = FeatureBuilder(self.n_prev_obs,
+                                 self.n_future,
+                                 self.min_st_obs)
 
     def load(
         self, split_ratio: float = 0.8, categorical_to_numeric: bool = True

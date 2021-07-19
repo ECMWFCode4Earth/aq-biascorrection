@@ -50,6 +50,7 @@ class ModelTrain:
         config_folder: Path = ROOT_DIR / "models" / "configuration"
     ):
         config = read_yaml(config_folder / config_yml_filename)
+        self.model_ensemble = config['data']['model_ensemble']
         self.variable = config['data']['variable']
         self.input_dir = ROOT_DIR / config['data']['idir']
         self.n_prev_obs = config['data']['n_prev_obs']
@@ -255,16 +256,16 @@ class ModelTrain:
 
     def show_prediction_results(self):
         max_err = self.y_test.abs().max().round(4).values.tolist()
-        mae = self.y_test.abs().mean()
-        rmse = (self.y_test ** 2).mean() ** 0.5
+        mae = self.y_test.abs().mean().round(4).values.tolist()
+        rmse = ((self.y_test ** 2).mean() ** 0.5).round(4).values.tolist()
 
         print(
             f"-----------------------------------------------\n"
             f"--------       CAMS predictions        --------\n"
             f"-----------------------------------------------\n"
             f"MAX ERR: {max_err}\n"
-            f"MAE: {mae:.4f}\n"
-            f"RMSE: {rmse:.4f}\n"
+            f"MAE: {mae}\n"
+            f"RMSE: {rmse}\n"
         )
         return max_err, mae, rmse
 
