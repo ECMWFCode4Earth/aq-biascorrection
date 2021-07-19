@@ -1,11 +1,8 @@
 name: AQ-BiasCorrection
 
 on: 
-  # Trigger the workflow on push or pull request,
-  # but only for the master branch
-  push:
-    branches:
-      - main
+  # Trigger the workflow on pull request,
+  # but only for the main branch
   pull_request:
     branches:
       - main

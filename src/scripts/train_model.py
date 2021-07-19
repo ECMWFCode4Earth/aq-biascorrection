@@ -9,6 +9,7 @@ PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()
 
 from src.logging import get_logger
+
 logger = get_logger("Model trainer")
 
 
@@ -16,22 +17,21 @@ logger = get_logger("Model trainer")
 # @click.option('-c', '--config_file', type=PATH, required=True,
 #               help="Input file where to take the model configuration from")
 def main(
-        config_yaml_path,
+    config_yaml_path,
 ):
     """
     Script to process the CAMS forecasts.
     """
 
-    ModelTrain(
-        config_yaml_path.name,
-        config_yaml_path.parent
-    ).run()
+    ModelTrain(config_yaml_path.name, config_yaml_path.parent).run()
 
-    logger.info('Process finished!')
+    logger.info("Process finished!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(
-        Path('/home/pereza/git/esowc/aq-biascorrection/models/configuration/'
-             'config_inceptiontime_depth6.yml')
+        Path(
+            "/home/pereza/git/esowc/aq-biascorrection/models/configuration/"
+            "config_inceptiontime_depth6.yml"
+        )
     )
