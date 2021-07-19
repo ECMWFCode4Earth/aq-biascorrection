@@ -94,27 +94,24 @@ class FeatureBuilder:
             data_samples["latitude_attr"] = loc.latitude
             data_samples["longitude_attr"] = loc.longitude
             data_samples["elevation_attr"] = loc.elevation
-        X = self.get_features(data_samples)
-        y = self.get_labels(data_samples)
+        X, y = self.get_features_and_labels(data_samples)
 
         index = set(X.index.values).intersection(y.index.values)
         return X.loc[index, :], y.loc[index, :]
 
-    def get_features(self, dataset: pd.DataFrame) -> pd.DataFrame:
-        columns_to_drop = []
+    def get_features_and_labels(
+            self, dataset: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        columns_to_features = []
+        columns_to_labels = []
         for column in dataset.columns:
             if "bias" in column:
-                columns_to_drop.append(column)
-        dataset = dataset.drop(columns=columns_to_drop)
-        return dataset
-
-    def get_labels(self, dataset: pd.DataFrame) -> pd.DataFrame:
-        columns_to_drop = []
-        for column in dataset.columns:
-            if "bias" not in column:
-                columns_to_drop.append(column)
-        dataset = dataset.drop(columns=columns_to_drop)
-        return dataset
+                columns_to_features.append(column)
+            else:
+                columns_to_labels.append(column)
+        X = dataset.drop(columns=columns_to_features)
+        y = dataset.drop(columns=columns_to_labels)
+        return X, y
 
 
     def get_samples(self, dataset: pd.DataFrame) -> pd.DataFrame:
