@@ -32,9 +32,7 @@ class FileProvider:
         #  y en cambio en el else si funciona. A partir de la 2 vez ya funciona
         #  entrando en el IF
         if cached_path.exists() and not self.clobber:
-            logging.info(
-                f"{cached_path} already exists, linking it to {dest_path}"
-            )
+            logging.info(f"{cached_path} already exists, linking it to {dest_path}")
             self._link_or_copy(cached_path, dest_path)
         else:
             logging.info(f"Downloading {cached_path} for testing")
@@ -49,7 +47,7 @@ class FileProvider:
         else:
             self._link_if_different(cached_path, dest_path)
 
-    def  _link_if_different(self, cached_path, dest_path):
+    def _link_if_different(self, cached_path, dest_path):
         try:
             dest_path.symlink_to(cached_path)
             logging.debug(f"Linked {dest_path} to {cached_path}")
@@ -58,19 +56,19 @@ class FileProvider:
 
     def _get_fabric_connection(self):
         return fabric.Connection(
-                self.hostname,
-                port=self.port,
-                connect_kwargs=dict(password=self.password, allow_agent=False)
+            self.hostname,
+            port=self.port,
+            connect_kwargs=dict(password=self.password, allow_agent=False),
         )
 
 
 def get_remote_file(
-        filename: str,
-        localdir: str,
-        cache_dir: Path = Path("/tmp/aq_biascorrection_test_files"),
-        remote_path: str = "testfiles/aq-biascorrection",
-        clobber: bool = False,
-        copy_not_link: bool = False
+    filename: str,
+    localdir: str,
+    cache_dir: Path = Path("/tmp/aq_biascorrection_test_files"),
+    remote_path: str = "testfiles/aq-biascorrection",
+    clobber: bool = False,
+    copy_not_link: bool = False,
 ) -> str:
     if filename != Path(filename).name:
         # There are subfolders in the file name, we need to take these into
@@ -86,7 +84,9 @@ def get_remote_file(
 
     cache_dir.mkdir(parents=True, exist_ok=True)
     ttp = FileProvider(
-        filenames=[actual_filename, ],
+        filenames=[
+            actual_filename,
+        ],
         destdir=localdir,
         cachedir=str(cache_dir),
         hostname="tester@10.11.12.17",
@@ -94,7 +94,7 @@ def get_remote_file(
         port=8222,
         password="8D3zhMi0dr",
         clobber=clobber,
-        copy_not_link=copy_not_link
+        copy_not_link=copy_not_link,
     )
     ttp.get_files()
     return str(Path(localdir, filename))

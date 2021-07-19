@@ -8,7 +8,9 @@ from typing import Tuple
 from pydantic.dataclasses import dataclass
 
 from src.logging import get_logger
+
 logger = get_logger("Dataset Loader")
+
 
 @dataclass
 class DatasetLoader:
@@ -19,10 +21,11 @@ class DatasetLoader:
         variable (str): Air quality variable to consider. Choices are: pm25, o3 and no2.
         n_prev_obs (int): Number of previous times to consider at each time step.
         Default is 0, which means only predictions at current time are considered.
-        n_futute (int): Number of future predictions to correct. Default is 1, which 
+        n_futute (int): Number of future predictions to correct. Default is 1, which
         means that only the next prediction is corrected.
         input_dir (Path): Directory to input data.
     """
+
     variable: str
     n_prev_obs: int = 0
     n_future: int = 1
@@ -31,16 +34,10 @@ class DatasetLoader:
     fb: FeatureBuilder = None
 
     def __post_init__(self):
-        self.fb = FeatureBuilder(
-            self.n_prev_obs,
-            self.n_future,
-            self.min_st_obs
-        )
+        self.fb = FeatureBuilder(self.n_prev_obs, self.n_future, self.min_st_obs)
 
     def load(
-        self,
-        split_ratio: float = 0.8,
-        categorical_to_numeric: bool = True
+        self, split_ratio: float = 0.8, categorical_to_numeric: bool = True
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Get the data for all the stations available for the given variable
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")
@@ -49,8 +46,7 @@ class DatasetLoader:
         # Iterate over all stations
         for station_file in files:
             X, y = self.fb.build(
-                station_file,
-                categorical_to_numeric=categorical_to_numeric
+                station_file, categorical_to_numeric=categorical_to_numeric
             )
             if X is None:
                 continue  # Stations not satisfying min obs. requirement.

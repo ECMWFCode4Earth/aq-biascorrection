@@ -3,7 +3,7 @@ import yaml
 import logging
 import warnings
 from pathlib import Path
-from typing import Dict, NoReturn, Tuple
+from typing import Dict, NoReturn, Tuple, Any, Union
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -94,6 +94,7 @@ class ModelTrain:
                 self.train_and_evaluation(model)
 
     def train_and_evaluation(self, model: Dict):
+        model['model_parameters']['output_dims'] = self.n_future
         mo = models_dict[model['type']](**model['model_parameters'])
         self.train_model(mo)
         self.evaluate_model(mo)
@@ -120,29 +121,32 @@ class ModelTrain:
         Train the model using the training dataset. If the model is stored in .h5
         format, it only loads the model without training it.
         """
-        model_output_path = self.get_model_output_path(model, 'h5')
-        if model_output_path.exists():
-            model.load(model_output_path)
+        model_path, scaler_paths = self.get_model_and_scaler_output_path(model)
+        if model_path.exists() and \
+                scaler_paths["attr_scaler"].exists() and \
+                scaler_paths["aq_vars_scaler"].exists():
+            logger.info('Model and data scalers already exist, loading!')
+            model.load(model_path, scaler_paths)
         else:
+            logger.info('Model does not exist yet, training and saving!')
             model.fit(self.X_train, self.y_train)
-            model.save(model_output_path)
+            model.save(model_path)
     
     def evaluate_model(self, model) -> NoReturn:
         """
         Evaluate the model performance of a model in both training and test dataset.
         """
-        # Evaluating performance in test dataset.
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
-        predictions_output_path = self.get_model_output_path(model, 'csv')
-        preds = model.predict(self.X_test, filename=predictions_output_path)
+        predictions_output_path = self.get_model_predictions_path(model)
+        preds = model.predict(self.X_test,
+                              filepath=predictions_output_path)
         test_metrics = self.get_metric_results(
             preds, labels
         )
         te_exp_var, te_maxerr, te_mae, te_rmse, te_r2, te_r2time = test_metrics
         # self.save_r2_with_time_structure(r2time, False)
 
-        # Evaluating performance in train dataset.
         logger.info("Evaluating performance on train set.")
         labels = self.y_train
         preds = model.predict(self.X_train)
@@ -194,18 +198,33 @@ class ModelTrain:
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
-    def get_model_output_path(self, model, ext) -> Path:
+    def get_model_and_scaler_output_path(self, model) -> Tuple[Path, Dict]:
         """
-        Save model fitted to the whole training dataset.
+        Get paths to save the model and the scalers once the model has been trained
 
         Args:
             model: model to save its weights and architecture.
-            ext: extension of the file (h5, csv, ...)
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
         filename = f"{data_attrs}_{str(model)}"
-        file_path = self.results_output_dir / f"{filename}.{ext}"
-        return file_path
+        model_path = self.results_output_dir / f"{filename}.h5"
+        scaler_paths = {
+            "attr_scaler": self.results_output_dir / f"{filename}_attrscaler.pkl",
+            "aq_vars_scaler": self.results_output_dir / f"{filename}_aqvarsscaler.pkl",
+        }
+        return model_path, scaler_paths
+
+    def get_model_predictions_path(self, model) -> Path:
+        """
+        Get the model predictions path
+
+        Args:
+            model: model that will be used for making the predictions
+        """
+        data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
+        filename = f"{data_attrs}_{str(model)}"
+        predictions_path = self.results_output_dir/ f"{filename}.csv"
+        return predictions_path
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
         outfile = self.results_output_dir / \
