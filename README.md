@@ -418,7 +418,7 @@ The main task of this project is to predict the CAMS bias in the following M pre
 
 The [ElasticNet](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html#sklearn.linear_model.ElasticNet) interface from scikit-learn has been used for model selection of the best regression model, where the parameters alpha and l1_ratio are selected by grid search cross validation in the the training dataset. The linear regression, the lasso regression and the ridge regression are particular cases from this model, which are all considered in the model selection procedure.
 
-The l1_ratio take values in [0, 1], and represents the ratio between the l1 loss term and the l2 loss term. On the other hand, the alpha parameter is a multiplying constant for l1 and l2 loss terms.
+The l1_ratio take values in [0, 1], and represents the ratio between the l1 loss term and the l2 loss term. On the other hand, the alpha parameter is a multiplying constant for l1 and l2 loss terms. This is implemented in [regression.py](https://github.com/esowc/aq-biascorrection/blob/main/src/models/regression.py)
 
 
 
@@ -427,16 +427,20 @@ The l1_ratio take values in [0, 1], and represents the ratio between the l1 loss
   
 The [InceptionTime](https://github.com/hfawaz/InceptionTime) model is a neural network used for time series classification with inception modules and residual connections. Its main architecture has been used for extraction of the most relevant features of our CAMS predictions series. A Multi Layer Perceptron (MLP) has been used for the features without temporal variability (for example, hour, month, latitude, longitude or altitude). The output of both modules is passed to another MLP whose last layer is a Dense layer with M neurons.
   
-This model has different hyperparameters to tune. The inceptions kernels are set following the results presented in Table 1 of [paper](https://arxiv.org/pdf/1909.04939.pdf). The residuals connections are set as in the preivous study (each 3 inception modules) as well as the bottleneck size. Other parameter is the depth of the network, i.e. number of inception modules. We have train and validated our model for depths values of 3, 6, and 9. Other hyperparameter that has been changed is the number of filter m << M, where M=17 is the number of temporal features. So, 4 filters are used in each case.
+This model has different hyperparameters to tune. The inceptions kernels are set following the results presented in Table 1 of [paper](https://arxiv.org/pdf/1909.04939.pdf). The residuals connections are set as in the preivous study (each 3 inception modules) as well as the bottleneck size. Other parameter is the depth of the network, i.e. number of inception modules. We have train and validated our model for depths values of 3, 6, and 9. Other hyperparameter that has been changed is the number of filter m << M, where M=17 is the number of temporal features. So, 4 filters are used in each case. This is implemented in [inception_time.py](https://github.com/esowc/aq-biascorrection/blob/main/src/models/inception_time.py).
 
 
 
 <h3 id="gradient-boosting"> Gradient Boosting </h3>
 
+Gradient Boosting is a supervised algorithm that refers to the ensemble of several decision trees which is implemented in [gradient_boosting.py](https://github.com/esowc/aq-biascorrection/blob/main/src/models/gradient_boosting.py). A particular implementation of gradient boosting is [XGBoost](https://xgboost.readthedocs.io/en/latest/), which improves:
 
+- **Model performance** because it introduces regularization techniques)
+- **Model efficency** because of its ease of parallelization.
 
-<h3 id="ensemble"> Ensemble of methods </h3>
+<h3 id="ensemble"> Ensemble of models </h3>
 
+Lastly, the models which prove to correct reasonably well the bias in the CAMS forecast will be aggregate together.
 
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
