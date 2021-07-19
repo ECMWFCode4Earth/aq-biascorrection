@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, NoReturn, Union, Tuple
+from pickle import load, dump
+from typing import List, NoReturn, Union, Tuple, Dict
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
@@ -179,13 +180,13 @@ class InceptionTime:
     def predict(
         self, 
         X: pd.DataFrame,
-        filename: Union[Path, str] = None
+        filepath: Path = None
     ) -> pd.DataFrame:
         y_hat = self.model.predict(self.reshape_data(X, test=True)[0])
         y_hat = pd.DataFrame(
             y_hat, index=X.index, columns=list(range(1, self.output_dims + 1)))
-        if filename is not None:
-            y_hat.to_csv(self.output_predictions / f"{filename}.csv")
+        if filepath is not None:
+            y_hat.to_csv(filepath)
         return y_hat
 
     def reshape_data(
@@ -246,9 +247,18 @@ class InceptionTime:
         self.__post_init__()
         return self
 
-    def save(self, filename: str) -> NoReturn:
-        self.model.save(self.output_models / filename)
+    def save(self, model_path: Path, scaler_paths: Dict) -> NoReturn:
+        # Save model:
+        self.model.save(model_path)
+        # Save scalers:
+        dump(self.attr_scaler, open(scaler_paths["attr_scaler"], 'wb'))
+        dump(self.aq_vars_scaler, open(scaler_paths["aq_vars_scaler"], 'wb'))
 
-    def load(self, filename: str) -> NoReturn:
-        self.model = load_model(self.output_models / filename)
+    def load(self, model_path: Path, scaler_paths: Dict) -> NoReturn:
+        # Load model
+        self.model = load_model(model_path)
+        # Load scalers:
+        self.attr_scaler = load(open(scaler_paths["attr_scaler"], 'rb'))
+        self.aq_vars_scaler = load(open(scaler_paths["aq_vars_scaler"], 'rb'))
+        # Load StandardScaler associated with that model
         print(self.model.summary())
