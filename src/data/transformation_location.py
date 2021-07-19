@@ -150,7 +150,11 @@ class LocationTransformer:
             )
         # Filter outliers
         observations_data = self.filter_observations_data(observations_data)
-
+        # Rolling through the data
+        for data_var in list(observations_data.data_vars.keys()):
+            observations_data[data_var] = observations_data[data_var].interpolate_na(
+                dim='time', method='linear', fill_value='extrapolate', max_gap='2H'
+            )
         return observations_data
 
     def filter_observations_data(

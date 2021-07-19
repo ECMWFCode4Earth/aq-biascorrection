@@ -5,11 +5,13 @@ import pandas as pd
 import numpy as np
 from typing import Tuple
 from pydantic.dataclasses import dataclass
+from joblib import Memory
 
 from src.logging import get_logger
 
 logger = get_logger("Feature Builder")
 
+mem = Memory(cachedir='/tmp', verbose=1)
 
 @dataclass
 class FeatureBuilder:
@@ -31,6 +33,7 @@ class FeatureBuilder:
     def __post_init__(self):
         if self.min_st_obs is None:
             self.min_st_obs = self.n_future + self.n_prev_obs
+        self.build = mem.cache(self.build)
 
     def build(
         self,
@@ -79,42 +82,68 @@ class FeatureBuilder:
             return pd.DataFrame(), pd.DataFrame()
 
         # Get features and labels
-        X = self.get_features(dataset.drop(f"{var}_bias", axis=1))
+        samples = self.get_samples(dataset)
+        if len(samples) == 0:
+            return pd.DataFrame(), pd.DataFrame()
+        else:
+            data_samples = pd.concat(samples)
+
         if include_time_attrs:
-            X = X.merge(aux, left_index=True, right_index=True)
+            data_samples = data_samples.merge(aux, left_index=True, right_index=True)
         if include_station_attrs:
-            X["latitude_attr"] = loc.latitude
-            X["longitude_attr"] = loc.longitude
-            X["elevation_attr"] = loc.elevation
-        y = self.get_labels(dataset, f"{var}_bias")
+            data_samples["latitude_attr"] = loc.latitude
+            data_samples["longitude_attr"] = loc.longitude
+            data_samples["elevation_attr"] = loc.elevation
+        X = self.get_features(data_samples)
+        y = self.get_labels(data_samples)
 
         index = set(X.index.values).intersection(y.index.values)
         return X.loc[index, :], y.loc[index, :]
 
-    def get_labels(self, dataset: pd.DataFrame, label: str) -> pd.DataFrame:
-        obs_ahead = list(range(1, self.n_future + 1))
-        ds = pd.DataFrame(columns=obs_ahead, index=dataset.index)
-        for obs in obs_ahead:
-            ds[obs] = dataset[label].shift(-obs)
-        return ds.dropna()
-
     def get_features(self, dataset: pd.DataFrame) -> pd.DataFrame:
-        past_obs = list(range(0, self.n_prev_obs))
-        dfs = []
-        for n_past in past_obs:
-            dfs.append(dataset.shift(n_past))
-        df = pd.concat(dfs, axis=1)
-        index_past_val = (
-            np.array(past_obs * len(dataset.columns))
-            .reshape((-1, self.n_prev_obs))
-            .T.ravel()
-        )
-        columns = list(
-            map(lambda x: f"{x[0]}_{str(x[1])}", zip(df.columns.values, index_past_val))
-        )
-        df.columns = columns
-        return df.dropna()
+        columns_to_drop = []
+        for column in dataset.columns:
+            if "bias" in column:
+                columns_to_drop.append(column)
+        dataset = dataset.drop(columns=columns_to_drop)
+        return dataset
 
+    def get_labels(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        columns_to_drop = []
+        for column in dataset.columns:
+            if "bias" not in column:
+                columns_to_drop.append(column)
+        dataset = dataset.drop(columns=columns_to_drop)
+        return dataset
+
+
+    def get_samples(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        number_per_sample = self.n_future + self.n_prev_obs
+        samples = []
+        i = 0
+        while i < len(dataset) - number_per_sample:
+            sample = dataset.iloc[i: i + number_per_sample]
+            # Check that the first time of the sample is 00:00 or 12:00 utc
+            if sample.index[number_per_sample - self.n_future].hour not in [0, 12]:
+                i += 1
+                continue
+            # Check that all times are continuous (not more than 1h between times)
+            if not np.all(np.diff(sample.index.values) == np.timedelta64(1, 'h')):
+                i += 1
+                continue
+            data = {}
+            for t, row in enumerate(sample.iterrows()):
+                row = row[1]
+                for feature in list(row.index):
+                    data[f"{feature}_{t}"] = row[feature]
+            i += 1
+            samples.append(
+                pd.DataFrame(
+                    data,
+                    index=[sample.index[number_per_sample - self.n_future]]
+                )
+            )
+        return samples
     @staticmethod
     def get_features_hour_and_month(
         dataset: pd.DataFrame, categorical_to_numeric: bool = True

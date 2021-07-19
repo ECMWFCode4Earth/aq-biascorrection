@@ -50,7 +50,6 @@ class ModelTrain:
         config_folder: Path = ROOT_DIR / "models" / "configuration"
     ):
         config = read_yaml(config_folder / config_yml_filename)
-        self.model_ensemble = config['data']['model_ensemble']
         self.variable = config['data']['variable']
         self.input_dir = ROOT_DIR / config['data']['idir']
         self.n_prev_obs = config['data']['n_prev_obs']
