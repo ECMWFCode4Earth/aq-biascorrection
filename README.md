@@ -2,6 +2,9 @@
 <h1 align="center"> AQ-BiasCorrection </h1>
 <h3 align="center"> Bias correction of CAMS model forecasts for air quality variables by using in-situ observations. The bias correction algorithm will mainly be based on ML / DL techniques. </h3>  
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) 
+![Continuous Integration](https://github.com/esowc/aq-biascorrection/actions/workflows/github-ci.yml/badge.svg) 
+
 </br>
 
 <p align="center"> 
