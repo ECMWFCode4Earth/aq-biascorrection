@@ -94,6 +94,7 @@ class ModelTrain:
                 self.train_and_evaluation(model)
 
     def train_and_evaluation(self, model: Dict):
+        model['model_parameters']['output_dims'] = self.n_future
         mo = models_dict[model['type']](**model['model_parameters'])
         self.train_model(mo)
         self.evaluate_model(mo)
@@ -199,11 +200,10 @@ class ModelTrain:
 
     def get_model_and_scaler_output_path(self, model) -> Tuple[Path, Dict]:
         """
-        Save model fitted to the whole training dataset.
+        Get paths to save the model and the scalers once the model has been trained
 
         Args:
             model: model to save its weights and architecture.
-            ext: extension of the file (h5, csv, ...)
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
         filename = f"{data_attrs}_{str(model)}"
@@ -216,15 +216,14 @@ class ModelTrain:
 
     def get_model_predictions_path(self, model) -> Path:
         """
-        Save model fitted to the whole training dataset.
+        Get the model predictions path
 
         Args:
-            model: model to save its weights and architecture.
-            ext: extension of the file (h5, csv, ...)
+            model: model that will be used for making the predictions
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
         filename = f"{data_attrs}_{str(model)}"
-        predictions_path = self.results_output_dir / f"{filename}.csv"
+        predictions_path = self.results_output_dir/ f"{filename}.csv"
         return predictions_path
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
