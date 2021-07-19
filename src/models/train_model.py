@@ -17,23 +17,24 @@ from src.models.gradient_boosting import GradientBoosting
 from src.models.utils import read_yaml
 from src.constants import ROOT_DIR
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 from src.logging import get_logger
+
 logger = get_logger("Model trainer")
 
 models_dict = {
-    'gradient_boosting': GradientBoosting,
-    'inception_time': InceptionTime,
-    'elasticnet_regressor': ElasticNetRegr
+    "gradient_boosting": GradientBoosting,
+    "inception_time": InceptionTime,
+    "elasticnet_regressor": ElasticNetRegr,
 }
 
 
 class ModelTrain:
-    """ Class that handles the model selection, training and validation of any set of
-    models with a common structure (having methods: fit, model, predict, set_params, 
+    """Class that handles the model selection, training and validation of any set of
+    models with a common structure (having methods: fit, model, predict, set_params,
     get_params, save and load)
-    
+
     Attributes:
         variable (str): Air quality variable to correct.
         input_dir (Path): Directory of the input data for the model.
@@ -44,27 +45,29 @@ class ModelTrain:
         X_test (pd.DataFrame): features used for assesing the performance of the model.
         y_test (pd.DataFrame): labels of the test instances.
     """
+
     def __init__(
         self,
         config_yml_filename: str,
-        config_folder: Path = ROOT_DIR / "models" / "configuration"
+        config_folder: Path = ROOT_DIR / "models" / "configuration",
     ):
         config = read_yaml(config_folder / config_yml_filename)
-        self.variable = config['data']['variable']
-        self.input_dir = ROOT_DIR / config['data']['idir']
-        self.n_prev_obs = config['data']['n_prev_obs']
-        self.n_future = config['data']['n_future']
-        self.min_st_obs = config['data']['min_station_observations']
-        self.models = config['models']
+        self.variable = config["data"]["variable"]
+        self.input_dir = ROOT_DIR / config["data"]["idir"]
+        self.n_prev_obs = config["data"]["n_prev_obs"]
+        self.n_future = config["data"]["n_future"]
+        self.min_st_obs = config["data"]["min_station_observations"]
+        self.models = config["models"]
         self.categorical_to_numeric = True
 
-        logger.info(f'Loading data for variable {self.variable}')
+        logger.info(f"Loading data for variable {self.variable}")
         self.ds_loader = DatasetLoader(
             self.variable,
             self.n_prev_obs,
             self.n_future,
             self.min_st_obs,
-            input_dir=self.input_dir)
+            input_dir=self.input_dir,
+        )
         self.__build_datasets()
 
     def __build_datasets(self):
@@ -82,33 +85,35 @@ class ModelTrain:
     def run(self):
         # Iterate over each model.
         for i, model in enumerate(self.models):
-            self.update_model_output_dir(model['name'])
+            self.update_model_output_dir(model["name"])
             self.update_datasets(model)
-            logger.info(f'Training and validating model {i+1} '
-                        f'out of {len(self.models)}')
+            logger.info(
+                f"Training and validating model {i+1} " f"out of {len(self.models)}"
+            )
             logger.info(f'Training model with method {model["name"]}')
- 
-            if model['model_selection']:
+
+            if model["model_selection"]:
                 self.selection_train_and_evaluation(model)
             else:
                 self.train_and_evaluation(model)
 
     def train_and_evaluation(self, model: Dict):
-        mo = models_dict[model['type']](**model['model_parameters'])
+        mo = models_dict[model["type"]](**model["model_parameters"])
         self.train_model(mo)
         self.evaluate_model(mo)
         return mo
 
     def selection_train_and_evaluation(self, model: Dict):
-        training_params = model['training_method']
+        training_params = model["training_method"]
 
         gridsearch = GridSearchCV(
-            models_dict[model['type']](),
-            model['model_parameters'],
-            cv=training_params['cv'],
-            scoring=training_params['scoring'],
-            n_jobs=training_params['n_jobs'],
-            verbose=training_params['verbose'])
+            models_dict[model["type"]](),
+            model["model_parameters"],
+            cv=training_params["cv"],
+            scoring=training_params["scoring"],
+            n_jobs=training_params["n_jobs"],
+            verbose=training_params["verbose"],
+        )
 
         gridsearch.fit(self.X_train, self.y_train)
         self.evaluate_model(gridsearch.best_estimator_)
@@ -120,13 +125,13 @@ class ModelTrain:
         Train the model using the training dataset. If the model is stored in .h5
         format, it only loads the model without training it.
         """
-        model_output_path = self.get_model_output_path(model, 'h5')
+        model_output_path = self.get_model_output_path(model, "h5")
         if model_output_path.exists():
             model.load(model_output_path)
         else:
             model.fit(self.X_train, self.y_train)
             model.save(model_output_path)
-    
+
     def evaluate_model(self, model) -> NoReturn:
         """
         Evaluate the model performance of a model in both training and test dataset.
@@ -134,11 +139,9 @@ class ModelTrain:
         # Evaluating performance in test dataset.
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
-        predictions_output_path = self.get_model_output_path(model, 'csv')
+        predictions_output_path = self.get_model_output_path(model, "csv")
         preds = model.predict(self.X_test, filename=predictions_output_path)
-        test_metrics = self.get_metric_results(
-            preds, labels
-        )
+        test_metrics = self.get_metric_results(preds, labels)
         te_exp_var, te_maxerr, te_mae, te_rmse, te_r2, te_r2time = test_metrics
         # self.save_r2_with_time_structure(r2time, False)
 
@@ -146,9 +149,7 @@ class ModelTrain:
         logger.info("Evaluating performance on train set.")
         labels = self.y_train
         preds = model.predict(self.X_train)
-        training_metrics = self.get_metric_results(
-            preds, labels
-        )
+        training_metrics = self.get_metric_results(preds, labels)
         tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2, tr_r2time = training_metrics
         # self.save_r2_with_time_structure(tr_r2time, True)
 
@@ -160,38 +161,41 @@ class ModelTrain:
             f"Max error (test): {tr_maxerr} ({te_maxerr})\n"
             f"MAE (test): {tr_mae:.4f} ({te_mae:.4f})\n"
             f"RMSE (test): {tr_rmse:.4f} ({te_rmse:.4f})\n"
-            f"R2 (test): {tr_r2:.4f} ({te_r2:.4f})\n")
+            f"R2 (test): {tr_r2:.4f} ({te_r2:.4f})\n"
+        )
 
         cams_max, cams_mae, cams_rmse = self.show_prediction_results()
 
         data = {
-            'model': self.model_name,
-            'variable': self.variable,
-            'params': model.get_params(),
-            'train': {
-                'explained_variance': tr_exp_var,
-                'max_errors': tr_maxerr,
-                'mean_absolute_error': tr_mae,
-                'root_mean_squared_error': tr_rmse,
-                'r2': tr_r2
+            "model": self.model_name,
+            "variable": self.variable,
+            "params": model.get_params(),
+            "train": {
+                "explained_variance": tr_exp_var,
+                "max_errors": tr_maxerr,
+                "mean_absolute_error": tr_mae,
+                "root_mean_squared_error": tr_rmse,
+                "r2": tr_r2,
             },
-            'test': {
-                'explained_variance': te_exp_var,
-                'max_errors': te_maxerr,
-                'mean_absolute_error': te_mae,
-                'root_mean_squared_error': te_rmse,
-                'r2': te_r2,
-                'cams_max_err': cams_max,
-                'cams_mae': cams_mae,
-                'cams_rmse': cams_rmse
-            }
+            "test": {
+                "explained_variance": te_exp_var,
+                "max_errors": te_maxerr,
+                "mean_absolute_error": te_mae,
+                "root_mean_squared_error": te_rmse,
+                "r2": te_r2,
+                "cams_max_err": cams_max,
+                "cams_mae": cams_mae,
+                "cams_rmse": cams_rmse,
+            },
         }
 
         # Save results.
-        filename = f'allstations_{self.variable}_inception_time'
-        logger.debug(f"Saving result of {self.model_name} to {self.results_output_dir}/"
-                     f"test_{filename}.yml")
-        with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
+        filename = f"allstations_{self.variable}_inception_time"
+        logger.debug(
+            f"Saving result of {self.model_name} to {self.results_output_dir}/"
+            f"test_{filename}.yml"
+        )
+        with open(self.results_output_dir / f"test_{filename}.yml", "w") as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
     def get_model_output_path(self, model, ext) -> Path:
@@ -202,15 +206,17 @@ class ModelTrain:
             model: model to save its weights and architecture.
             ext: extension of the file (h5, csv, ...)
         """
-        data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
+        data_attrs = "_".join([self.variable, str(self.n_prev_obs), str(self.n_future)])
         filename = f"{data_attrs}_{str(model)}"
         file_path = self.results_output_dir / f"{filename}.{ext}"
         return file_path
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
-        outfile = self.results_output_dir / \
-            f'plot_{"test" if test else "train"}_{self.variable}_" \
+        outfile = (
+            self.results_output_dir
+            / f'plot_{"test" if test else "train"}_{self.variable}_" \
             f"r2_with_time_structure.png'
+        )
         logger.info(f"Plotting R2 with time structure to {outfile}")
         plt.figure(figsize=(12, 9))
         r2_time.plot(legend=False)
@@ -225,8 +231,8 @@ class ModelTrain:
         os.makedirs(self.results_output_dir, exist_ok=True)
 
     def update_datasets(self, model: Dict) -> NoReturn:
-        if 'categorical_to_numerical' in model.keys():
-            new = model['categorical_to_numeric']
+        if "categorical_to_numerical" in model.keys():
+            new = model["categorical_to_numeric"]
         else:
             new = True  # default option
 
@@ -251,10 +257,9 @@ class ModelTrain:
 
     @staticmethod
     def get_metric_results(
-            preds: pd.DataFrame,
-            labels: pd.DataFrame
+        preds: pd.DataFrame, labels: pd.DataFrame
     ) -> Tuple[float, ...]:
-        """ Computes different metrics given the predictions and the true values.
+        """Computes different metrics given the predictions and the true values.
 
         Args:
             preds: predictions of any model.

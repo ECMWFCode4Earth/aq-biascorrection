@@ -12,31 +12,31 @@ from src.constants import ROOT_DIR
 
 
 from src.logging import get_logger
-logger = get_logger('Location Transformer')
+
+logger = get_logger("Location Transformer")
 
 
 class LocationTransformer:
     def __init__(
-            self,
-            variable: str,
-            location: Location,
-            observations_dir: Path = ROOT_DIR / 'data/interim/observations/',
-            forecast_dir: Path = ROOT_DIR / 'data/interim/forecasts/',
-            time_range: Dict[str, str] = None
+        self,
+        variable: str,
+        location: Location,
+        observations_dir: Path = ROOT_DIR / "data/interim/observations/",
+        forecast_dir: Path = ROOT_DIR / "data/interim/forecasts/",
+        time_range: Dict[str, str] = None,
     ):
         self.variable = variable
         if time_range is None:
-            time_range = dict(start='2019-06-01', end='2021-03-31')
+            time_range = dict(start="2019-06-01", end="2021-03-31")
         self.time_range = time_range
         self.location = location
         self.observations_path = location.get_observations_path(
             observations_dir,
             self.variable,
-            '_'.join(self.time_range.values()).replace('-', '')
+            "_".join(self.time_range.values()).replace("-", ""),
         )
         self.forecast_path = location.get_forecast_path(
-            forecast_dir,
-            '_'.join(self.time_range.values()).replace('-', '')
+            forecast_dir, "_".join(self.time_range.values()).replace("-", "")
         )
 
     def run(self) -> pd.DataFrame:
@@ -51,8 +51,9 @@ class LocationTransformer:
         try:
             observed_data = self.opening_and_transforming_observations()
         except Exception as ex:
-            raise Exception('There is not data for this variable at the'
-                            ' location of interest')
+            raise Exception(
+                "There is not data for this variable at the" " location of interest"
+            )
         # Merge both xarray datasets
         merged = xr.merge([forecast_data, observed_data])
         merged_pd = merged.to_dataframe()
@@ -60,13 +61,15 @@ class LocationTransformer:
         merged_pd = self.adding_local_time_hour(merged_pd)
         # There are some stations which has 0s, which seems to be NaN, drop
         # them
-        varname = f'{self.variable}_observed'
+        varname = f"{self.variable}_observed"
         merged_pd[varname] = merged_pd[varname].where(merged_pd[varname] > 0)
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias
-        merged_pd[f'{self.variable}_bias'] = merged_pd[f'{self.variable}_forecast'] \
-            - merged_pd[f'{self.variable}_observed']
+        merged_pd[f"{self.variable}_bias"] = (
+            merged_pd[f"{self.variable}_forecast"]
+            - merged_pd[f"{self.variable}_observed"]
+        )
         merged_pd.reset_index(inplace=True)
         return merged_pd
 
@@ -82,31 +85,28 @@ class LocationTransformer:
         # Open the data
         forecast_data = xr.open_dataset(self.forecast_path)
         # Rename some of the variables
-        forecast_data = forecast_data.rename({'pm2p5': 'pm25',
-                                              'go3': 'o3'})
+        forecast_data = forecast_data.rename({"pm2p5": "pm25", "go3": "o3"})
         # Interpolate time axis to 1h data
         logger.info("Interpolating time data to hourly resolution.")
-        hourly_times = pd.date_range(forecast_data.time.values[0],
-                                     forecast_data.time.values[-1],
-                                     freq='1H')
-        forecast_data = forecast_data.interp(time=hourly_times, method='linear')
+        hourly_times = pd.date_range(
+            forecast_data.time.values[0], forecast_data.time.values[-1], freq="1H"
+        )
+        forecast_data = forecast_data.interp(time=hourly_times, method="linear")
 
         # Transform units of concentration variables
-        for variable in ['pm25', 'o3', 'no2', 'so2', 'pm10']:
+        for variable in ["pm25", "o3", "no2", "so2", "pm10"]:
             logger.info(f"Transforming data for variable {variable}.")
             # The air density depends on temperature and pressure, but an
             # standard is known when 15K and 1 atmosphere of pressure
             surface_pressure = self.calculate_surface_pressure_by_msl(
-                forecast_data['t2m'],
-                forecast_data['msl']
+                forecast_data["t2m"], forecast_data["msl"]
             )
             air_density = self.calculate_air_density(
-                surface_pressure,
-                forecast_data['t2m']
+                surface_pressure, forecast_data["t2m"]
             )
             # Now, we use the air density to transform to Micrograms / m³
             forecast_data[variable] *= air_density.values
-            forecast_data[variable] *= (10 ** 9)
+            forecast_data[variable] *= 10 ** 9
 
         # Some forecast variables are aggregated daily, so a temporal
         # disaggregation is needed
@@ -117,18 +117,14 @@ class LocationTransformer:
         # Rename all the variables to "{variable}_forecast" in order to
         # distinguish them when merged
         for data_var in list(forecast_data.data_vars.keys()):
-            forecast_data = forecast_data.rename(
-                {data_var: f"{data_var}_forecast"}
-            )
+            forecast_data = forecast_data.rename({data_var: f"{data_var}_forecast"})
 
-        forecast_data = forecast_data.drop(
-            ['latitude', 'longitude', 'station_id']
-        )
+        forecast_data = forecast_data.drop(["latitude", "longitude", "station_id"])
         return forecast_data
 
     def opening_and_transforming_observations(self) -> xr.Dataset:
         """
-        Open the observations given the path specified in the object 
+        Open the observations given the path specified in the object
         declaration. It also transforms the units of the air quality variables
         and filter the outliers.
 
@@ -140,9 +136,7 @@ class LocationTransformer:
 
         # Resample the values in order to have the same time frequency as
         # CAMS model forecast
-        observations_data = observations_data.resample(
-            {'time': '1H'}
-        ).mean('time')
+        observations_data = observations_data.resample({"time": "1H"}).mean("time")
         # If there are more than one station associated with the location of
         # interest an average is performed taking into consideration the
         # distance to the location of interest
@@ -158,15 +152,13 @@ class LocationTransformer:
         observations_data = self.filter_observations_data(observations_data)
 
         return observations_data
-    
+
     def filter_observations_data(
-        self, 
-        data: xr.Dataset, 
-        rate_iqr: float = 20
+        self, data: xr.Dataset, rate_iqr: float = 20
     ) -> xr.Dataset:
-        """ 
+        """
         Method for filtering extreme values for the air quality observed values.
-        By defaults it filters values over 20 times the IQR over the third 
+        By defaults it filters values over 20 times the IQR over the third
         quartile.
 
         Args:
@@ -176,15 +168,15 @@ class LocationTransformer:
         Returns:
             xr.Dataset: dataset containing the filtered observations.
         """
-        q3 = float(data.quantile(0.75)[f'{self.variable}_observed'])
-        q1 = float(data.quantile(0.25)[f'{self.variable}_observed'])
+        q3 = float(data.quantile(0.75)[f"{self.variable}_observed"])
+        q1 = float(data.quantile(0.25)[f"{self.variable}_observed"])
         iqr = q3 - q1
         thres = q3 + rate_iqr * iqr
 
         # Filter values over the specified threshold
         logger.debug(f"Filtering observations values over {thres:.2f}.")
-        filtered_data = data.where(data[f'{self.variable}_observed'] < thres)
-        return filtered_data.dropna('time')
+        filtered_data = data.where(data[f"{self.variable}_observed"] < thres)
+        return filtered_data.dropna("time")
 
     def weight_average_with_distance(self, ds: xr.Dataset) -> xr.Dataset:
         """
@@ -192,15 +184,15 @@ class LocationTransformer:
         average of the closes stations to the location of interest.
 
         Args:
-            ds (xr.Dataset): dataset containing a dimension station_id, which 
+            ds (xr.Dataset): dataset containing a dimension station_id, which
             represents different stations.
-        
+
         Returns:
             xr.Dataset: dataset of observed value at the location specified.
         """
         if len(ds.station_id.values) == 1:
-            ds = ds.mean('station_id')
-            ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
+            ds = ds.mean("station_id")
+            ds = ds.drop(["x", "y", "_x", "_y", "distance"])
         else:
             values_weighted_average = []
             for time in ds.time.values:
@@ -224,11 +216,13 @@ class LocationTransformer:
                         list(distance_and_value.keys())
                     ) / sum(distance_and_value.keys())
                     values_weighted_average.append(
-                        np.average(list(distance_and_value.values()),
-                                   weights=weights_normalized)
+                        np.average(
+                            list(distance_and_value.values()),
+                            weights=weights_normalized,
+                        )
                     )
-            ds = ds.drop(['x', 'y', '_x', '_y', 'distance'])
-            ds = ds.mean('station_id')
+            ds = ds.drop(["x", "y", "_x", "_y", "distance"])
+            ds = ds.mean("station_id")
             ds[self.variable][:] = values_weighted_average
         return ds
 
@@ -245,36 +239,25 @@ class LocationTransformer:
         Returns:
             pd.DataFrame: table with new column containing the local time hour.
         """
-        timezone = pytz.timezone(
-            self.location.timezone
-        )
+        timezone = pytz.timezone(self.location.timezone)
         local_time_hour = [
-            timezone.fromutc(
-                pd.to_datetime(x)
-            ).hour for x in df.index.values
+            timezone.fromutc(pd.to_datetime(x)).hour for x in df.index.values
         ]
-        df['local_time_hour'] = local_time_hour
+        df["local_time_hour"] = local_time_hour
         return df
 
     @staticmethod
     def forecast_accumulated_variables_disaggregation(forecast_data):
-        vars_to_temp_diss = ['dsrp', 'tp', 'uvb']
+        vars_to_temp_diss = ["dsrp", "tp", "uvb"]
         for variable in vars_to_temp_diss:
             ds_variable = forecast_data[variable].copy()
-            ds_variable_diff = ds_variable.differentiate(
-                'time', 1, 'h'
-            )
-            ds_variable_diff = ds_variable_diff.where(
-                ds_variable_diff >= 0,
-                0
-            )
+            ds_variable_diff = ds_variable.differentiate("time", 1, "h")
+            ds_variable_diff = ds_variable_diff.where(ds_variable_diff >= 0, 0)
             forecast_data[variable] = ds_variable_diff
         return forecast_data
 
     def calculate_surface_pressure_by_msl(
-        self,
-        temp: xr.DataArray,
-        mslp: xr.DataArray
+        self, temp: xr.DataArray, mslp: xr.DataArray
     ) -> xr.DataArray:
         """
         Method to get the surface pressure by using the elevation of the
@@ -296,8 +279,7 @@ class LocationTransformer:
 
     @staticmethod
     def calculate_air_density(
-        pressure: xr.DataArray,
-        temperature: xr.DataArray
+        pressure: xr.DataArray, temperature: xr.DataArray
     ) -> xr.DataArray:
         """
         Method to get the air density at a given temperature and pressure.
