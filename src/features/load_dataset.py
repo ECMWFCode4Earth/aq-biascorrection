@@ -10,7 +10,7 @@ from pydantic.dataclasses import dataclass
 from src.constants import ROOT_DIR
 from src.features.build_features import FeatureBuilder
 
-memory = Memory(cachedir='/tmp', verbose=1)
+memory = Memory(cachedir='/tmp', verbose=0)
 
 from src.logging import get_logger
 
@@ -45,9 +45,12 @@ class DatasetLoader:
                                  self.n_future,
                                  self.min_st_obs)
         self.load = memory.cache(self.load)
+        self.load_station = memory.cache(self.load_station)
 
     def load(
-        self, split_ratio: float = 0.8, categorical_to_numeric: bool = True
+        self,
+        split_ratio: float = 0.8,
+        categorical_to_numeric: bool = True
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # Get the data for all the stations available for the given variable
         files = glob.glob(f"{self.input_dir}/{self.variable}/*.csv")

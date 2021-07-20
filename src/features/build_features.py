@@ -3,15 +3,12 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-from joblib import Memory
 from pydantic.dataclasses import dataclass
 
 from src.data.utils import Location
 from src.logging import get_logger
 
 logger = get_logger("Feature Builder")
-
-mem = Memory(cachedir='/tmp', verbose=1)
 
 
 @dataclass
@@ -34,7 +31,6 @@ class FeatureBuilder:
     def __post_init__(self):
         if self.min_st_obs is None:
             self.min_st_obs = self.n_future + self.n_prev_obs
-        self.build = mem.cache(self.build)
 
     def build(
         self,
@@ -125,31 +121,29 @@ class FeatureBuilder:
     def get_samples(self, dataset: pd.DataFrame) -> List[pd.DataFrame]:
         number_per_sample = self.n_future + self.n_prev_obs
         samples = []
-        i = 0
-        while i < len(dataset) - number_per_sample:
-            sample = dataset.iloc[i: i + number_per_sample]
-            # Check that the first time of the sample is 00:00 or 12:00 utc
-            if sample.index[number_per_sample - self.n_future].hour not in [0, 12]:
-                i += 1
+        idxs = np.where(np.logical_or(
+            dataset.index.hour == 0,
+            dataset.index.hour == 12
+        ))[0].tolist()
+        for idx in idxs:
+            sample = dataset.iloc[idx: idx + number_per_sample]
+            if len(sample) != number_per_sample:
                 continue
             # Check that all times are continuous (not more than 1h between times)
-            if not np.all(np.diff(sample.index.values) == np.timedelta64(1, 'h')):
-                i += 1
-                continue
-            data = {}
-            for t, row in enumerate(sample.iterrows()):
-                if len(str(t)) == 1:
-                    t = f"0{t}"
-                row = row[1]
-                for feature in list(row.index):
-                    data[f"{feature}_{t}"] = row[feature]
-            i += 1
-            samples.append(
-                pd.DataFrame(
-                    data,
-                    index=[sample.index[number_per_sample - self.n_future]]
+            if np.all(np.diff(sample.index.values) == np.timedelta64(1, 'h')):
+                data = {}
+                for t, row in enumerate(sample.iterrows()):
+                    if len(str(t)) == 1:
+                        t = f"0{t}"
+                    row = row[1]
+                    for feature in list(row.index):
+                        data[f"{feature}_{t}"] = row[feature]
+                samples.append(
+                    pd.DataFrame(
+                        data,
+                        index=[sample.index[number_per_sample - self.n_future]]
+                    )
                 )
-            )
         return samples
 
     @staticmethod

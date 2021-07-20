@@ -48,7 +48,7 @@ class DataTransformer:
             )
             for location in self.locations.iterrows()
         ]
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             future_to_entry = {
                 executor.submit(self._data_transform, location): location
                 for location in locations

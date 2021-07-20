@@ -151,7 +151,11 @@ class LocationTransformer:
         # Rolling through the data
         for data_var in list(observations_data.data_vars.keys()):
             observations_data[data_var] = observations_data[data_var].interpolate_na(
-                dim='time', method='linear', fill_value='extrapolate', max_gap='2H'
+                dim='time',
+                method='linear',
+                fill_value='extrapolate',
+                use_coordinate=True,
+                max_gap=pd.Timedelta(value=4, unit='h')
             )
         return observations_data
 

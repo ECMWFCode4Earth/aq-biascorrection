@@ -64,9 +64,11 @@ class InceptionTime:
         reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                                       factor=0.1,
                                       patience=50,
-                                      min_lr=0.0001)
+                                      min_delta=0.0001,
+                                      min_lr=0.001)
         file_path = self.output_models / f'best_{str(self)}.h5'
-        model_checkpoint = ModelCheckpoint(filepath=file_path, monitor='loss',
+        model_checkpoint = ModelCheckpoint(filepath=file_path,
+                                           monitor='loss',
                                            save_best_only=True)
         self.callbacks = [reduce_lr, model_checkpoint]
 
