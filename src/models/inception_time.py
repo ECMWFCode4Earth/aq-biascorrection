@@ -1,25 +1,27 @@
+import logging
 import os
-import logging 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-from src.constants import ROOT_DIR
 from dataclasses import dataclass, field
 from pathlib import Path
-from pickle import load, dump
-from typing import List, NoReturn, Union, Tuple, Dict
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Concatenate, Add, \
-    Activation, Input, GlobalAveragePooling1D, BatchNormalization
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from pickle import dump, load
+from typing import Dict, List, NoReturn, Tuple, Union
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.keras.layers import (Activation, Add, BatchNormalization,
+                                     Concatenate, Conv1D, Dense,
+                                     GlobalAveragePooling1D, Input, MaxPool1D)
+from tensorflow.keras.models import Model, load_model
+
+from src.constants import ROOT_DIR
 from src.logging import get_logger
+
 logger = get_logger("InceptionTime")
 
-
 import tensorflow as tf
+
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 
 if len(physical_devices) == 0:

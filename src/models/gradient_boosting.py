@@ -1,15 +1,16 @@
-import logging 
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Callable, NoReturn
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
-from src.constants import ROOT_DIR
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import NoReturn, Callable
 from sklearn.model_selection import train_test_split
 
+from src.constants import ROOT_DIR
 from src.logging import get_logger
+
 logger = get_logger("Gradient Boosting")
 
 NUM_SAMPLES = 100000

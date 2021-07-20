@@ -10,11 +10,9 @@ import openaq
 import pandas as pd
 import xarray as xr
 
-from src.data.utils import Location
-from src.data import utils
 from src.constants import units2str, var2longstr
-
-
+from src.data import utils
+from src.data.utils import Location
 from src.logging import get_logger
 
 logger = get_logger("OpenAQ Downloader")

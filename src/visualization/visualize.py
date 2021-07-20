@@ -11,7 +11,6 @@ import pandas as pd
 import seaborn as sns
 
 from src import constants
-
 from src.logging import get_logger
 
 logger = get_logger("Station Plotter")

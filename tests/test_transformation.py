@@ -1,10 +1,9 @@
 import pandas as pd
-
 from pytest_mock import MockerFixture
 
+from src.constants import ROOT_DIR
 from src.data import transformation_location
 from src.data.utils import Location
-from src.constants import ROOT_DIR
 
 
 def test_location_transformation(mocker: MockerFixture):

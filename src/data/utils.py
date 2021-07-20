@@ -1,17 +1,15 @@
-import os
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, TypeVar
 
-import xarray as xr
 import pandas as pd
 import requests
+import xarray as xr
 from tenacity import retry
 
 from src.constants import ROOT_DIR
-
-
 from src.logging import get_logger
 
 logger = get_logger("Data utilities")

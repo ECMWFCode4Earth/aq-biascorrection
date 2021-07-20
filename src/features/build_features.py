@@ -1,12 +1,12 @@
-from src.data.utils import Location
-
 import logging
-import pandas as pd
-import numpy as np
-from typing import Tuple, List
-from pydantic.dataclasses import dataclass
-from joblib import Memory
+from typing import List, Tuple
 
+import numpy as np
+import pandas as pd
+from joblib import Memory
+from pydantic.dataclasses import dataclass
+
+from src.data.utils import Location
 from src.logging import get_logger
 
 logger = get_logger("Feature Builder")

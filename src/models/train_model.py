@@ -1,25 +1,26 @@
-import os
-import yaml
 import logging
+import os
 import warnings
 from pathlib import Path
-from typing import Dict, NoReturn, Tuple, Any, Union
+from typing import Any, Dict, NoReturn, Tuple, Union
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+import yaml
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
 
+from src.constants import ROOT_DIR
 from src.features.load_dataset import DatasetLoader
+from src.models.gradient_boosting import GradientBoosting
 from src.models.inception_time import InceptionTime
 from src.models.regression import ElasticNetRegr
-from src.models.gradient_boosting import GradientBoosting
 from src.models.utils import read_yaml
-from src.constants import ROOT_DIR
 
 warnings.filterwarnings('ignore')
 
 from src.logging import get_logger
+
 logger = get_logger("Model trainer")
 
 models_dict = {

@@ -1,12 +1,13 @@
-import pickle
 import os
-import pandas as pd
-from typing import Union, NoReturn
-
+import pickle
 from pathlib import Path
-from src.constants import ROOT_DIR
+from typing import NoReturn, Union
+
+import pandas as pd
 from sklearn.linear_model import ElasticNet
 from sklearn.preprocessing import StandardScaler
+
+from src.constants import ROOT_DIR
 
 
 class ElasticNetRegr(ElasticNet):

@@ -2,15 +2,14 @@ import filecmp
 import glob
 import tempfile
 
-import pytest
 import pandas as pd
+import pytest
 import xarray as xr
-
-from src.scripts import extraction_openaq, extraction_cams
-from tests.file_provider import get_remote_file
-
-from pytest_mock import MockerFixture
 from click.testing import CliRunner
+from pytest_mock import MockerFixture
+
+from src.scripts import extraction_cams, extraction_openaq
+from tests.file_provider import get_remote_file
 
 
 def test_cli_download_openaq(mocker: MockerFixture):
