@@ -3,7 +3,7 @@ from src.data.utils import Location
 import logging
 import pandas as pd
 import numpy as np
-from typing import Tuple
+from typing import Tuple, List
 from pydantic.dataclasses import dataclass
 from joblib import Memory
 
@@ -12,6 +12,7 @@ from src.logging import get_logger
 logger = get_logger("Feature Builder")
 
 mem = Memory(cachedir='/tmp', verbose=1)
+
 
 @dataclass
 class FeatureBuilder:
@@ -87,6 +88,10 @@ class FeatureBuilder:
             return pd.DataFrame(), pd.DataFrame()
         else:
             data_samples = pd.concat(samples)
+            data_samples = data_samples.reindex(
+                sorted(data_samples.columns),
+                axis=1
+            )
 
         if include_time_attrs:
             data_samples = data_samples.merge(aux, left_index=True, right_index=True)
@@ -94,13 +99,17 @@ class FeatureBuilder:
             data_samples["latitude_attr"] = loc.latitude
             data_samples["longitude_attr"] = loc.longitude
             data_samples["elevation_attr"] = loc.elevation
+        data_samples['station'] = loc.location_id
         X, y = self.get_features_and_labels(data_samples)
 
         index = set(X.index.values).intersection(y.index.values)
-        return X.loc[index, :], y.loc[index, :]
+        X = X.loc[index, :]
+        y = y.loc[index, :]
+        return X, y
 
+    @staticmethod
     def get_features_and_labels(
-            self, dataset: pd.DataFrame
+            dataset: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         columns_to_features = []
         columns_to_labels = []
@@ -113,8 +122,7 @@ class FeatureBuilder:
         y = dataset.drop(columns=columns_to_labels)
         return X, y
 
-
-    def get_samples(self, dataset: pd.DataFrame) -> pd.DataFrame:
+    def get_samples(self, dataset: pd.DataFrame) -> List[pd.DataFrame]:
         number_per_sample = self.n_future + self.n_prev_obs
         samples = []
         i = 0
@@ -130,6 +138,8 @@ class FeatureBuilder:
                 continue
             data = {}
             for t, row in enumerate(sample.iterrows()):
+                if len(str(t)) == 1:
+                    t = f"0{t}"
                 row = row[1]
                 for feature in list(row.index):
                     data[f"{feature}_{t}"] = row[feature]
@@ -141,9 +151,11 @@ class FeatureBuilder:
                 )
             )
         return samples
+
     @staticmethod
     def get_features_hour_and_month(
-        dataset: pd.DataFrame, categorical_to_numeric: bool = True
+        dataset: pd.DataFrame,
+        categorical_to_numeric: bool = True
     ) -> pd.DataFrame:
         """
         Computes a dataframe with the sine and cosine decompositions of the month and
@@ -153,6 +165,8 @@ class FeatureBuilder:
         Args:
             dataset (pd.DataFrame): Dataframe with a column named 'local_time_hour' and
             indexed by timestamps.
+            categorical_to_numeric (bool): Boolean to indicate whether to transform
+            categorical data columns to numeric
 
         Returns:
             pd.DataFrame: Table with 4 columns corresponding to the Cosine and Sine

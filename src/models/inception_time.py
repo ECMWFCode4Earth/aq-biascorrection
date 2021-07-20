@@ -59,7 +59,9 @@ class InceptionTime:
     def _set_callbacks(self):
         logger.info("Two callbacks have been added to the model fitting: "
                     "ModelCheckpoint and ReduceLROnPlateau.")
-        reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
+        reduce_lr = ReduceLROnPlateau(monitor='val_loss',
+                                      factor=0.1,
+                                      patience=50,
                                       min_lr=0.0001)
         file_path = self.output_models / f'best_{str(self)}.h5'
         model_checkpoint = ModelCheckpoint(filepath=file_path, monitor='loss',
@@ -103,7 +105,8 @@ class InceptionTime:
         x = Activation(activation='relu')(x)
         return x
 
-    def _shortcut_layer(self, input_tensor, out_inception):
+    @staticmethod
+    def _shortcut_layer(input_tensor, out_inception):
         shortcut_y = Conv1D(
             filters=int(out_inception.shape[-1]), kernel_size=1, padding='same', 
             use_bias=False
@@ -211,7 +214,7 @@ class InceptionTime:
         else:
             aux_values = aux_df.values
 
-        # Process temporal feaures. Including scaling ignoring timestep.
+        # Process temporal features. Including scaling ignoring timestep.
         temporal_df = X.filter(regex="_\d+$", axis=1)
         n_time_steps = len(set(map(lambda x: x.split("_")[-1], temporal_df.columns)))
         n_temporal_var = len(temporal_df.columns) // n_time_steps
@@ -264,5 +267,4 @@ class InceptionTime:
         # Load scalers:
         self.attr_scaler = load(open(scaler_paths["attr_scaler"], 'rb'))
         self.aq_vars_scaler = load(open(scaler_paths["aq_vars_scaler"], 'rb'))
-        # Load StandardScaler associated with that model
         print(self.model.summary())

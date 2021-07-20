@@ -76,8 +76,12 @@ class ModelTrain:
         columns_X = len(self.X_train.columns)
         df = pd.concat([self.X_train, self.y_train], axis=1)
         df = df.sample(frac=1)
-        self.X_train = df.iloc[:, :columns_X]
-        self.y_train = df.iloc[:, columns_X:]
+        df = df.set_index([
+            df.index,
+            df.station
+        ]).drop('station', axis=1)
+        self.X_train = df[[column for column in df.columns if 'bias' not in column]]
+        self.y_train = df[[column for column in df.columns if 'bias' in column]]
 
     def run(self):
         # Iterate over each model.
@@ -94,10 +98,11 @@ class ModelTrain:
                 self.train_and_evaluation(model)
 
     def train_and_evaluation(self, model: Dict):
-        model['model_parameters']['output_dims'] = self.n_future
-        mo = models_dict[model['type']](**model['model_parameters'])
-        self.train_model(mo)
-        self.evaluate_model(mo)
+        for ensemble_number in range(model['model_ensemble']):
+            model['model_parameters']['output_dims'] = self.n_future
+            mo = models_dict[model['type']](**model['model_parameters'])
+            self.train_model(mo, ensemble_number)
+            self.evaluate_model(mo, ensemble_number)
         return mo
 
     def selection_train_and_evaluation(self, model: Dict):
@@ -116,12 +121,14 @@ class ModelTrain:
 
         return gridsearch.best_estimator_
 
-    def train_model(self, model) -> NoReturn:
+    def train_model(self, model, ensemble_number: int) -> NoReturn:
         """
         Train the model using the training dataset. If the model is stored in .h5
         format, it only loads the model without training it.
         """
-        model_path, scaler_paths = self.get_model_and_scaler_output_path(model)
+        model_path, scaler_paths = self.get_model_and_scaler_output_path(
+            model, ensemble_number
+        )
         if model_path.exists() and \
                 scaler_paths["attr_scaler"].exists() and \
                 scaler_paths["aq_vars_scaler"].exists():
@@ -130,15 +137,18 @@ class ModelTrain:
         else:
             logger.info('Model does not exist yet, training and saving!')
             model.fit(self.X_train, self.y_train)
-            model.save(model_path)
+            model.save(model_path, scaler_paths)
     
-    def evaluate_model(self, model) -> NoReturn:
+    def evaluate_model(self, model, ensemble_number: int) -> NoReturn:
         """
         Evaluate the model performance of a model in both training and test dataset.
         """
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
-        predictions_output_path = self.get_model_predictions_path(model)
+        predictions_output_path = self.get_model_predictions_path(
+            model,
+            ensemble_number
+        )
         preds = model.predict(self.X_test,
                               filepath=predictions_output_path)
         test_metrics = self.get_metric_results(
@@ -192,13 +202,17 @@ class ModelTrain:
         }
 
         # Save results.
-        filename = f'allstations_{self.variable}_inception_time'
+        filename = f'allstations_{self.variable}_inception_time_{ensemble_number}'
         logger.debug(f"Saving result of {self.model_name} to {self.results_output_dir}/"
                      f"test_{filename}.yml")
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
-    def get_model_and_scaler_output_path(self, model) -> Tuple[Path, Dict]:
+    def get_model_and_scaler_output_path(
+            self,
+            model,
+            ensemble_number: int
+        ) -> Tuple[Path, Dict]:
         """
         Get paths to save the model and the scalers once the model has been trained
 
@@ -206,7 +220,7 @@ class ModelTrain:
             model: model to save its weights and architecture.
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
-        filename = f"{data_attrs}_{str(model)}"
+        filename = f"{data_attrs}_{str(model)}_{ensemble_number}"
         model_path = self.results_output_dir / f"{filename}.h5"
         scaler_paths = {
             "attr_scaler": self.results_output_dir / f"{filename}_attrscaler.pkl",
@@ -214,7 +228,11 @@ class ModelTrain:
         }
         return model_path, scaler_paths
 
-    def get_model_predictions_path(self, model) -> Path:
+    def get_model_predictions_path(
+            self,
+            model,
+            ensemble_number: int
+    ) -> Path:
         """
         Get the model predictions path
 
@@ -222,8 +240,8 @@ class ModelTrain:
             model: model that will be used for making the predictions
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
-        filename = f"{data_attrs}_{str(model)}"
-        predictions_path = self.results_output_dir/ f"{filename}.csv"
+        filename = f"{data_attrs}_{str(model)}_{ensemble_number}"
+        predictions_path = self.results_output_dir / f"{filename}.csv"
         return predictions_path
 
     def save_r2_with_time_structure(self, r2_time, test: bool) -> NoReturn:
