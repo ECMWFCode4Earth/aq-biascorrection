@@ -103,14 +103,15 @@ class FeatureBuilder:
         y = y.loc[index, :]
         return X, y
 
-    @staticmethod
     def get_features_and_labels(
+            self,
             dataset: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         columns_to_features = []
         columns_to_labels = []
         for column in dataset.columns:
-            if "bias" in column:
+            hour = column.split('_')[-1]
+            if "bias" in column and float(hour) >= 0:
                 columns_to_features.append(column)
             else:
                 columns_to_labels.append(column)
@@ -133,8 +134,18 @@ class FeatureBuilder:
             if np.all(np.diff(sample.index.values) == np.timedelta64(1, 'h')):
                 data = {}
                 for t, row in enumerate(sample.iterrows()):
-                    if len(str(t)) == 1:
-                        t = f"0{t}"
+                    if t - self.n_prev_obs < 0:
+                        t = abs(t - self.n_prev_obs)
+                        if len(str(t)) == 1:
+                            t = f"-0{t}"
+                        else:
+                            t = f"-{t}"
+                    else:
+                        t = abs(t - self.n_prev_obs)
+                        if len(str(t)) == 1:
+                            t = f"0{t}"
+                        else:
+                            t = f"{t}"
                     row = row[1]
                     for feature in list(row.index):
                         data[f"{feature}_{t}"] = row[feature]

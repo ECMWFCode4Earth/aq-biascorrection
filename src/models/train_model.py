@@ -81,8 +81,17 @@ class ModelTrain:
             df.index,
             df.station
         ]).drop('station', axis=1)
-        self.X_train = df[[column for column in df.columns if 'bias' not in column]]
-        self.y_train = df[[column for column in df.columns if 'bias' in column]]
+        self.X_train = df.iloc[:, :(columns_X - 1)]
+        self.y_train = df.iloc[:, (columns_X - 1):]
+
+        columns_X = len(self.X_test.columns)
+        df_test = pd.concat([self.X_test, self.y_test], axis=1)
+        df_test = df_test.set_index([
+            df_test.index,
+            df_test.station
+        ]).drop('station', axis=1)
+        self.X_test = df_test.iloc[:, :(columns_X - 1)]
+        self.y_test = df_test.iloc[:, (columns_X - 1):]
 
     def run(self):
         # Iterate over each model.

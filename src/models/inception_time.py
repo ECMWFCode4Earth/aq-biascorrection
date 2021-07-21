@@ -47,7 +47,8 @@ class InceptionTime:
 
     def __post_init__(self) -> NoReturn:
         self.attr_scaler = StandardScaler()
-        self.aq_vars_scaler = StandardScaler()
+        self.aq_vars_scaler = dict(past=StandardScaler(),
+                                   future=StandardScaler())
         self.output_models = ROOT_DIR / "models" / "results" / "InceptionTime"
         self.output_predictions = ROOT_DIR / "data" / "predictions" / "InceptionTime"
         os.makedirs(self.output_models, exist_ok=True)
@@ -61,10 +62,9 @@ class InceptionTime:
     def _set_callbacks(self):
         logger.info("Two callbacks have been added to the model fitting: "
                     "ModelCheckpoint and ReduceLROnPlateau.")
-        reduce_lr = ReduceLROnPlateau(monitor='val_loss',
-                                      factor=0.1,
-                                      patience=50,
-                                      min_delta=0.0001,
+        reduce_lr = ReduceLROnPlateau(monitor='loss',
+                                      factor=0.2,
+                                      patience=25,
                                       min_lr=0.001)
         file_path = self.output_models / f'best_{str(self)}.h5'
         model_checkpoint = ModelCheckpoint(filepath=file_path,
@@ -121,10 +121,10 @@ class InceptionTime:
         x = Activation('relu')(x)
         return x
 
-    def build_model(self, input_shape: tuple, aux_shape: tuple = None) -> Model:
-        logger.debug(f'Input data has shaper {input_shape}')
-        input_layer = Input(input_shape)
-        
+    def build_model(self,
+                    input_shape_past: tuple,
+                    input_shape_future: tuple,
+                    aux_shape: tuple = None) -> Model:
         if aux_shape is not None:
             logger.debug(f'Auxiliary input data has shape {aux_shape}')
             input_aux = Input(aux_shape)
@@ -134,29 +134,43 @@ class InceptionTime:
             x_aux = Dense(128, activation='relu')(x_aux)
             x_aux = Dense(1, activation='relu')(x_aux)
 
-        x = input_layer
-        input_res = input_layer
-
+        input_layer_past = Input(input_shape_past)
+        x_past = input_layer_past
+        input_res_past = input_layer_past
         for d in range(self.depth):
-
-            x = self._inception_module(x)
-
+            x_past = self._inception_module(x_past)
             if d % 3 == 2:
-                input_res = x = self._shortcut_layer(input_res, x)
+                input_res_past = x_past = self._shortcut_layer(
+                    input_res_past, x_past
+                )
 
-        gap_layer = GlobalAveragePooling1D()(x)
+        gap_layer_past = GlobalAveragePooling1D()(x_past)
+
+        input_layer_future = Input(input_shape_future)
+        x_future = input_layer_future
+        input_res_future = input_layer_future
+        for d in range(self.depth):
+            x_future = self._inception_module(x_future)
+            if d % 3 == 2:
+                input_res_future = x_future = self._shortcut_layer(
+                    input_res_future, x_future
+                )
+
+        gap_layer_future = GlobalAveragePooling1D()(x_future)
         
         if aux_shape is None:
-            concatenated = gap_layer
+            concatenated = Concatenate()([gap_layer_past, gap_layer_future])
         else:
-            concatenated = Concatenate()([gap_layer, x_aux])
+            concatenated = Concatenate()([gap_layer_past, gap_layer_future, x_aux])
         output_layer = Dense(100, activation='relu')(concatenated)
         output_layer = Dense(self.output_dims, activation='linear')(output_layer)
 
         if aux_shape:
-            self.model = Model(inputs=[input_layer, input_aux], outputs=output_layer)
+            self.model = Model(inputs=[input_layer_past, input_layer_future, input_aux],
+                               outputs=output_layer)
         else:
-            self.model = Model(inputs=input_layer, outputs=output_layer)
+            self.model = Model(inputs=[input_layer_past, input_layer_future],
+                               outputs=output_layer)
 
         logger.info(self.model.summary())
         self.model.compile(loss=self.loss, optimizer=self.optimizer)
@@ -170,7 +184,7 @@ class InceptionTime:
         history = self.model.fit(
             features,
             y,
-            validation_split=0.2,
+            validation_split=0.3,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
@@ -219,24 +233,43 @@ class InceptionTime:
             aux_values = aux_df.values
 
         # Process temporal features. Including scaling ignoring timestep.
-        temporal_df = X.filter(regex="_\d+$", axis=1)
-        n_time_steps = len(set(map(lambda x: x.split("_")[-1], temporal_df.columns)))
-        n_temporal_var = len(temporal_df.columns) // n_time_steps
-        temp_values = temporal_df.values.reshape((-1, n_time_steps, n_temporal_var))
-        temp_values = temp_values.reshape((-1, n_temporal_var))
-        if test:
-            logger.debug("Air Quality variables have been scaled with fitted scaler.")
-            temp_values = self.aq_vars_scaler.transform(temp_values)
-        else:
-            logger.debug("Air Quality variables have been scaled.")
-            temp_values = self.aq_vars_scaler.fit_transform(temp_values)
-        temp_values = temp_values.reshape((-1, n_time_steps, n_temporal_var))
+        temporal_dfs = {
+            'past': X.filter(regex="_-\d+$", axis=1),
+            'future': X.filter(regex="_\d+$", axis=1)
+        }
+        temporal_values = {
+            'past': None,
+            'future': None
+        }
+        for key, temporal_df in temporal_dfs.items():
+            n_time_steps = len(set(map(
+                lambda x: x.split("_")[-1], temporal_df.columns
+            )))
+            n_temporal_var = len(temporal_df.columns) // n_time_steps
+            temp_values = temporal_df.values.reshape(
+                (-1, n_time_steps, n_temporal_var)
+            )
+            temp_values = temp_values.reshape((-1, n_temporal_var))
+            if test:
+                logger.debug("Air Quality variables have been scaled with fitted scaler.")
+                temp_values = self.aq_vars_scaler[key].transform(temp_values)
+            else:
+                logger.debug("Air Quality variables have been scaled.")
+                temp_values = self.aq_vars_scaler[key].fit_transform(temp_values)
+            temp_values = temp_values.reshape(
+                (-1, n_time_steps, n_temporal_var)
+            )
+            temporal_values[key] = temp_values
 
         if aux_values.size:
             logger.info("The input data is separated in temporal features (air quality"
                         " variables) and auxiliary features.")
-            return [temp_values, aux_values], \
-                (temp_values.shape[1:], aux_values.shape[1:])
+            return (temporal_values['past'],
+                    temporal_values['future'],
+                    aux_values),\
+                   (temporal_values['past'].shape[1:],
+                    temporal_values['future'].shape[1:],
+                    aux_values.shape[1:])
         else:
             logger.info("The input data is contains only temporal features (air quality"
                         " variables).")
