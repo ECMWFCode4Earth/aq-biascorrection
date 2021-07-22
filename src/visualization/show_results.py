@@ -1,4 +1,5 @@
 import os
+import matplotlib.pyplot as plt
 import xarray as xr
 import pandas as pd
 
@@ -25,16 +26,26 @@ class ResultsPlotter:
         sum_df /= count
         return sum_df.loc[(slice(None), station), :].droplevel(1)
 
-    def load_obs_preds(self, station: str):
+    def load_obs_preds(self, station: str) -> pd.DataFrame:
         # Load Observations
         idir = ROOT_DIR / "data" / "processed"
         data_file = list(idir.rglob(f"data_{self.varname}_{station}.csv"))[0]
-        data = pd.read_csv(data_file, index_col=0, parse_dates=True)
-        return data
+        data = pd.read_csv(data_file, index_col=0)
+        data['index'] = pd.to_datetime(data.index)
+        return data.set_index('index')
 
     def run(self, station_code: str):
         df = self.load_data(station_code)
         data = self.load_obs_preds(station_code)
+
+        data[f"{self.varname}_forecast"].plot(color='b', label='CAMS forecast')
+        data[f"{self.varname}_observed"].plot(color='k', label='Observation')
+        for init_time, values in df.iterrows():
+            # TODO: These are corrections so must be joined with predicitons.
+            indices = pd.date_range(start=init_time, periods=len(values), freq='H')
+            plt.plot(indices, values.values, color='orange')
+        plt.show()
+
 
 
 if __name__ == '__main__':
