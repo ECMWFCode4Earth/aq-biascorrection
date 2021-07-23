@@ -134,13 +134,13 @@ class LocationTransformer:
 
         # Resample the values in order to have the same time frequency as
         # CAMS model forecast
-        observations_data = observations_data.resample({"time": "1H"}).mean("time")
+        observations_data = observations_data.resample({"time": "1H"}).mean()
         # If there are more than one station associated with the location of
         # interest an average is performed taking into consideration the
         # distance to the location of interest
         observations_data = self.weight_average_with_distance(observations_data)
 
-        # Rename all the variables to "{variable}_forecast" in order to
+        # Rename all the variables to "{variable}_observed" in order to
         # distinguish them when merged
         for data_var in list(observations_data.data_vars.keys()):
             observations_data = observations_data.rename(
@@ -148,14 +148,16 @@ class LocationTransformer:
             )
         # Filter outliers
         observations_data = self.filter_observations_data(observations_data)
-        # Rolling through the data
+        # Resample time axis to 1H time frequency
+        observations_data = observations_data.resample({"time": "1H"}).asfreq()
+        # Rolling through the data to interpolate NaNs
         for data_var in list(observations_data.data_vars.keys()):
             observations_data[data_var] = observations_data[data_var].interpolate_na(
                 dim='time',
                 method='linear',
                 fill_value='extrapolate',
                 use_coordinate=True,
-                max_gap=pd.Timedelta(value=4, unit='h')
+                max_gap=pd.Timedelta(value=12, unit='h')
             )
         return observations_data
 
@@ -203,28 +205,28 @@ class LocationTransformer:
             values_weighted_average = []
             for time in ds.time.values:
                 ds_time = ds.sel(time=time)
-                distance_and_value = {}
-                for station in ds_time.station_id.values:
-                    ds_station = ds_time.sel(station_id=station)
-                    if ds_station.distance.values > 1:
-                        distance_weight = round(1 / ds_station.distance.values, 2)
-                    else:
-                        # We give the same weight to those stations 1km close
-                        # to the location of interest
-                        distance_weight = 1
-                    value = float(ds_station[self.variable].values)
-                    if not np.isnan(value):
-                        distance_and_value[distance_weight] = value
-                if len(distance_and_value) == 0:
+                distances = ds_time.distance.values
+                distances_weights = [1
+                                     if distance <= 1
+                                     else round(1 / distance, 2)
+                                     for distance in distances]
+                values = ds_time[list(ds_time.data_vars)[0]].values
+                assert len(distances_weights) == len(values)
+                values_n = []
+                distances_weights_n = []
+                for i in range(len(values)):
+                    if not np.isnan(values[i]):
+                        values_n.append(values[i])
+                        distances_weights_n.append(distances_weights[i])
+                if len(values_n) == 0:
                     values_weighted_average.append(np.nan)
                 else:
-                    weights_normalized = np.array(
-                        list(distance_and_value.keys())
-                    ) / sum(distance_and_value.keys())
+                    normalized_weights = [weight / sum(distances_weights_n)
+                                          for weight in distances_weights_n]
                     values_weighted_average.append(
                         np.average(
-                            list(distance_and_value.values()),
-                            weights=weights_normalized,
+                            values_n,
+                            weights=normalized_weights,
                         )
                     )
             ds = ds.drop(["x", "y", "_x", "_y", "distance"])

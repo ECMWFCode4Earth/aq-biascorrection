@@ -128,6 +128,7 @@ class FeatureBuilder:
         ))[0].tolist()
         for idx in idxs:
             sample = dataset.iloc[idx: idx + number_per_sample]
+            # Check that the last sample has the number of data needed
             if len(sample) != number_per_sample:
                 continue
             # Check that all times are continuous (not more than 1h between times)

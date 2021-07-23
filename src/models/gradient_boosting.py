@@ -13,6 +13,16 @@ from src.logging import get_logger
 
 logger = get_logger("Gradient Boosting")
 
+import tensorflow as tf
+
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+
+if len(physical_devices) == 0:
+    logger.info("Not enough GPU hardware devices available")
+else:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    logger.info(f"A total of {len(physical_devices)} GPU devices are available.")
+
 NUM_SAMPLES = 100000
 
 
@@ -20,17 +30,19 @@ class GradientBoosting:
     def __init__(self,
                  n_batches: int = 1,
                  n_epochs: int = 50,
+                 output_dims: int = 24,
                  num_samples: int = 100000):
         self.n_batches = n_batches
         self.n_epochs = n_epochs
         self.num_samples = num_samples
+        self.output_dims = output_dims
 
     def build_model(self, df: pd.DataFrame) -> NoReturn:
         numerical_columns = []
         categorical_columns = []
         for col_name in df.columns:
             if ('hour' in col_name) or ('month' in col_name):
-                categorical_columns.append(col_name)
+                numerical_columns.append(col_name)
             else:
                 numerical_columns.append(col_name)
         
