@@ -47,6 +47,5 @@ class ResultsPlotter:
         plt.show()
 
 
-
 if __name__ == '__main__':
     ResultsPlotter("InceptionTime_ensemble", "pm25").run("GB002")
