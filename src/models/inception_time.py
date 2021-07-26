@@ -18,7 +18,7 @@ from tensorflow.keras.models import Model, load_model
 from src.constants import ROOT_DIR
 from src.logging import get_logger
 
-logger = get_logger("InceptionTime")
+logger = get_logger("InceptionTime_ensemble")
 
 import tensorflow as tf
 
@@ -49,8 +49,8 @@ class InceptionTime:
         self.attr_scaler = StandardScaler()
         self.aq_vars_scaler = dict(past=StandardScaler(),
                                    future=StandardScaler())
-        self.output_models = ROOT_DIR / "models" / "results" / "InceptionTime"
-        self.output_predictions = ROOT_DIR / "data" / "predictions" / "InceptionTime"
+        self.output_models = ROOT_DIR / "models" / "results" / "InceptionTime_ensemble"
+        self.output_predictions = ROOT_DIR / "data" / "predictions" / "InceptionTime_ensemble"
         os.makedirs(self.output_models, exist_ok=True)
         os.makedirs(self.output_predictions, exist_ok=True)
         self._set_callbacks()
@@ -63,8 +63,8 @@ class InceptionTime:
         logger.info("Two callbacks have been added to the model fitting: "
                     "ModelCheckpoint and ReduceLROnPlateau.")
         reduce_lr = ReduceLROnPlateau(monitor='loss',
-                                      factor=0.2,
-                                      patience=25,
+                                      factor=0.5,
+                                      patience=5,
                                       min_lr=0.001)
         file_path = self.output_models / f'best_{str(self)}.h5'
         model_checkpoint = ModelCheckpoint(filepath=file_path,
@@ -81,7 +81,8 @@ class InceptionTime:
         else:
             input_inception = input_tensor
 
-        # As presented in original paper InceptionTime: Finding AlexNet for Time Series 
+        # As presented in original paper InceptionTime_ensemble:
+        # Finding AlexNet for Time Series
         # Classification. https://arxiv.org/pdf/1909.04939.pdf
         conv_list = []
         for kernel_size in self.inception_kernels:

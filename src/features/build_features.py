@@ -103,8 +103,8 @@ class FeatureBuilder:
         y = y.loc[index, :]
         return X, y
 
+    @staticmethod
     def get_features_and_labels(
-            self,
             dataset: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         columns_to_features = []

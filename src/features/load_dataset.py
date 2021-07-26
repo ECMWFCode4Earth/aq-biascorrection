@@ -57,7 +57,7 @@ class DatasetLoader:
         X_train, y_train, X_test, y_test = None, None, None, None
 
         # Iterate over all stations
-        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             future_to_entry = {
                 executor.submit(
                     self.load_station, station_file, split_ratio, categorical_to_numeric
