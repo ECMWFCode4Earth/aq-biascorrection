@@ -51,7 +51,7 @@ def main(
 
 
 if __name__ == '__main__':
-    main('pm25',
+    main('o3',
          Path(ROOT_DIR) / "data/external/stations.csv",
          Path(ROOT_DIR) / "data/processed/"
          )

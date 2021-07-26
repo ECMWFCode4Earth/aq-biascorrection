@@ -45,13 +45,13 @@ class LocationTransformer:
             pd.DataFrame: observations and forecasts merged
         """
         # Open forecast and observational data
-        forecast_data = self.opening_and_transforming_forecast()
         try:
             observed_data = self.opening_and_transforming_observations()
         except Exception as ex:
             raise Exception(
                 "There is not data for this variable at the" " location of interest"
             )
+        forecast_data = self.opening_and_transforming_forecast()
         # Merge both xarray datasets
         merged = xr.merge([forecast_data, observed_data])
         merged_pd = merged.to_dataframe()
