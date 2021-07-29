@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras.layers import (Activation, Add, BatchNormalization,
                                      Concatenate, Conv1D, Dense,
                                      GlobalAveragePooling1D, Input, MaxPool1D)
@@ -60,8 +60,8 @@ class InceptionTime:
                f"{'-'.join(map(str, self.inception_kernels))}kernels"
 
     def _set_callbacks(self):
-        logger.info("Two callbacks have been added to the model fitting: "
-                    "ModelCheckpoint and ReduceLROnPlateau.")
+        logger.info("Three callbacks have been added to the model fitting: "
+                    "ModelCheckpoint, EarlyStopping and ReduceLROnPlateau.")
         reduce_lr = ReduceLROnPlateau(monitor='loss',
                                       factor=0.5,
                                       patience=5,
@@ -70,7 +70,11 @@ class InceptionTime:
         model_checkpoint = ModelCheckpoint(filepath=file_path,
                                            monitor='loss',
                                            save_best_only=True)
-        self.callbacks = [reduce_lr, model_checkpoint]
+        early_stopping = EarlyStopping(monitor='val_loss',
+                                       patience=5,
+                                       mode='auto',
+                                       restore_best_weights=True)
+        self.callbacks = [reduce_lr, model_checkpoint, early_stopping]
 
     def _inception_module(self, input_tensor, stride=1, activation='linear'):
         if int(input_tensor.shape[-2]) > 1:
@@ -191,16 +195,6 @@ class InceptionTime:
             verbose=self.verbose,
             callbacks=[self.callbacks]
         )
-
-        # Save fig with results
-        plt.figure(figsize=(12, 9))
-        plt.plot(history.history['loss'])
-        plt.plot(history.history['val_loss'])
-        plt.title('model loss')
-        plt.ylabel(self.loss.upper())
-        plt.xlabel('Epoch')
-        plt.legend(['train', 'valid'], loc='upper left')
-        plt.savefig(self.output_models / f"history_{str(self)}.png")
         return history
 
     def predict(

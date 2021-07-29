@@ -2,11 +2,12 @@ import os
 import matplotlib.pyplot as plt
 import xarray as xr
 import pandas as pd
+import glob
 
 from ipywidgets import interactive, widgets
 from src.constants import ROOT_DIR
 from matplotlib.dates import DateFormatter
-from typing import List
+from typing import List, Dict
 from pydantic.dataclasses import dataclass
 
 
@@ -20,18 +21,23 @@ class ResultsPlotter:
     varname: str
 
     def load_data(self, station: str) -> pd.DataFrame:
-        directory = ROOT_DIR / "data" / "predictions" / self.model_name / self.varname
-        
-        sum_df, count = None, 0
-        for file in os.listdir(directory):
-            count += 1
-            df = pd.read_csv(directory / file, index_col=[0, 1])
-            if sum_df is not None:
-                sum_df += df
-            else:
-                sum_df = df
-        sum_df /= count
-        return sum_df.loc[(slice(None), station), :].droplevel(1)
+        directory = ROOT_DIR / "models" / "results" / self.model_name / self.varname
+        sum_dfs = {"train": None,
+                   "test": None}
+        for key in sum_dfs.keys():
+            sum_df, count = None, 0
+            for file in glob.glob(str(directory / f"*_{key}.csv")):
+                count += 1
+                df = pd.read_csv(file, index_col=[0, 1])
+                if sum_df is not None:
+                    sum_df += df
+                else:
+                    sum_df = df
+            sum_df /= count
+            sum_dfs[key] = sum_df.loc[(slice(None), station), :].droplevel(1)
+        df_total = pd.concat([sum_dfs['train'], sum_dfs['test']])
+        df_total = df_total.sort_index()
+        return df_total
 
     def load_obs_preds(self, station: str) -> pd.DataFrame:
         # Load Observations
@@ -45,6 +51,9 @@ class ResultsPlotter:
         df = self.load_data(station_code)
         data = self.load_obs_preds(station_code)
 
+        self.time_serie(df, data, xlim)
+
+    def time_serie(self, df, data, xlim):
         plt.figure(figsize=(17, 9))
         data[f"{self.varname}_forecast"].plot(color='b', label='CAMS forecast')
         data[f"{self.varname}_observed"].plot(color='k', label='Observation')
@@ -58,7 +67,7 @@ class ResultsPlotter:
             )
             is_first = None
         plt.legend()
-        plt.ylabel(self.varname + r' ($\mu g / m^2$)')
+        plt.ylabel(self.varname + r' ($\mu g / m^2$)', fontsize='xx-large')
         plt.xlabel("Date", fontsize='xx-large')
         ax = plt.gca()
         ax.xaxis.set_major_formatter(date_form)
@@ -82,4 +91,4 @@ def interactive_viz(varname: str, station: str, date_range: tuple):
 
 
 if __name__ == '__main__':
-    ResultsPlotter('InceptionTime_ensemble', 'pm25').run("GB002")
+    ResultsPlotter('InceptionTime_ensemble', 'pm25').run("ES001")

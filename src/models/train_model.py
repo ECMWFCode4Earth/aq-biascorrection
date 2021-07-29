@@ -155,12 +155,13 @@ class ModelTrain:
         """
         logger.info("Evaluating performance on test set.")
         labels = self.y_test
-        predictions_output_path = self.get_model_predictions_path(
+        predictions_output_path_test = self.get_model_predictions_path(
             model,
-            ensemble_number
+            ensemble_number,
+            'test'
         )
         preds = model.predict(self.X_test,
-                              filepath=predictions_output_path)
+                              filepath=predictions_output_path_test)
         test_metrics = self.get_metric_results(
             preds, labels
         )
@@ -169,7 +170,13 @@ class ModelTrain:
 
         logger.info("Evaluating performance on train set.")
         labels = self.y_train
-        preds = model.predict(self.X_train)
+        predictions_output_path_train = self.get_model_predictions_path(
+            model,
+            ensemble_number,
+            'train'
+        )
+        preds = model.predict(self.X_train,
+                              filepath=predictions_output_path_train)
         training_metrics = self.get_metric_results(
             preds, labels
         )
@@ -228,29 +235,33 @@ class ModelTrain:
 
         Args:
             model: model to save its weights and architecture.
+            ensemble_number: identifier for the ensemble member
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
         filename = f"{data_attrs}_{str(model)}_{ensemble_number}"
-        model_path = self.results_output_dir / f"{filename}.h5"
+        model_path = self.weights_output_dir / f"{filename}.h5"
         scaler_paths = {
-            "attr_scaler": self.results_output_dir / f"{filename}_attrscaler.pkl",
-            "aq_vars_scaler": self.results_output_dir / f"{filename}_aqvarsscaler.pkl",
+            "attr_scaler": self.weights_output_dir / f"{filename}_attrscaler.pkl",
+            "aq_vars_scaler": self.weights_output_dir / f"{filename}_aqvarsscaler.pkl",
         }
         return model_path, scaler_paths
 
     def get_model_predictions_path(
             self,
             model,
-            ensemble_number: int
+            ensemble_number: int,
+            data_type: str
     ) -> Path:
         """
         Get the model predictions path
 
         Args:
             model: model that will be used for making the predictions
+            ensemble_number: identifier for the ensemble member
+            data_type: kind of data used to get the predictions (train or test)
         """
         data_attrs = '_'.join([self.variable, str(self.n_prev_obs), str(self.n_future)])
-        filename = f"{data_attrs}_{str(model)}_{ensemble_number}"
+        filename = f"{data_attrs}_{str(model)}_{ensemble_number}_{data_type}"
         predictions_path = self.results_output_dir / f"{filename}.csv"
         return predictions_path
 
@@ -268,8 +279,10 @@ class ModelTrain:
 
     def update_model_output_dir(self, model_name: str) -> NoReturn:
         self.model_name = model_name
-        self.results_output_dir = ROOT_DIR / "models" / "results" / model_name
+        self.results_output_dir = ROOT_DIR / "models" / "results" / model_name / self.variable
+        self.weights_output_dir = ROOT_DIR / "models" / "weights_storage" / model_name / self.variable
         os.makedirs(self.results_output_dir, exist_ok=True)
+        os.makedirs(self.weights_output_dir, exist_ok=True)
 
     def update_datasets(self, model: Dict) -> NoReturn:
         if 'categorical_to_numerical' in model.keys():
