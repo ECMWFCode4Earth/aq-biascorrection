@@ -7,8 +7,6 @@
 
 </br>
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) ![Continuous Integration](https://github.com/JPXKQX/dl-fx-forecasting/actions/workflows/project-ci.yml/badge.svg) 
-
 
 <p align="center"> 
   <img src="reports/images/esowc_logo.png" alt="ESoWC logo" width="90%" height="90%">
