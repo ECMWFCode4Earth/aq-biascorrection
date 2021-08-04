@@ -344,7 +344,8 @@ class StationTemporalSeriesPlotter:
             logger.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
             ndays = len(aggregate_df(data, 'daily', 'index').index)
-            logger.debug(f"There are {len(data.index)} observation which corresponds to a total of {ndays} days.")
+            logger.debug(f"There are {len(data.index)} "
+                         f"observation which corresponds to a total of {ndays} days.")
             
             if agg: 
                 data = aggregate_df(data, agg, 'index')

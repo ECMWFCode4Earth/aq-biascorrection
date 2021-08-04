@@ -70,7 +70,7 @@ class InceptionTime:
         model_checkpoint = ModelCheckpoint(filepath=file_path,
                                            monitor='loss',
                                            save_best_only=True)
-        early_stopping = EarlyStopping(monitor='val_loss',
+        early_stopping = EarlyStopping(monitor='loss',
                                        patience=5,
                                        mode='auto',
                                        restore_best_weights=True)
@@ -189,7 +189,6 @@ class InceptionTime:
         history = self.model.fit(
             features,
             y,
-            validation_split=0.3,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
@@ -246,7 +245,8 @@ class InceptionTime:
             )
             temp_values = temp_values.reshape((-1, n_temporal_var))
             if test:
-                logger.debug("Air Quality variables have been scaled with fitted scaler.")
+                logger.debug("Air Quality variables have "
+                             "been scaled with fitted scaler.")
                 temp_values = self.aq_vars_scaler[key].transform(temp_values)
             else:
                 logger.debug("Air Quality variables have been scaled.")

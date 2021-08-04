@@ -7,7 +7,7 @@ from pytest_mock import MockerFixture
 
 from src import constants
 from src.scripts.plotting import main_corrs, main_hourly_bias, main_line
-from src.visualization import visualize
+from src.visualization import data_visualizer
 
 
 def mock_data():
@@ -20,45 +20,45 @@ def mock_metadata():
 
 def test_line_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
+        data_visualizer.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
     )
-    visualize.StationTemporalSeriesPlotter(
+    data_visualizer.StationTemporalSeriesPlotter(
         "pm25",
         "Canada",
         Path(constants.ROOT_DIR) / "data" / "processed",
         stations=["Montreal"],
     ).plot_data()
-    visualize.pd.read_csv.assert_called()
+    data_visualizer.pd.read_csv.assert_called()
 
 
 def test_heatmap_corrs(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
+        data_visualizer.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
     )
-    visualize.StationTemporalSeriesPlotter(
+    data_visualizer.StationTemporalSeriesPlotter(
         "pm25",
         "Canada",
         Path(constants.ROOT_DIR) / "data" / "processed",
         stations=["Montreal"],
     ).plot_correlations()
-    visualize.pd.read_csv.assert_called()
+    data_visualizer.pd.read_csv.assert_called()
 
 
 def test_hourly_bias_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd,
+        data_visualizer.pd,
         "read_csv",
         side_effect=[mock_metadata(), mock_data(), mock_data(), mock_data()],
     )
-    visualize.StationTemporalSeriesPlotter(
+    data_visualizer.StationTemporalSeriesPlotter(
         "pm25", "Canada", Path(constants.ROOT_DIR) / "data" / "processed"
     ).plot_hourly_bias()
-    visualize.pd.read_csv.assert_called()
+    data_visualizer.pd.read_csv.assert_called()
 
 
 def test_cli_line_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
+        data_visualizer.pd, "read_csv", side_effect=[mock_metadata(), mock_data()]
     )
     runner = CliRunner()
     result = runner.invoke(
@@ -95,7 +95,7 @@ def test_cli_plot_heatmap():
 
 def test_cli_hourly_bias_plot(mocker: MockerFixture):
     mocker.patch.object(
-        visualize.pd,
+        data_visualizer.pd,
         "read_csv",
         side_effect=[mock_metadata(), mock_data(), mock_data(), mock_data()],
     )
