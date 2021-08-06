@@ -1,21 +1,24 @@
-import os
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
-import xarray as xr
-import pandas as pd
 import glob
+import os
+from pathlib import Path
+from typing import Dict, List
 
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import xarray as xr
 from ipywidgets import interactive, widgets
-from src.constants import ROOT_DIR
 from matplotlib.dates import DateFormatter
-from typing import List, Dict
 from pydantic.dataclasses import dataclass
-from src.data.utils import Location
 
+from src.constants import ROOT_DIR
+from src.data.utils import Location
+from src.logging import get_logger
 
 df_stations = pd.read_csv(ROOT_DIR / "data" / "external" / "stations.csv", index_col=0)
 date_form = DateFormatter("%-d %b %y")
+
+logger = get_logger('Validation Visualization')
 
 
 @dataclass
@@ -27,6 +30,7 @@ class ValidationVisualization:
     output_dir: Path
 
     def run(self):
+        logger.info('Plotting CDF Bias for "Hour", "Day" and "Month" aggregations')
         self.plot_bias_cdf(
             self.validation_datasets,
             self.location,
@@ -42,6 +46,8 @@ class ValidationVisualization:
             self.location,
             'month'
         )
+        logger.info('Plotting "Hour" and "Month" aggregation Box Plots taking into '
+                    'consideration training and test datasets')
         if self.class_on_train == 'all':
             self.box_plot_time_agg(
                 self.validation_datasets,
@@ -63,6 +69,7 @@ class ValidationVisualization:
             self.location,
             False,
             'month')
+        logger.info('Plotting "Hour" and "Month" aggregation ErrorBar Plots')
         self.time_serie_time_agg(
             self.validation_datasets,
             self.location,
@@ -71,6 +78,7 @@ class ValidationVisualization:
             self.validation_datasets,
             self.location,
             'month')
+        logger.info('Plotting TimeSerie Plots')
         self.time_serie_total(
             self.validation_datasets,
             self.location)
@@ -148,6 +156,18 @@ class ValidationVisualization:
                                 and test initializations
             agg_time: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
         """
+        city = "".join(location.city.split(" ")).lower()
+        country = "".join(location.country.split(" ")).lower()
+        station_code = "".join(location.location_id.split(" ")).lower()
+        freq = f"{agg_time}_" if agg_time else ""
+        compare = 'train-test-comparison_' if compare_train_test else ""
+        filename = f"{freq}{compare}{self.varname}_boxplot_" \
+                   f"{station_code}_{city}_{country}.png"
+        plot_path = self.output_dir / 'BoxPlot' / filename
+        if not plot_path.parent.exists():
+            os.makedirs(plot_path.parent, exist_ok=True)
+        if plot_path.exists():
+            return None
         data = self.get_dataset_for_boxplot(initialization_datasets)
         if agg_time == 'hour':
             x_data = data.index.hour
@@ -173,16 +193,9 @@ class ValidationVisualization:
         plt.ylabel(self.varname + r' ($\mu g / m^3$)', fontsize='xx-large')
         plt.xlabel(f"{agg_time.capitalize()} of prediction", fontsize='xx-large')
         plt.title(f"{location.city} ({location.country})", fontsize='xx-large')
-        city = "".join(location.city.split(" ")).lower()
-        country = "".join(location.country.split(" ")).lower()
-        freq = f"{agg_time}_" if agg_time else ""
-        compare = 'train-test-comparison_' if compare_train_test else ""
-        filename = f"{freq}{compare}{self.varname}_boxplot_{city}_{country}.png"
-        plot_path = self.output_dir / 'BoxPlot' / filename
-        if not plot_path.parent.exists():
-            os.makedirs(plot_path.parent, exist_ok=True)
         plt.savefig(plot_path,
                     transparent=True, bbox_inches='tight', pad_inches=0)
+        plt.close()
 
     def time_serie_time_agg(
             self,
@@ -200,6 +213,17 @@ class ValidationVisualization:
             location: Location object for the station_id wanted
             agg_time: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
         """
+        city = "".join(location.city.split(" ")).lower()
+        country = "".join(location.country.split(" ")).lower()
+        station_code = "".join(location.location_id.split(" ")).lower()
+        freq = f"{agg_time}_" if agg_time else ""
+        filename = f"{freq}{self.varname}_errorbarplot_" \
+                   f"{station_code}_{city}_{country}.png"
+        plot_path = self.output_dir / 'ErrorBarPlot' / filename
+        if not plot_path.parent.exists():
+            os.makedirs(plot_path.parent, exist_ok=True)
+        if plot_path.exists():
+            return None
         colors = ['b', 'k', 'orange']
         data = self.get_dataset_for_timeseries(initialization_datasets)
         if agg_time == 'hour':
@@ -225,15 +249,9 @@ class ValidationVisualization:
         plt.ylabel(self.varname + r' ($\mu g / m^3$)', fontsize='xx-large')
         plt.xlabel(f"{agg_time.capitalize()} of prediction", fontsize='xx-large')
         plt.title(f"{location.city} ({location.country})", fontsize='xx-large')
-        city = "".join(location.city.split(" ")).lower()
-        country = "".join(location.country.split(" ")).lower()
-        freq = f"{agg_time}_" if agg_time else ""
-        filename = f"{freq}{self.varname}_errorbarplot_{city}_{country}.png"
-        plot_path = self.output_dir / 'ErrorBarPlot' / filename
-        if not plot_path.parent.exists():
-            os.makedirs(plot_path.parent, exist_ok=True)
         plt.savefig(plot_path,
                     transparent=True, bbox_inches='tight', pad_inches=0)
+        plt.close()
 
     def time_serie_total(
             self,
@@ -241,6 +259,26 @@ class ValidationVisualization:
             location,
             xlim=None
     ):
+        """
+        Method to plot the CDF of bias for the CAMS forecast and
+        the Corrected CAMS forecast in a specific location.
+        Args:
+            initialization_datasets: list of InitializationDataset with data of CAMS,
+                                     Observations, Predictions and its Class during the
+                                     training phase.
+            location: Location object for the station_id wanted
+            xlim: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
+        """
+        city = "".join(location.city.split(" ")).lower()
+        country = "".join(location.country.split(" ")).lower()
+        station_code = "".join(location.location_id.split(" ")).lower()
+        filename = f"{self.varname}_timeserie_" \
+                   f"{station_code}_{city}_{country}.png"
+        plot_path = self.output_dir / 'TimeSeriePlot' / filename
+        if not plot_path.parent.exists():
+            os.makedirs(plot_path.parent, exist_ok=True)
+        if plot_path.exists():
+            return None
         colors = ['b', 'k', 'orange']
         data = self.get_dataset_for_timeseries(initialization_datasets)
         plt.figure(figsize=(17, 9))
@@ -261,26 +299,35 @@ class ValidationVisualization:
         if xlim is not None:
             plt.xlim(xlim)
         plt.title(f"{location.city} ({location.country})", fontsize='xx-large')
-        city = "".join(location.city.split(" ")).lower()
-        country = "".join(location.country.split(" ")).lower()
-        filename = f"{self.varname}_timeserie_{city}_{country}.png"
-        plot_path = self.output_dir / 'TimeSeriePlot' / filename
-        if not plot_path.parent.exists():
-            os.makedirs(plot_path.parent, exist_ok=True)
         plt.savefig(plot_path,
                     transparent=True, bbox_inches='tight', pad_inches=0)
+        plt.close()
 
     def plot_bias_cdf(self,
                       initialization_datasets: list,
                       location: Location,
                       agg_time: str = None):
-        """Plot the CDF of bias for the variable requested in the stations whose
-        position is specified.
-
-        Args:
-            output_path (Path): the output folder at which save the images.
-            agg (str): Whether to aggregate data. Choices are: daily or monthly.
         """
+        Method to plot the CDF of bias for the CAMS forecast and
+        the Corrected CAMS forecast in a specific location.
+        Args:
+            initialization_datasets: list of InitializationDataset with data of CAMS,
+                                     Observations, Predictions and its Class during the
+                                     training phase.
+            location: Location object for the station_id wanted
+            agg_time: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
+        """
+        city = "".join(location.city.split(" ")).lower()
+        country = "".join(location.country.split(" ")).lower()
+        station_code = "".join(location.location_id.split(" ")).lower()
+        freq = f"{agg_time}_" if agg_time else ""
+        filename = f"{freq}{self.varname}_cdf-bias_" \
+                   f"{station_code}_{city}_{country}.png"
+        plot_path = self.output_dir / 'CDFBiasPlot' / filename
+        if not plot_path.parent.exists():
+            os.makedirs(plot_path.parent, exist_ok=True)
+        if plot_path.exists():
+            return None
         data = self.get_dataset_for_timeseries(initialization_datasets)
         if agg_time == 'hour':
             agg_time = 'hourly'
@@ -305,9 +352,9 @@ class ValidationVisualization:
             sns.histplot, 'value', stat="probability",
             kde=True, binwidth=5, legend=True
         )
-        freq = agg_time + " " if agg_time else ""
+        freq_str = agg_time + " " if agg_time else ""
         plt.title(
-            f"CDF of {freq.capitalize()}{self.varname.upper()}" f" error in"
+            f"CDF of {freq_str.capitalize()}{self.varname.upper()}" f" bias in"
             f" {location.city} ({location.country})"
         )
         plt.legend(
@@ -318,17 +365,12 @@ class ValidationVisualization:
         )
         plt.ylabel("Probability", fontsize="x-large")
         plt.xlabel(
-            freq.capitalize() + self.varname.upper() + r" bias ($\mu g / m^3$)",
+            freq_str.capitalize() + self.varname.upper() + r" bias ($\mu g / m^3$)",
             fontsize="x-large",
         )
-        city = "".join(location.city.split(" ")).lower()
-        country = "".join(location.country.split(" ")).lower()
-        filename = f"{self.varname}_cdf-bias_{city}_{country}.png"
-        plot_path = self.output_dir / 'CDFBiasPlot' / filename
-        if not plot_path.parent.exists():
-            os.makedirs(plot_path.parent, exist_ok=True)
         plt.savefig(plot_path,
                     transparent=True, bbox_inches='tight', pad_inches=0)
+        plt.close()
 
 
 # Methods for implementation of Jupyter Tool

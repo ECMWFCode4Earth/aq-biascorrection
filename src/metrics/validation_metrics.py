@@ -1,13 +1,14 @@
+import os
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-import os
 
-from src.metrics.utils import weighted_corr
 from src.data.utils import Location
-from pydantic.dataclasses import dataclass
+from src.logging import get_logger
+
+logger = get_logger('Validation Tables')
 
 
 class ValidationTables:
@@ -19,14 +20,16 @@ class ValidationTables:
             self,
             validation_datasets: list,
             location: Location,
-            metrics_output_dir: Path,
+            output_dir: Path,
     ):
         self.validation_datasets = validation_datasets
         self.location = location
-        self.metrics_output_dir = metrics_output_dir
+        self.output_dir = output_dir
 
     def run(self):
+        logger.info('Producing tables taking into account every single prediction')
         self.run_for_every_prediction()
+        logger.info('Producing tables taking into account the whole time serie')
         self.run_for_the_complete_data()
 
     def run_for_every_prediction(self):
@@ -73,8 +76,10 @@ class ValidationTables:
         for key, value in dict_to_use_to_save.items():
             city = "".join(self.location.city.split(" ")).lower()
             country = "".join(self.location.country.split(" ")).lower()
-            filename = f"{key}_metrics-for-setofruns_{city}_{country}.csv"
-            csv_path = self.metrics_output_dir / 'SetOfRuns' / filename
+            station_code = "".join(self.location.location_id.split(" ")).lower()
+            filename = f"{key}_metrics-for-setofruns_" \
+                       f"{station_code}_{city}_{country}.csv"
+            csv_path = self.output_dir / 'SetOfRuns' / filename
             if not csv_path.parent.exists():
                 os.makedirs(csv_path.parent, exist_ok=True)
             value.to_csv(csv_path)
@@ -124,8 +129,10 @@ class ValidationTables:
         for key, value in dict_to_use_to_save.items():
             city = "".join(self.location.city.split(" ")).lower()
             country = "".join(self.location.country.split(" ")).lower()
-            filename = f"{key}_metrics-for-completetimeserie_{city}_{country}.csv"
-            csv_path = self.metrics_output_dir / 'CompleteTimeSerie' / filename
+            station_code = "".join(self.location.location_id.split(" ")).lower()
+            filename = f"{key}_metrics-for-completetimeserie_" \
+                       f"{station_code}_{city}_{country}.csv"
+            csv_path = self.output_dir / 'CompleteTimeSerie' / filename
             if not csv_path.parent.exists():
                 os.makedirs(csv_path.parent, exist_ok=True)
             value.to_csv(csv_path)

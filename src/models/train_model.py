@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
+from tenacity import retry
 
 from src.constants import ROOT_DIR
 from src.features.load_dataset import DatasetLoader
@@ -101,18 +102,26 @@ class ModelTrain:
             logger.info(f'Training and validating model {i+1} '
                         f'out of {len(self.models)}')
             logger.info(f'Training model with method {model["name"]}')
- 
+
             if model['model_selection']:
                 self.selection_train_and_evaluation(model)
             else:
                 self.train_and_evaluation(model)
 
+    @retry()
     def train_and_evaluation(self, model: Dict):
         for ensemble_number in range(model['model_ensemble']):
             model['model_parameters']['output_dims'] = self.n_future
             mo = models_dict[model['type']](**model['model_parameters'])
-            self.train_model(mo, ensemble_number)
-            self.evaluate_model(mo, ensemble_number)
+            model_path, scaler_paths = self.train_model(mo, ensemble_number)
+            try:
+                self.evaluate_model(mo, ensemble_number)
+            except Exception as ex:
+                logger.info(ex)
+                os.remove(model_path)
+                for scaler_path in scaler_paths.values():
+                    os.remove(scaler_path)
+                raise Exception(ex)
         return mo
 
     def selection_train_and_evaluation(self, model: Dict):
@@ -148,7 +157,8 @@ class ModelTrain:
             logger.info('Model does not exist yet, training and saving!')
             model.fit(self.X_train, self.y_train)
             model.save(model_path, scaler_paths)
-    
+        return model_path, scaler_paths
+
     def evaluate_model(self, model, ensemble_number: int) -> NoReturn:
         """
         Evaluate the model performance of a model in both training and test dataset.
@@ -165,7 +175,7 @@ class ModelTrain:
         test_metrics = self.get_metric_results(
             preds, labels
         )
-        te_exp_var, te_maxerr, te_mae, te_rmse, te_r2, te_r2time = test_metrics
+        te_exp_var, te_maxerr, te_mae, te_rmse, te_r2 = test_metrics
         # self.save_r2_with_time_structure(r2time, False)
 
         logger.info("Evaluating performance on train set.")
@@ -180,7 +190,7 @@ class ModelTrain:
         training_metrics = self.get_metric_results(
             preds, labels
         )
-        tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2, tr_r2time = training_metrics
+        tr_exp_var, tr_maxerr, tr_mae, tr_rmse, tr_r2 = training_metrics
         # self.save_r2_with_time_structure(tr_r2time, True)
 
         print(
@@ -195,35 +205,48 @@ class ModelTrain:
 
         cams_max, cams_mae, cams_rmse = self.show_prediction_results()
 
+        print(
+            f"-----------------------------------------------\n"
+            f"--------       CAMS predictions        --------\n"
+            f"-----------------------------------------------\n"
+            f"Max error: {cams_max}\n"
+            f"MAE: {cams_mae}\n"
+            f"RMSE: {cams_rmse}\n"
+        )
+
+        if cams_mae < tr_mae and cams_mae < te_mae:
+            raise Exception('The model is not performing correctly')
+
         data = {
             'model': self.model_name,
             'variable': self.variable,
             'params': model.get_params(),
             'train': {
                 'explained_variance': tr_exp_var,
-                'max_errors': tr_maxerr,
+                'max_error': tr_maxerr,
                 'mean_absolute_error': tr_mae,
                 'root_mean_squared_error': tr_rmse,
                 'r2': tr_r2
             },
             'test': {
                 'explained_variance': te_exp_var,
-                'max_errors': te_maxerr,
+                'max_error': te_maxerr,
                 'mean_absolute_error': te_mae,
                 'root_mean_squared_error': te_rmse,
                 'r2': te_r2,
-                'cams_max_err': cams_max,
-                'cams_mae': cams_mae,
-                'cams_rmse': cams_rmse
+            },
+            'cams_forecast': {
+                'max_error': cams_max,
+                'mean_absolute_error': cams_mae,
+                'root_mean_squared_error': cams_rmse
             }
         }
-
         # Save results.
         filename = f'allstations_{self.variable}_inception_time_{ensemble_number}'
         logger.debug(f"Saving result of {self.model_name} to {self.results_output_dir}/"
                      f"test_{filename}.yml")
         with open(self.results_output_dir / f"test_{filename}.yml", 'w') as outfile:
-            yaml.dump(data, outfile, default_flow_style=False)
+            yaml.dump(data, outfile, default_flow_style=False, sort_keys=False)
 
     def get_model_and_scaler_output_path(
             self,
@@ -243,6 +266,7 @@ class ModelTrain:
         scaler_paths = {
             "attr_scaler": self.weights_output_dir / f"{filename}_attrscaler.pkl",
             "aq_vars_scaler": self.weights_output_dir / f"{filename}_aqvarsscaler.pkl",
+            "aq_bias_scaler": self.weights_output_dir / f"{filename}_aqbiasscaler.pkl"
         }
         return model_path, scaler_paths
 
@@ -279,8 +303,10 @@ class ModelTrain:
 
     def update_model_output_dir(self, model_name: str) -> NoReturn:
         self.model_name = model_name
-        self.results_output_dir = ROOT_DIR / "models" / "results" / model_name / self.variable
-        self.weights_output_dir = ROOT_DIR / "models" / "weights_storage" / model_name / self.variable
+        self.results_output_dir = ROOT_DIR / "models" / "results" / \
+                                  model_name / self.variable
+        self.weights_output_dir = ROOT_DIR / "models" / "weights_storage" / \
+                                  model_name / self.variable
         os.makedirs(self.results_output_dir, exist_ok=True)
         os.makedirs(self.weights_output_dir, exist_ok=True)
 
@@ -295,18 +321,9 @@ class ModelTrain:
             self.__build_datasets()
 
     def show_prediction_results(self):
-        max_err = self.y_test.abs().max().round(4).values.tolist()
-        mae = self.y_test.abs().mean().round(4).values.tolist()
-        rmse = ((self.y_test ** 2).mean() ** 0.5).round(4).values.tolist()
-
-        print(
-            f"-----------------------------------------------\n"
-            f"--------       CAMS predictions        --------\n"
-            f"-----------------------------------------------\n"
-            f"MAX ERR: {max_err}\n"
-            f"MAE: {mae}\n"
-            f"RMSE: {rmse}\n"
-        )
+        max_err = float(self.y_test.abs().max().round(4).max())
+        mae = float(self.y_test.abs().mean().round(4).mean())
+        rmse = float(((self.y_test ** 2).mean() ** 0.5).round(4).mean())
         return max_err, mae, rmse
 
     @staticmethod
@@ -326,16 +343,16 @@ class ModelTrain:
             mae (float): the mean absolute error of the predictions.
             mse (float): the mean square error of the predictions.
             r2 (float): the R-squared value of the predictions.
-            r2time (float): the R-squared with time structure value of the predictions. It
-            only makes sense when the predictions correspond to a time series.
         """
         # Compute metrics
+        if sorted(labels.columns.values) != sorted(preds.columns.values):
+            columns_rename_dict = {}
+            for i in range(len(labels.columns.values)):
+                columns_rename_dict[labels.columns[i]] = preds.columns[i]
+            labels = labels.rename(columns=columns_rename_dict)
         exp_var = float(metrics.explained_variance_score(labels, preds))
-        maxerr = (labels - preds).abs().max().round(4).values.tolist()
+        maxerr = float((labels - preds).abs().max().round(4).max())
         mae = float(metrics.mean_absolute_error(labels, preds))
         rmse = float(metrics.mean_squared_error(labels, preds, squared=False))
         r2 = float(metrics.r2_score(labels, preds))
-        ssd = ((labels - preds) ** 2).cumsum()
-        sst = (labels ** 2).cumsum()
-        r2time = (sst - ssd) / sst.iloc[-1]
-        return exp_var, maxerr, mae, rmse, r2, r2time
+        return exp_var, maxerr, mae, rmse, r2

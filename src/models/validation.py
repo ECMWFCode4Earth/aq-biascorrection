@@ -1,23 +1,26 @@
-import os
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
-import xarray as xr
-import pandas as pd
 import glob
+import os
+from pathlib import Path
+from typing import Dict, List
 
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import xarray as xr
 from ipywidgets import interactive, widgets
-from src.constants import ROOT_DIR
 from matplotlib.dates import DateFormatter
-from typing import List, Dict
 from pydantic.dataclasses import dataclass
-from src.data.utils import Location
-from src.visualization.validation_visualization import ValidationVisualization
-from src.metrics.validation_metrics import ValidationTables
 
+from src.constants import ROOT_DIR
+from src.data.utils import Location
+from src.logging import get_logger
+from src.metrics.validation_metrics import ValidationTables
+from src.visualization.validation_visualization import ValidationVisualization
 
 df_stations = pd.read_csv(ROOT_DIR / "data" / "external" / "stations.csv", index_col=0)
 date_form = DateFormatter("%-d %b %y")
+
+logger = get_logger('Model Predictions Validation')
 
 
 class ValidationDataset:
@@ -58,17 +61,23 @@ class Validator:
             self,
             station_code: str,
             class_on_train: str = 'all'):
+        logger.info(f'Starting Validation worfklow for variable '
+                    f'{self.varname} and station {station_code}.')
+        logger.info('Getting the data from the machine learning predictions.')
         ml_predictions = self.load_model_predictions(
             station_code,
             class_on_train
         )
+        logger.info('Getting the data from the CAMS Forecast and Observations.')
         cams_and_obs = self.load_obs_and_cams(
             station_code
         )
+        logger.info('Creating a ValidationDataset object for every run.')
         validation_datasets = self.get_initialization_datasets(
             ml_predictions,
             cams_and_obs
         )
+        logger.info('Running ValidationVisualization workflow.')
         ValidationVisualization(
             validation_datasets,
             self.varname,
@@ -76,6 +85,7 @@ class Validator:
             class_on_train,
             self.visualizations_output_dir
         ).run()
+        logger.info('Running ValidationTables workflow')
         ValidationTables(
             validation_datasets,
             Location.get_location_by_id(station_code),
@@ -192,9 +202,14 @@ def interactive_viz(varname: str, station: str, date_range: tuple):
 
 
 if __name__ == '__main__':
-    Validator(
-        'InceptionTime_ensemble',
-        'o3',
-        ROOT_DIR / 'reports' / 'figures',
-        ROOT_DIR / 'reports' / 'tables'
-    ).run("GB002")
+    stations = pd.read_csv(f"{ROOT_DIR}/data/external/stations.csv")
+    for station_id in stations['id'].values:
+        try:
+            Validator(
+                'InceptionTime_ensemble',
+                'pm25',
+                ROOT_DIR / 'reports' / 'figures',
+                ROOT_DIR / 'reports' / 'tables'
+            ).run(station_id)
+        except:
+            pass
