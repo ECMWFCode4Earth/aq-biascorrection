@@ -349,8 +349,12 @@ class ValidationVisualization:
         plt.figure(figsize=(17, 9))
         g = sns.FacetGrid(df_n, hue="Data", height=8, aspect=1.6, legend_out=True)
         g.map_dataframe(
-            sns.histplot, 'value', stat="probability",
-            kde=True, binwidth=5, legend=True
+            sns.histplot,
+            'value',
+            stat="probability",
+            kde=True,
+            binwidth=5,
+            legend=True
         )
         freq_str = agg_time + " " if agg_time else ""
         plt.title(

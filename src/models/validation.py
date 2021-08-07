@@ -207,7 +207,7 @@ if __name__ == '__main__':
         try:
             Validator(
                 'InceptionTime_ensemble',
-                'pm25',
+                'no2',
                 ROOT_DIR / 'reports' / 'figures',
                 ROOT_DIR / 'reports' / 'tables'
             ).run(station_id)

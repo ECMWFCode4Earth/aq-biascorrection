@@ -214,7 +214,7 @@ class ModelTrain:
             f"RMSE: {cams_rmse}\n"
         )
 
-        if cams_mae < tr_mae and cams_mae < te_mae:
+        if 0.8 * cams_mae < tr_mae and 0.8 * cams_mae < te_mae:
             raise Exception('The model is not performing correctly')
 
         data = {
