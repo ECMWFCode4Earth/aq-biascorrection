@@ -1,3 +1,4 @@
+import datetime
 import glob
 import os
 from pathlib import Path
@@ -29,12 +30,21 @@ class ValidationDataset:
             cams: pd.DataFrame,
             observations: pd.DataFrame,
             predictions: pd.DataFrame,
+            persistence: pd.DataFrame,
             class_on_train: str
     ):
         self.cams = cams
         self.observations = observations
         self.predictions = predictions
+        self.persistence = persistence
         self.class_on_train = class_on_train
+
+    def __str__(self):
+        pd.options.display.max_rows = 999
+        df = self.cams.join([self.predictions, self.persistence, self.observations])
+        df['class_on_train'] = self.class_on_train
+        df = df.round(2)
+        return df.to_string()
 
 
 @dataclass
@@ -77,6 +87,12 @@ class Validator:
             ml_predictions,
             cams_and_obs
         )
+        logger.info('Running ValidationTables workflow')
+        ValidationTables(
+            validation_datasets,
+            Location.get_location_by_id(station_code),
+            self.metrics_output_dir
+        ).run()
         logger.info('Running ValidationVisualization workflow.')
         ValidationVisualization(
             validation_datasets,
@@ -84,12 +100,6 @@ class Validator:
             Location.get_location_by_id(station_code),
             class_on_train,
             self.visualizations_output_dir
-        ).run()
-        logger.info('Running ValidationTables workflow')
-        ValidationTables(
-            validation_datasets,
-            Location.get_location_by_id(station_code),
-            self.metrics_output_dir
         ).run()
 
     def load_model_predictions(
@@ -172,17 +182,22 @@ class Validator:
                               indices, f"{self.varname}_forecast"
                           ] - values[:-1].values
             predictions = predictions.to_frame(
-                'CAMS + Correction'
+                'Corrected CAMS'
             ).astype(float)
             cams = data[f"{self.varname}_forecast"].loc[predictions.index].to_frame(
-                'CAMS Forecast'
+                'CAMS'
             ).astype(float)
             obs = data[f"{self.varname}_observed"].loc[predictions.index].to_frame(
                 'Observations'
             ).astype(float)
+            persistence = data[f"{self.varname}_observed"].loc[
+                predictions.index - datetime.timedelta(hours=24)
+            ].reset_index(drop=True).to_frame(
+                'Persistence'
+            ).set_index(predictions.index).astype(float)
             class_on_train = values[-1]
             init_datasets.append(
-                ValidationDataset(cams, obs, predictions, class_on_train)
+                ValidationDataset(cams, obs, predictions, persistence, class_on_train)
             )
         return init_datasets
 
@@ -207,7 +222,7 @@ if __name__ == '__main__':
         try:
             Validator(
                 'InceptionTime_ensemble',
-                'no2',
+                'o3',
                 ROOT_DIR / 'reports' / 'figures',
                 ROOT_DIR / 'reports' / 'tables'
             ).run(station_id)

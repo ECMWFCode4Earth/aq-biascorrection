@@ -155,7 +155,10 @@ class ModelTrain:
             model.load(model_path, scaler_paths)
         else:
             logger.info('Model does not exist yet, training and saving!')
-            model.fit(self.X_train, self.y_train)
+            try:
+                model.fit(self.X_train, self.y_train)
+            except Exception as ex:
+                pass
             model.save(model_path, scaler_paths)
         return model_path, scaler_paths
 
@@ -321,9 +324,9 @@ class ModelTrain:
             self.__build_datasets()
 
     def show_prediction_results(self):
-        max_err = float(self.y_test.abs().max().round(4).max())
-        mae = float(self.y_test.abs().mean().round(4).mean())
-        rmse = float(((self.y_test ** 2).mean() ** 0.5).round(4).mean())
+        max_err = round(float(self.y_test.abs().max().round(4).max()), 3)
+        mae = round(float(self.y_test.abs().mean().round(4).mean()), 3)
+        rmse = round(float(((self.y_test ** 2).mean() ** 0.5).round(4).mean()), 3)
         return max_err, mae, rmse
 
     @staticmethod
@@ -350,9 +353,9 @@ class ModelTrain:
             for i in range(len(labels.columns.values)):
                 columns_rename_dict[labels.columns[i]] = preds.columns[i]
             labels = labels.rename(columns=columns_rename_dict)
-        exp_var = float(metrics.explained_variance_score(labels, preds))
-        maxerr = float((labels - preds).abs().max().round(4).max())
-        mae = float(metrics.mean_absolute_error(labels, preds))
-        rmse = float(metrics.mean_squared_error(labels, preds, squared=False))
-        r2 = float(metrics.r2_score(labels, preds))
+        exp_var = round(float(metrics.explained_variance_score(labels, preds)), 3)
+        maxerr = round(float((labels - preds).abs().max().round(4).max()), 3)
+        mae = round(float(metrics.mean_absolute_error(labels, preds)), 3)
+        rmse = round(float(metrics.mean_squared_error(labels, preds, squared=False)), 3)
+        r2 = round(float(metrics.r2_score(labels, preds)), 3)
         return exp_var, maxerr, mae, rmse, r2

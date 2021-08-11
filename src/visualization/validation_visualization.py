@@ -30,58 +30,65 @@ class ValidationVisualization:
     output_dir: Path
 
     def run(self):
+        data = self.get_dataset_for_timeseries(
+            self.validation_datasets
+        )
         logger.info('Plotting CDF Bias for "Hour", "Day" and "Month" aggregations')
         self.plot_bias_cdf(
-            self.validation_datasets,
+            data,
             self.location,
             'hour'
         )
         self.plot_bias_cdf(
-            self.validation_datasets,
+            data,
             self.location,
             'day'
         )
         self.plot_bias_cdf(
-            self.validation_datasets,
+            data,
             self.location,
             'month'
+        )
+        logger.info('Plotting TimeSerie Plots')
+        self.time_serie_total(
+            data,
+            self.location)
+
+        data = self.get_dataset_for_boxplot(
+            self.validation_datasets
         )
         logger.info('Plotting "Hour" and "Month" aggregation Box Plots taking into '
                     'consideration training and test datasets')
         if self.class_on_train == 'all':
             self.box_plot_time_agg(
-                self.validation_datasets,
+                data,
                 self.location,
                 True,
                 'hour')
             self.box_plot_time_agg(
-                self.validation_datasets,
+                data,
                 self.location,
                 True,
                 'month')
         self.box_plot_time_agg(
-            self.validation_datasets,
+            data,
             self.location,
             False,
             'hour')
         self.box_plot_time_agg(
-            self.validation_datasets,
+            data,
             self.location,
             False,
             'month')
         logger.info('Plotting "Hour" and "Month" aggregation ErrorBar Plots')
         self.time_serie_time_agg(
-            self.validation_datasets,
+            data,
             self.location,
             'hour')
         self.time_serie_time_agg(
-            self.validation_datasets,
+            data,
             self.location,
             'month')
-        logger.info('Plotting TimeSerie Plots')
-        self.time_serie_total(
-            self.validation_datasets,
-            self.location)
 
     def get_dataset_for_boxplot(
             self,
@@ -97,7 +104,9 @@ class ValidationVisualization:
         """
         datasets = []
         for init in initialization_datasets:
-            data = init.cams.join([init.observations, init.predictions])
+            data = init.cams.join([init.observations,
+                                   init.predictions,
+                                   init.persistence])
             for column in data.columns:
                 data[column] = data[column].astype(float)
             data['class_on_train'] = init.class_on_train
@@ -130,7 +139,9 @@ class ValidationVisualization:
         """
         datasets = []
         for init in initialization_datasets:
-            data = init.cams.join([init.observations, init.predictions])
+            data = init.cams.join([init.observations,
+                                   init.predictions,
+                                   init.persistence])
             for column in data.columns:
                 data[column] = data[column].astype(float)
             datasets.append(data)
@@ -139,7 +150,7 @@ class ValidationVisualization:
 
     def box_plot_time_agg(
             self,
-            initialization_datasets,
+            data,
             location,
             compare_train_test: bool = True,
             agg_time: str = 'hour',
@@ -148,9 +159,7 @@ class ValidationVisualization:
         Method to create a boxplot that compares the value of all the different
         initializations passed as an argument.
         Args:
-            initialization_datasets: list of InitializationDataset with data of CAMS,
-                                     Observations, Predictions and its Class during the
-                                     training phase.
+            data: data which is used to make the plot
             location: Location object for the station_id wanted
             compare_train_test: whether to use all the data or to differ between train
                                 and test initializations
@@ -168,7 +177,6 @@ class ValidationVisualization:
             os.makedirs(plot_path.parent, exist_ok=True)
         if plot_path.exists():
             return None
-        data = self.get_dataset_for_boxplot(initialization_datasets)
         if agg_time == 'hour':
             x_data = data.index.hour
         elif agg_time == 'month':
@@ -199,7 +207,7 @@ class ValidationVisualization:
 
     def time_serie_time_agg(
             self,
-            initialization_datasets: list,
+            data,
             location: Location,
             agg_time: str = 'hour'
     ):
@@ -207,9 +215,7 @@ class ValidationVisualization:
         Method to create a scatter plot that compares the value of all the different
         initializations passed as an argument, showing mean and std (errorbar).
         Args:
-            initialization_datasets: list of InitializationDataset with data of CAMS,
-                                     Observations, Predictions and its Class during the
-                                     training phase.
+            data: data which is used to make the plot
             location: Location object for the station_id wanted
             agg_time: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
         """
@@ -224,8 +230,7 @@ class ValidationVisualization:
             os.makedirs(plot_path.parent, exist_ok=True)
         if plot_path.exists():
             return None
-        colors = ['b', 'k', 'orange']
-        data = self.get_dataset_for_timeseries(initialization_datasets)
+        colors = ['b', 'k', 'orange', 'green']
         if agg_time == 'hour':
             x_data = data.index.hour
         elif agg_time == 'month':
@@ -234,7 +239,7 @@ class ValidationVisualization:
             raise NotImplementedError(
                 'There are only two aggregation types for time: "hour" and "month".'
             )
-        plt.figure(figsize=(17, 9))
+        plt.figure(figsize=(30, 15))
         for i, column in enumerate(data.columns):
             plt.errorbar(data[column].groupby(x_data).mean().index.values,
                          data[column].groupby(x_data).mean().values,
@@ -255,7 +260,7 @@ class ValidationVisualization:
 
     def time_serie_total(
             self,
-            initialization_datasets,
+            data,
             location,
             xlim=None
     ):
@@ -279,15 +284,13 @@ class ValidationVisualization:
             os.makedirs(plot_path.parent, exist_ok=True)
         if plot_path.exists():
             return None
-        colors = ['b', 'k', 'orange']
-        data = self.get_dataset_for_timeseries(initialization_datasets)
-        plt.figure(figsize=(17, 9))
+        colors = ['b', 'k', 'orange', 'green']
+        plt.figure(figsize=(30, 15))
         for i, column in enumerate(data.columns):
             plt.plot(
                 data.index.values,
                 data[column].values,
                 linewidth=2,
-                linestyle='dashed',
                 color=colors[i],
                 label=column
             )
@@ -304,16 +307,14 @@ class ValidationVisualization:
         plt.close()
 
     def plot_bias_cdf(self,
-                      initialization_datasets: list,
+                      data: pd.DataFrame,
                       location: Location,
                       agg_time: str = None):
         """
         Method to plot the CDF of bias for the CAMS forecast and
         the Corrected CAMS forecast in a specific location.
         Args:
-            initialization_datasets: list of InitializationDataset with data of CAMS,
-                                     Observations, Predictions and its Class during the
-                                     training phase.
+            data: data which is used to make the plot.
             location: Location object for the station_id wanted
             agg_time: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
         """
@@ -328,7 +329,6 @@ class ValidationVisualization:
             os.makedirs(plot_path.parent, exist_ok=True)
         if plot_path.exists():
             return None
-        data = self.get_dataset_for_timeseries(initialization_datasets)
         if agg_time == 'hour':
             agg_time = 'hourly'
             data = data.resample('H').mean()
@@ -338,15 +338,17 @@ class ValidationVisualization:
         elif agg_time == 'month':
             agg_time = 'monthly'
             data = data.resample('M').mean()
-        cams_bias = data['CAMS Forecast'] - data['Observations']
-        cams_bias = cams_bias.to_frame('CAMS Bias')
-        predictions_bias = data['CAMS + Correction'] - data['Observations']
-        predictions_bias = predictions_bias.to_frame('CAMS + Correction Bias')
-        df = cams_bias.join(predictions_bias)
+        cams_bias = data['CAMS'] - data['Observations']
+        cams_bias = cams_bias.to_frame('CAMS Error')
+        predictions_bias = data['Corrected CAMS'] - data['Observations']
+        predictions_bias = predictions_bias.to_frame('Corrected CAMS Error')
+        persistence_bias = data['Persistence'] - data['Observations']
+        persistence_bias = persistence_bias.to_frame('Persistence Error')
+        df = cams_bias.join([predictions_bias, persistence_bias])
         df_n = df.stack().reset_index().set_index('level_0').rename(
             columns={'level_1': 'Data', 0: 'value'}
         )
-        plt.figure(figsize=(17, 9))
+        plt.figure(figsize=(30, 15))
         g = sns.FacetGrid(df_n, hue="Data", height=8, aspect=1.6, legend_out=True)
         g.map_dataframe(
             sns.histplot,
@@ -358,7 +360,7 @@ class ValidationVisualization:
         )
         freq_str = agg_time + " " if agg_time else ""
         plt.title(
-            f"CDF of {freq_str.capitalize()}{self.varname.upper()}" f" bias in"
+            f"CDF of {freq_str.capitalize()}{self.varname.upper()}" f" error in"
             f" {location.city} ({location.country})"
         )
         plt.legend(
@@ -369,7 +371,7 @@ class ValidationVisualization:
         )
         plt.ylabel("Probability", fontsize="x-large")
         plt.xlabel(
-            freq_str.capitalize() + self.varname.upper() + r" bias ($\mu g / m^3$)",
+            freq_str.capitalize() + self.varname.upper() + r" error ($\mu g / m^3$)",
             fontsize="x-large",
         )
         plt.savefig(plot_path,

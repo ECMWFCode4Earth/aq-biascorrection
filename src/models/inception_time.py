@@ -133,7 +133,6 @@ class InceptionTime:
     def build_model(self,
                     input_shape_past: tuple,
                     input_shape_future: tuple,
-                    input_shape_past_bias: tuple,
                     aux_shape: tuple = None) -> Model:
         if aux_shape is not None:
             logger.debug(f'Auxiliary input data has shape {aux_shape}')
@@ -168,26 +167,24 @@ class InceptionTime:
 
         gap_layer_future = GlobalAveragePooling1D()(x_future)
 
-        input_layer_past_bias = Input(input_shape_past_bias)
-        x_past_bias = input_layer_past_bias
-        input_res_past_bias = input_layer_past_bias
-        for d in range(self.depth):
-            x_past_bias = self._inception_module(x_past_bias)
-            if d % 3 == 2:
-                input_res_past_bias = x_past_bias = self._shortcut_layer(
-                    input_res_past_bias, x_past_bias
-                )
-
-        gap_layer_past_bias = GlobalAveragePooling1D()(x_past_bias)
+        # input_layer_past_bias = Input(input_shape_past_bias)
+        # x_past_bias = input_layer_past_bias
+        # input_res_past_bias = input_layer_past_bias
+        # for d in range(self.depth):
+        #     x_past_bias = self._inception_module(x_past_bias)
+        #     if d % 3 == 2:
+        #         input_res_past_bias = x_past_bias = self._shortcut_layer(
+        #             input_res_past_bias, x_past_bias
+        #         )
+        #
+        # gap_layer_past_bias = GlobalAveragePooling1D()(x_past_bias)
         
         if aux_shape is None:
             concatenated = Concatenate()([gap_layer_past,
-                                          gap_layer_future,
-                                          gap_layer_past_bias])
+                                          gap_layer_future])
         else:
             concatenated = Concatenate()([gap_layer_past,
                                           gap_layer_future,
-                                          gap_layer_past_bias,
                                           x_aux])
         output_layer = Dense(100, activation='relu')(concatenated)
         output_layer = Dense(self.output_dims, activation='linear')(output_layer)
@@ -195,13 +192,11 @@ class InceptionTime:
         if aux_shape:
             self.model = Model(inputs=[input_layer_past,
                                        input_layer_future,
-                                       input_layer_past_bias,
                                        input_aux],
                                outputs=output_layer)
         else:
             self.model = Model(inputs=[input_layer_past,
-                                       input_layer_future,
-                                       input_layer_past_bias],
+                                       input_layer_future],
                                outputs=output_layer)
 
         logger.info(self.model.summary())
@@ -254,8 +249,8 @@ class InceptionTime:
             aux_values = aux_df.values
 
         # Process temporal features. Including scaling ignoring timestep.
-        past_df = X.filter(regex="_-\d+$", axis=1)
-        past_df_bias = past_df.filter(regex='bias', axis=1)
+        past_df = X.filter(regex="forecast_-\d+$", axis=1)
+        past_df_bias = X.filter(regex='bias_-\d+$', axis=1)
         n_time_steps = len(set(map(
             lambda x: x.split("_")[-1], past_df_bias.columns
         )))
@@ -279,7 +274,7 @@ class InceptionTime:
                           [column for column in past_df.columns
                            if column not in past_df_bias.columns]
                           ]
-        future_df = X.filter(regex="_\d+$", axis=1)
+        future_df = X.filter(regex="forecast_\d+$", axis=1)
         temporal_dfs = {
             'past': past_df_no_bias,
             'future': future_df
@@ -314,21 +309,19 @@ class InceptionTime:
                         " variables) and auxiliary features.")
             return (temporal_values['past'],
                     temporal_values['future'],
-                    past_bias_values,
+                    # past_bias_values,
                     aux_values),\
                    (temporal_values['past'].shape[1:],
                     temporal_values['future'].shape[1:],
-                    past_bias_values.shape[1:],
+                    # past_bias_values.shape[1:],
                     aux_values.shape[1:])
         else:
             logger.info("The input data contains only temporal features (air quality"
                         " variables).")
             return (temporal_values['past'],
-                    temporal_values['future'],
-                    past_bias_values),\
+                    temporal_values['future']),\
                    (temporal_values['past'].shape[1:],
-                    temporal_values['future'].shape[1:],
-                    past_bias_values.shape[1:])
+                    temporal_values['future'].shape[1:])
 
     def get_params(self, deep=True):
         return {

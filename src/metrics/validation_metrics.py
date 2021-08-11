@@ -39,33 +39,45 @@ class ValidationTables:
             cams = dataset.cams.values.flatten()
             observations = dataset.observations.values.flatten()
             predictions = dataset.predictions.values.flatten()
+            persistence = dataset.persistence.values.flatten()
             data = self.metric_table(cams,
                                      observations,
                                      predictions,
+                                     persistence,
                                      dataset.observations.index.values[0])
             if dataset.class_on_train == 'train':
                 metrics_train.append(data)
             elif dataset.class_on_train == 'test':
                 metrics_test.append(data)
         data_train = pd.concat(metrics_train)
-        data_train.loc[('Mean', 'CAMS Forecast'), :] = data_train.xs(
-            'CAMS Forecast',
+        data_train.loc[('Mean', 'CAMS'), :] = data_train.xs(
+            'CAMS',
             level=1,
             drop_level=False
         ).mean()
-        data_train.loc[('Mean', 'CAMS Forecast + Correction'), :] = data_train.xs(
-            'CAMS Forecast + Correction',
+        data_train.loc[('Mean', 'Corrected CAMS'), :] = data_train.xs(
+            'Corrected CAMS',
+            level=1,
+            drop_level=False
+        ).mean()
+        data_train.loc[('Mean', 'Persistence'), :] = data_train.xs(
+            'Persistence',
             level=1,
             drop_level=False
         ).mean()
         data_test = pd.concat(metrics_test)
-        data_test.loc[('Mean', 'CAMS Forecast'), :] = data_test.xs(
-            'CAMS Forecast',
+        data_test.loc[('Mean', 'CAMS'), :] = data_test.xs(
+            'CAMS',
             level=1,
             drop_level=False
         ).mean()
-        data_test.loc[('Mean', 'CAMS Forecast + Correction'), :] = data_test.xs(
-            'CAMS Forecast + Correction',
+        data_test.loc[('Mean', 'Corrected CAMS'), :] = data_test.xs(
+            'Corrected CAMS',
+            level=1,
+            drop_level=False
+        ).mean()
+        data_test.loc[('Mean', 'Persistence'), :] = data_test.xs(
+            'Persistence',
             level=1,
             drop_level=False
         ).mean()
@@ -89,7 +101,9 @@ class ValidationTables:
         datasets_train = []
         datasets_test = []
         for dataset in self.validation_datasets:
-            data = dataset.cams.join([dataset.observations, dataset.predictions])
+            data = dataset.cams.join([dataset.observations,
+                                      dataset.predictions,
+                                      dataset.persistence])
             for column in data.columns:
                 data[column] = data[column].astype(float)
             if dataset.class_on_train == 'train':
@@ -112,12 +126,14 @@ class ValidationTables:
                     data_resampled = value.resample(resampling_option).mean()
                 if np.any(np.isnan(data_resampled)):
                     data_resampled.dropna(inplace=True)
-                cams = data_resampled['CAMS Forecast'].values
+                cams = data_resampled['CAMS'].values
                 observations = data_resampled['Observations'].values
-                predictions = data_resampled['CAMS + Correction'].values
+                predictions = data_resampled['Corrected CAMS'].values
+                persistence = data_resampled['Persistence'].values
                 data = self.metric_table(cams,
                                          observations,
                                          predictions,
+                                         persistence,
                                          resampling_option)
                 results_dict[key].append(data)
         data_train = pd.concat(results_dict['train'])
@@ -167,6 +183,7 @@ class ValidationTables:
                      cams,
                      observations,
                      predictions,
+                     persistence,
                      index):
         tables_cams = {
             'NMAE': self.nmae_value(
@@ -194,13 +211,30 @@ class ValidationTables:
                 predictions,
                 observations),
         }
+        tables_persistence = {
+            'NMAE': self.nmae_value(
+                persistence - observations,
+                observations),
+            'BIAS': self.bias_value(persistence - observations),
+            'RMSE': self.rmse_value(persistence - observations),
+            'De-Biased NMAE': self.nmae_debiased_value(
+                persistence,
+                observations),
+            'Pearson Correlation': self.pearson_value(
+                persistence,
+                observations),
+        }
         df_cams = pd.DataFrame(tables_cams,
                                index=[index])
-        df_cams['type'] = 'CAMS Forecast'
+        df_cams['type'] = 'CAMS'
         df_cams.set_index([df_cams.index, 'type'], inplace=True)
         df_predictions = pd.DataFrame(tables_predictions,
                                       index=[index])
-        df_predictions['type'] = 'CAMS Forecast + Correction'
+        df_predictions['type'] = 'Corrected CAMS'
         df_predictions.set_index([df_predictions.index, 'type'], inplace=True)
-        data = df_cams.append(df_predictions)
+        df_persistence = pd.DataFrame(tables_persistence,
+                                      index=[index])
+        df_persistence['type'] = 'Persistence'
+        df_persistence.set_index([df_persistence.index, 'type'], inplace=True)
+        data = df_cams.append(df_predictions).append(df_persistence)
         return data
