@@ -53,6 +53,19 @@ class ValidationVisualization:
         self.time_serie_total(
             data,
             self.location)
+        # logger.info('Plotting Scatter Plots')
+        # self.scatter_plot_total(
+        #     data,
+        #     self.location)
+        logger.info('Plotting "Hour" and "Month" aggregation ErrorBar Plots')
+        self.time_serie_time_agg(
+            data,
+            self.location,
+            'hour')
+        self.time_serie_time_agg(
+            data,
+            self.location,
+            'month')
 
         data = self.get_dataset_for_boxplot(
             self.validation_datasets
@@ -79,15 +92,6 @@ class ValidationVisualization:
             data,
             self.location,
             False,
-            'month')
-        logger.info('Plotting "Hour" and "Month" aggregation ErrorBar Plots')
-        self.time_serie_time_agg(
-            data,
-            self.location,
-            'hour')
-        self.time_serie_time_agg(
-            data,
-            self.location,
             'month')
 
     def get_dataset_for_boxplot(
@@ -297,6 +301,54 @@ class ValidationVisualization:
         plt.legend()
         plt.ylabel(self.varname + r' ($\mu g / m^3$)', fontsize='xx-large')
         plt.xlabel("Date", fontsize='xx-large')
+        ax = plt.gca()
+        ax.xaxis.set_major_formatter(date_form)
+        if xlim is not None:
+            plt.xlim(xlim)
+        plt.title(f"{location.city} ({location.country})", fontsize='xx-large')
+        plt.savefig(plot_path,
+                    transparent=True, bbox_inches='tight', pad_inches=0)
+        plt.close()
+
+    def scatter_plot_total(
+            self,
+            data,
+            location,
+            xlim=None
+    ):
+        """
+        Method to plot the CDF of bias for the CAMS forecast and
+        the Corrected CAMS forecast in a specific location.
+        Args:
+            initialization_datasets: list of InitializationDataset with data of CAMS,
+                                     Observations, Predictions and its Class during the
+                                     training phase.
+            location: Location object for the station_id wanted
+            xlim: indicates how the boxplot x-axis is shown, i.e. 'hour' or 'month'
+        """
+        city = "".join(location.city.split(" ")).lower()
+        country = "".join(location.country.split(" ")).lower()
+        station_code = "".join(location.location_id.split(" ")).lower()
+        filename = f"{self.varname}_scatterplot_" \
+                   f"{station_code}_{city}_{country}.png"
+        plot_path = self.output_dir / 'ScatterPlot' / filename
+        if not plot_path.parent.exists():
+            os.makedirs(plot_path.parent, exist_ok=True)
+        if plot_path.exists():
+            return None
+        colors = ['b', 'k', 'orange']
+        plt.figure(figsize=(30, 15))
+        for i, column in enumerate([x for x in data.columns if x != 'Observations']):
+            plt.scatter(
+                data['Observations'].values,
+                data[column].values,
+                linewidth=2,
+                color=colors[i],
+                label=column
+            )
+        plt.legend()
+        plt.ylabel(self.varname + r' ($\mu g / m^3$) Predictions', fontsize='xx-large')
+        plt.xlabel(self.varname + r' ($\mu g / m^3$) Observations', fontsize='xx-large')
         ax = plt.gca()
         ax.xaxis.set_major_formatter(date_form)
         if xlim is not None:

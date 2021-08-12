@@ -55,15 +55,11 @@ class Validator:
     metrics_output_dir: Path
 
     def __post_init__(self):
-        self.visualizations_output_dir = self.visualizations_output_dir / \
-                                         self.varname / \
-                                         'results'
+        self.visualizations_output_dir = self.visualizations_output_dir / self.varname
         if not self.visualizations_output_dir.exists():
             os.makedirs(self.visualizations_output_dir, exist_ok=True)
 
-        self.metrics_output_dir = self.metrics_output_dir / \
-                                  self.varname / \
-                                  'results'
+        self.metrics_output_dir = self.metrics_output_dir / self.varname
         if not self.metrics_output_dir.exists():
             os.makedirs(self.metrics_output_dir, exist_ok=True)
 
@@ -222,9 +218,9 @@ if __name__ == '__main__':
         try:
             Validator(
                 'InceptionTime_ensemble',
-                'o3',
-                ROOT_DIR / 'reports' / 'figures',
-                ROOT_DIR / 'reports' / 'tables'
+                'no2',
+                ROOT_DIR / 'reports' / 'figures' / 'results',
+                ROOT_DIR / 'reports' / 'tables' / 'results'
             ).run(station_id)
         except:
             pass
