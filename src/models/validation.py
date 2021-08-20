@@ -21,17 +21,17 @@ from src.visualization.validation_visualization import ValidationVisualization
 df_stations = pd.read_csv(ROOT_DIR / "data" / "external" / "stations.csv", index_col=0)
 date_form = DateFormatter("%-d %b %y")
 
-logger = get_logger('Model Predictions Validation')
+logger = get_logger("Model Predictions Validation")
 
 
 class ValidationDataset:
     def __init__(
-            self,
-            cams: pd.DataFrame,
-            observations: pd.DataFrame,
-            predictions: pd.DataFrame,
-            persistence: pd.DataFrame,
-            class_on_train: str
+        self,
+        cams: pd.DataFrame,
+        observations: pd.DataFrame,
+        predictions: pd.DataFrame,
+        persistence: pd.DataFrame,
+        class_on_train: str,
     ):
         self.cams = cams
         self.observations = observations
@@ -42,7 +42,7 @@ class ValidationDataset:
     def __str__(self):
         pd.options.display.max_rows = 999
         df = self.cams.join([self.predictions, self.persistence, self.observations])
-        df['class_on_train'] = self.class_on_train
+        df["class_on_train"] = self.class_on_train
         df = df.round(2)
         return df.to_string()
 
@@ -63,46 +63,35 @@ class Validator:
         if not self.metrics_output_dir.exists():
             os.makedirs(self.metrics_output_dir, exist_ok=True)
 
-    def run(
-            self,
-            station_code: str,
-            class_on_train: str = 'all'):
-        logger.info(f'Starting Validation worfklow for variable '
-                    f'{self.varname} and station {station_code}.')
-        logger.info('Getting the data from the machine learning predictions.')
-        ml_predictions = self.load_model_predictions(
-            station_code,
-            class_on_train
+    def run(self, station_code: str, class_on_train: str = "all"):
+        logger.info(
+            f"Starting Validation worfklow for variable "
+            f"{self.varname} and station {station_code}."
         )
-        logger.info('Getting the data from the CAMS Forecast and Observations.')
-        cams_and_obs = self.load_obs_and_cams(
-            station_code
-        )
-        logger.info('Creating a ValidationDataset object for every run.')
+        logger.info("Getting the data from the machine learning predictions.")
+        ml_predictions = self.load_model_predictions(station_code, class_on_train)
+        logger.info("Getting the data from the CAMS Forecast and Observations.")
+        cams_and_obs = self.load_obs_and_cams(station_code)
+        logger.info("Creating a ValidationDataset object for every run.")
         validation_datasets = self.get_initialization_datasets(
-            ml_predictions,
-            cams_and_obs
+            ml_predictions, cams_and_obs
         )
-        logger.info('Running ValidationTables workflow')
+        logger.info("Running ValidationTables workflow")
         ValidationTables(
             validation_datasets,
             Location.get_location_by_id(station_code),
-            self.metrics_output_dir
+            self.metrics_output_dir,
         ).run()
-        logger.info('Running ValidationVisualization workflow.')
+        logger.info("Running ValidationVisualization workflow.")
         ValidationVisualization(
             validation_datasets,
             self.varname,
             Location.get_location_by_id(station_code),
             class_on_train,
-            self.visualizations_output_dir
+            self.visualizations_output_dir,
         ).run()
 
-    def load_model_predictions(
-            self,
-            station: str,
-            data_type: str
-    ) -> pd.DataFrame:
+    def load_model_predictions(self, station: str, data_type: str) -> pd.DataFrame:
         """
         Method to load the machine learning model predictions for a given station.
         The predictions collected are differentiated between "train" and "test".
@@ -111,8 +100,7 @@ class Validator:
             data_type: "train", "test" or "all" refers to the data that is taken
         """
         directory = ROOT_DIR / "models" / "results" / self.model_name / self.varname
-        sum_dfs = {"train": None,
-                   "test": None}
+        sum_dfs = {"train": None, "test": None}
         for key in sum_dfs.keys():
             sum_df, count = None, 0
             for file in glob.glob(str(directory / f"*_{key}.csv")):
@@ -123,14 +111,14 @@ class Validator:
                 else:
                     sum_df = df
             sum_df /= count
-            sum_df['class_on_train'] = key
+            sum_df["class_on_train"] = key
             sum_dfs[key] = sum_df.loc[(slice(None), station), :].droplevel(1)
-        if data_type == 'all':
-            df_total = pd.concat([sum_dfs['train'], sum_dfs['test']])
-        elif data_type == 'train':
-            df_total = sum_dfs['train']
-        elif data_type == 'test':
-            df_total = sum_dfs['train']
+        if data_type == "all":
+            df_total = pd.concat([sum_dfs["train"], sum_dfs["test"]])
+        elif data_type == "train":
+            df_total = sum_dfs["train"]
+        elif data_type == "test":
+            df_total = sum_dfs["train"]
         else:
             raise NotImplementedError(
                 'The data type has to be equal to: "train", "test" or "all"'
@@ -138,10 +126,7 @@ class Validator:
         df_total = df_total.sort_index()
         return df_total
 
-    def load_obs_and_cams(
-            self,
-            station: str
-    ) -> pd.DataFrame:
+    def load_obs_and_cams(self, station: str) -> pd.DataFrame:
         """
         Method to load the CAMS forecast predictions and OpenAQ observations
         for a given station.
@@ -151,13 +136,11 @@ class Validator:
         idir = ROOT_DIR / "data" / "processed"
         data_file = list(idir.rglob(f"data_{self.varname}_{station}.csv"))[0]
         data = pd.read_csv(data_file, index_col=0)
-        data['index'] = pd.to_datetime(data['index'])
-        return data.set_index('index')
+        data["index"] = pd.to_datetime(data["index"])
+        return data.set_index("index")
 
     def get_initialization_datasets(
-            self,
-            df: pd.DataFrame,
-            data: pd.DataFrame
+        self, df: pd.DataFrame, data: pd.DataFrame
     ) -> List[ValidationDataset]:
         """
         Method to transform the 24 machine learning predictions columns into a single
@@ -168,29 +151,32 @@ class Validator:
         """
         init_datasets = []
         for init_time, values in df.iterrows():
-            indices = pd.date_range(
-                start=init_time,
-                periods=len(values) - 1,
-                freq='H'
-            )
+            indices = pd.date_range(start=init_time, periods=len(values) - 1, freq="H")
             # Perform the correction of the forecasts
-            predictions = data.loc[
-                              indices, f"{self.varname}_forecast"
-                          ] - values[:-1].values
-            predictions = predictions.to_frame(
-                'Corrected CAMS'
-            ).astype(float)
-            cams = data[f"{self.varname}_forecast"].loc[predictions.index].to_frame(
-                'CAMS'
-            ).astype(float)
-            obs = data[f"{self.varname}_observed"].loc[predictions.index].to_frame(
-                'Observations'
-            ).astype(float)
-            persistence = data[f"{self.varname}_observed"].loc[
-                predictions.index - datetime.timedelta(hours=24)
-            ].reset_index(drop=True).to_frame(
-                'Persistence'
-            ).set_index(predictions.index).astype(float)
+            predictions = (
+                data.loc[indices, f"{self.varname}_forecast"] - values[:-1].values
+            )
+            predictions = predictions.to_frame("Corrected CAMS").astype(float)
+            cams = (
+                data[f"{self.varname}_forecast"]
+                .loc[predictions.index]
+                .to_frame("CAMS")
+                .astype(float)
+            )
+            obs = (
+                data[f"{self.varname}_observed"]
+                .loc[predictions.index]
+                .to_frame("Observations")
+                .astype(float)
+            )
+            persistence = (
+                data[f"{self.varname}_observed"]
+                .loc[predictions.index - datetime.timedelta(hours=24)]
+                .reset_index(drop=True)
+                .to_frame("Persistence")
+                .set_index(predictions.index)
+                .astype(float)
+            )
             class_on_train = values[-1]
             init_datasets.append(
                 ValidationDataset(cams, obs, predictions, persistence, class_on_train)
@@ -212,15 +198,15 @@ def interactive_viz(varname: str, station: str, date_range: tuple):
     plotter.run(get_id_location(station), date_range)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stations = pd.read_csv(f"{ROOT_DIR}/data/external/stations.csv")
-    for station_id in stations['id'].values:
+    for station_id in stations["id"].values:
         try:
             Validator(
-                'InceptionTime_ensemble',
-                'no2',
-                ROOT_DIR / 'reports' / 'figures' / 'results',
-                ROOT_DIR / 'reports' / 'tables' / 'results'
+                "InceptionTime_ensemble",
+                "no2",
+                ROOT_DIR / "reports" / "figures" / "results",
+                ROOT_DIR / "reports" / "tables" / "results",
             ).run(station_id)
         except:
             pass

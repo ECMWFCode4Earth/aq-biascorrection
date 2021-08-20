@@ -70,9 +70,9 @@ class StationTemporalSeriesPlotter:
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
             logger.debug(f"Plotting data for {info.city.values[0]}")
-            df = self.data[st_code].set_index('index')
-            df.index.name = 'Date'
-            if agg: 
+            df = self.data[st_code].set_index("index")
+            df.index.name = "Date"
+            if agg:
                 df = aggregate_df(df, agg)
             df[f"{self.varname}_forecast"] = (
                 df[f"{self.varname}_observed"] + df[f"{self.varname}_bias"]
@@ -125,7 +125,7 @@ class StationTemporalSeriesPlotter:
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
             logger.debug(f"Plotting data for {info.city.values[0]}")
-            df = self.data[st_code].set_index('index')
+            df = self.data[st_code].set_index("index")
             df.index = pd.to_datetime(df.index)
             df_grouped = df[f"{self.varname}_bias"].groupby(df.index.month)
             df = df_grouped.agg(["mean", "std", "count"])
@@ -193,17 +193,19 @@ class StationTemporalSeriesPlotter:
         for st_code in self.codes:
             info = self.sts_df[self.sts_df.id == st_code]
             logger.debug(f"Plotting data for {info.city.values[0]}")
-            df = self.data[st_code].set_index('index')
-            df[f'{self.varname}_forecast'] = df[f'{self.varname}_observed'] + \
-                df[f'{self.varname}_bias']
-            mean_obs = df[f'{self.varname}_observed'].mean()
-            df = df.drop(f'{self.varname}_observed', axis=1)
-            df['local_time_hour'] = np.cos(2 * pi * df['local_time_hour'] / 24)\
-                + np.sin(2 * pi * df['local_time_hour'] / 24)
+            df = self.data[st_code].set_index("index")
+            df[f"{self.varname}_forecast"] = (
+                df[f"{self.varname}_observed"] + df[f"{self.varname}_bias"]
+            )
+            mean_obs = df[f"{self.varname}_observed"].mean()
+            df = df.drop(f"{self.varname}_observed", axis=1)
+            df["local_time_hour"] = np.cos(
+                2 * pi * df["local_time_hour"] / 24
+            ) + np.sin(2 * pi * df["local_time_hour"] / 24)
 
             # Deseasonalize the time series
-            df = df.drop('local_time_hour', axis=1)
-            vars_to_not_deseasonalize = [f'{self.varname} Error Raw']
+            df = df.drop("local_time_hour", axis=1)
+            vars_to_not_deseasonalize = [f"{self.varname} Error Raw"]
             df.index = pd.to_datetime(df.index)
             months = df.index.month
             df = df.set_index(months, append=True)
@@ -219,7 +221,7 @@ class StationTemporalSeriesPlotter:
             if agg:
                 df = aggregate_df(df.droplevel(1), agg)
 
-            df.columns = [col.split('_')[0] for col in df.columns]
+            df.columns = [col.split("_")[0] for col in df.columns]
             plt.figure(figsize=(12, 9))
             mask = np.triu(np.ones(df.shape[1], dtype=np.bool))
             ax = sns.heatmap(
@@ -343,13 +345,15 @@ class StationTemporalSeriesPlotter:
             info = self.sts_df[self.sts_df.id == st_code]
             logger.debug(f"Plotting data for {info.city.values[0]}")
             data = self.data[st_code]
-            ndays = len(aggregate_df(data, 'daily', 'index').index)
-            logger.debug(f"There are {len(data.index)} "
-                         f"observation which corresponds to a total of {ndays} days.")
-            
-            if agg: 
-                data = aggregate_df(data, agg, 'index')
-            data['City'] = f"{info.city.values[0]} ({ndays:.0f})"
+            ndays = len(aggregate_df(data, "daily", "index").index)
+            logger.debug(
+                f"There are {len(data.index)} "
+                f"observation which corresponds to a total of {ndays} days."
+            )
+
+            if agg:
+                data = aggregate_df(data, agg, "index")
+            data["City"] = f"{info.city.values[0]} ({ndays:.0f})"
             dfs.append(data)
             labels.append(f"{info.city.values[0]} ({ndays:.0f})")
 
@@ -408,5 +412,5 @@ def aggregate_df(df, agg, index_col: str = None) -> pd.DataFrame:
     return df.mean().dropna()
 
 
-if __name__ == '__main__':
-    StationTemporalSeriesPlotter('pm25', 'Spain').plot_correlations()
+if __name__ == "__main__":
+    StationTemporalSeriesPlotter("pm25", "Spain").plot_correlations()

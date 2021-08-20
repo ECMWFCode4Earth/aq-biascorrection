@@ -153,11 +153,11 @@ class LocationTransformer:
         # Rolling through the data to interpolate NaNs
         for data_var in list(observations_data.data_vars.keys()):
             observations_data[data_var] = observations_data[data_var].interpolate_na(
-                dim='time',
-                method='linear',
-                fill_value='extrapolate',
+                dim="time",
+                method="linear",
+                fill_value="extrapolate",
                 use_coordinate=True,
-                max_gap=pd.Timedelta(value=12, unit='h')
+                max_gap=pd.Timedelta(value=12, unit="h"),
             )
         return observations_data
 
@@ -206,10 +206,10 @@ class LocationTransformer:
             for time in ds.time.values:
                 ds_time = ds.sel(time=time)
                 distances = ds_time.distance.values
-                distances_weights = [1
-                                     if distance <= 1
-                                     else round(1 / distance, 2)
-                                     for distance in distances]
+                distances_weights = [
+                    1 if distance <= 1 else round(1 / distance, 2)
+                    for distance in distances
+                ]
                 values = ds_time[list(ds_time.data_vars)[0]].values
                 assert len(distances_weights) == len(values)
                 values_n = []
@@ -221,8 +221,10 @@ class LocationTransformer:
                 if len(values_n) == 0:
                     values_weighted_average.append(np.nan)
                 else:
-                    normalized_weights = [weight / sum(distances_weights_n)
-                                          for weight in distances_weights_n]
+                    normalized_weights = [
+                        weight / sum(distances_weights_n)
+                        for weight in distances_weights_n
+                    ]
                     values_weighted_average.append(
                         np.average(
                             values_n,

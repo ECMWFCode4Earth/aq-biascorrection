@@ -84,10 +84,7 @@ class FeatureBuilder:
             return pd.DataFrame(), pd.DataFrame()
         else:
             data_samples = pd.concat(samples)
-            data_samples = data_samples.reindex(
-                sorted(data_samples.columns),
-                axis=1
-            )
+            data_samples = data_samples.reindex(sorted(data_samples.columns), axis=1)
 
         if include_time_attrs:
             data_samples = data_samples.merge(aux, left_index=True, right_index=True)
@@ -95,7 +92,7 @@ class FeatureBuilder:
             data_samples["latitude_attr"] = loc.latitude
             data_samples["longitude_attr"] = loc.longitude
             data_samples["elevation_attr"] = loc.elevation
-        data_samples['station'] = loc.location_id
+        data_samples["station"] = loc.location_id
         X, y = self.get_features_and_labels(data_samples)
 
         index = set(X.index.values).intersection(y.index.values)
@@ -105,12 +102,12 @@ class FeatureBuilder:
 
     @staticmethod
     def get_features_and_labels(
-            dataset: pd.DataFrame
+        dataset: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         columns_to_features = []
         columns_to_labels = []
         for column in dataset.columns:
-            hour = column.split('_')[-1]
+            hour = column.split("_")[-1]
             if "bias" in column and float(hour) >= 0:
                 columns_to_features.append(column)
             else:
@@ -122,17 +119,16 @@ class FeatureBuilder:
     def get_samples(self, dataset: pd.DataFrame) -> List[pd.DataFrame]:
         number_per_sample = self.n_future + self.n_prev_obs
         samples = []
-        idxs = np.where(np.logical_or(
-            dataset.index.hour == 0,
-            dataset.index.hour == 12
-        ))[0].tolist()
+        idxs = np.where(
+            np.logical_or(dataset.index.hour == 0, dataset.index.hour == 12)
+        )[0].tolist()
         for idx in idxs:
-            sample = dataset.iloc[idx: idx + number_per_sample]
+            sample = dataset.iloc[idx : idx + number_per_sample]
             # Check that the last sample has the number of data needed
             if len(sample) != number_per_sample:
                 continue
             # Check that all times are continuous (not more than 1h between times)
-            if np.all(np.diff(sample.index.values) == np.timedelta64(1, 'h')):
+            if np.all(np.diff(sample.index.values) == np.timedelta64(1, "h")):
                 data = {}
                 for t, row in enumerate(sample.iterrows()):
                     if t - self.n_prev_obs < 0:
@@ -152,16 +148,14 @@ class FeatureBuilder:
                         data[f"{feature}_{t}"] = row[feature]
                 samples.append(
                     pd.DataFrame(
-                        data,
-                        index=[sample.index[number_per_sample - self.n_future]]
+                        data, index=[sample.index[number_per_sample - self.n_future]]
                     )
                 )
         return samples
 
     @staticmethod
     def get_features_hour_and_month(
-        dataset: pd.DataFrame,
-        categorical_to_numeric: bool = True
+        dataset: pd.DataFrame, categorical_to_numeric: bool = True
     ) -> pd.DataFrame:
         """
         Computes a dataframe with the sine and cosine decompositions of the month and

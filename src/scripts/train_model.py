@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import click
@@ -14,12 +13,17 @@ from src.logging import get_logger
 logger = get_logger("Model trainer")
 
 
-# @click.command()
-# @click.option('-c', '--config_file', type=PATH, required=True,
-#               help="Input file where to take the model configuration from")
+@click.command()
+@click.option(
+    "-c",
+    "--config_file",
+    type=PATH,
+    required=True,
+    help="Input file where to take the model configuration from",
+)
 def main(
     config_yaml_filename: str,
-    config_yaml_parent: Path = ROOT_DIR / "models" / "configuration"
+    config_yaml_parent: Path = ROOT_DIR / "models" / "configuration",
 ):
     """
     Script to process the CAMS forecasts.
@@ -28,7 +32,3 @@ def main(
     ModelTrain(config_yaml_filename, config_yaml_parent).run()
 
     logger.info("Process finished!")
-
-
-if __name__ == "__main__":
-    main("config_inceptiontime_depth6.yml")

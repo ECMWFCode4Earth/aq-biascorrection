@@ -1,10 +1,6 @@
 import os
 from pathlib import Path
 
-from dotenv import find_dotenv, load_dotenv
-
-load_dotenv(find_dotenv())
-
 str2agg = {"daily": "D", "monthly": "M"}
 
 
@@ -18,7 +14,15 @@ var2longstr = {
 units2str = {"µg/m³": "microgram / m^3", "ppm": "ppm"}
 
 
-ROOT_DIR = Path(os.getenv("ROOT_DIR", os.path.dirname(os.path.abspath("setup.py"))))
+def project_root(dir=None):
+    newdir = dir.parent if dir is not None else Path(__file__).parent
+    if len(list(newdir.glob("README.md"))):
+        return newdir
+    else:
+        return project_root(newdir)
+
+
+ROOT_DIR = project_root()
 
 print(f"Project directory (ROOT_DIR): '{ROOT_DIR}'")
 

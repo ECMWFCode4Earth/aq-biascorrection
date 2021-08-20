@@ -9,11 +9,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint,
-                                        ReduceLROnPlateau)
-from tensorflow.keras.layers import (Activation, Add, BatchNormalization,
-                                     Concatenate, Conv1D, Dense,
-                                     GlobalAveragePooling1D, Input, MaxPool1D)
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.keras.layers import (
+    Activation,
+    Add,
+    BatchNormalization,
+    Concatenate,
+    Conv1D,
+    Dense,
+    GlobalAveragePooling1D,
+    Input,
+    MaxPool1D,
+)
 from tensorflow.keras.models import Model, load_model
 
 from src.constants import ROOT_DIR
@@ -23,7 +30,7 @@ logger = get_logger("InceptionTime_ensemble")
 
 import tensorflow as tf
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
+physical_devices = tf.config.experimental.list_physical_devices("GPU")
 
 if len(physical_devices) == 0:
     logger.info("Not enough GPU hardware devices available")
@@ -42,49 +49,53 @@ class InceptionTime:
     inception_kernels: List[int] = field(default_factory=lambda: [2, 4, 8])
     bottleneck_size: int = 32
     verbose: int = 2
-    optimizer: str = 'rmsprop'
-    loss: str = 'mae'
-    metrics: List[str] = field(default_factory=lambda: ['rmse'])
+    optimizer: str = "rmsprop"
+    loss: str = "mae"
+    metrics: List[str] = field(default_factory=lambda: ["rmse"])
 
     def __post_init__(self) -> NoReturn:
         self.attr_scaler = StandardScaler()
         self.aq_vars_scaler = StandardScaler()
         self.aq_bias_scaler = StandardScaler()
         self.output_models = ROOT_DIR / "models" / "results" / "InceptionTime_ensemble"
-        self.output_predictions = ROOT_DIR / "data" / "predictions" / "InceptionTime_ensemble"
+        self.output_predictions = (
+            ROOT_DIR / "data" / "predictions" / "InceptionTime_ensemble"
+        )
         os.makedirs(self.output_models, exist_ok=True)
         os.makedirs(self.output_predictions, exist_ok=True)
         self._set_callbacks()
 
     def __str__(self):
-        return f"inceptionTime_{self.depth}depth_{self.n_filters}filters_" \
-               f"{'-'.join(map(str, self.inception_kernels))}kernels"
+        return (
+            f"inceptionTime_{self.depth}depth_{self.n_filters}filters_"
+            f"{'-'.join(map(str, self.inception_kernels))}kernels"
+        )
 
     def _set_callbacks(self):
-        logger.info("Three callbacks have been added to the model fitting: "
-                    "ModelCheckpoint, EarlyStopping and ReduceLROnPlateau.")
-        reduce_lr = ReduceLROnPlateau(monitor='loss',
-                                      factor=0.8,
-                                      patience=5,
-                                      min_lr=0.001)
-        file_path = self.output_models / f'best_{str(self)}.h5'
-        model_checkpoint = ModelCheckpoint(filepath=file_path,
-                                           monitor='loss',
-                                           save_best_only=True)
-        early_stopping = EarlyStopping(monitor='loss',
-                                       patience=5,
-                                       mode='auto',
-                                       restore_best_weights=True)
+        logger.info(
+            "Three callbacks have been added to the model fitting: "
+            "ModelCheckpoint, EarlyStopping and ReduceLROnPlateau."
+        )
+        reduce_lr = ReduceLROnPlateau(
+            monitor="loss", factor=0.8, patience=5, min_lr=0.001
+        )
+        file_path = self.output_models / f"best_{str(self)}.h5"
+        model_checkpoint = ModelCheckpoint(
+            filepath=file_path, monitor="loss", save_best_only=True
+        )
+        early_stopping = EarlyStopping(
+            monitor="loss", patience=5, mode="auto", restore_best_weights=True
+        )
         self.callbacks = [reduce_lr, model_checkpoint, early_stopping]
 
-    def _inception_module(self, input_tensor, stride=1, activation='linear'):
+    def _inception_module(self, input_tensor, stride=1, activation="linear"):
         if int(input_tensor.shape[-2]) > 1:
             input_inception = Conv1D(
                 filters=self.bottleneck_size,
                 kernel_size=1,
-                padding='same',
+                padding="same",
                 activation=activation,
-                use_bias=False
+                use_bias=False,
             )(input_tensor)
         else:
             input_inception = input_tensor
@@ -96,52 +107,62 @@ class InceptionTime:
         for kernel_size in self.inception_kernels:
             conv_list.append(
                 Conv1D(
-                    filters=self.n_filters, kernel_size=kernel_size, 
-                    strides=stride, padding='same', activation=activation,
-                    use_bias=False
+                    filters=self.n_filters,
+                    kernel_size=kernel_size,
+                    strides=stride,
+                    padding="same",
+                    activation=activation,
+                    use_bias=False,
                 )(input_inception)
             )
 
-        max_pool_1 = MaxPool1D(
-            pool_size=3, strides=stride, padding='same'
-        )(input_tensor)
+        max_pool_1 = MaxPool1D(pool_size=3, strides=stride, padding="same")(
+            input_tensor
+        )
 
         conv_6 = Conv1D(
-            filters=self.n_filters, kernel_size=1, padding='same', 
-            activation=activation, use_bias=False
+            filters=self.n_filters,
+            kernel_size=1,
+            padding="same",
+            activation=activation,
+            use_bias=False,
         )(max_pool_1)
 
         conv_list.append(conv_6)
 
         x = Concatenate(axis=-1)(conv_list)
         x = BatchNormalization()(x)
-        x = Activation(activation='relu')(x)
+        x = Activation(activation="relu")(x)
         return x
 
     @staticmethod
     def _shortcut_layer(input_tensor, out_inception):
         shortcut_y = Conv1D(
-            filters=int(out_inception.shape[-1]), kernel_size=1, padding='same', 
-            use_bias=False
+            filters=int(out_inception.shape[-1]),
+            kernel_size=1,
+            padding="same",
+            use_bias=False,
         )(input_tensor)
         shortcut_y = BatchNormalization()(shortcut_y)
 
         x = Add()([shortcut_y, out_inception])
-        x = Activation('relu')(x)
+        x = Activation("relu")(x)
         return x
 
-    def build_model(self,
-                    input_shape_past: tuple,
-                    input_shape_future: tuple,
-                    aux_shape: tuple = None) -> Model:
+    def build_model(
+        self,
+        input_shape_past: tuple,
+        input_shape_future: tuple,
+        aux_shape: tuple = None,
+    ) -> Model:
         if aux_shape is not None:
-            logger.debug(f'Auxiliary input data has shape {aux_shape}')
+            logger.debug(f"Auxiliary input data has shape {aux_shape}")
             input_aux = Input(aux_shape)
 
             # Aux layer
-            x_aux = Dense(64, activation='relu')(input_aux)
-            x_aux = Dense(128, activation='relu')(x_aux)
-            x_aux = Dense(1, activation='relu')(x_aux)
+            x_aux = Dense(64, activation="relu")(input_aux)
+            x_aux = Dense(128, activation="relu")(x_aux)
+            x_aux = Dense(1, activation="relu")(x_aux)
 
         input_layer_past = Input(input_shape_past)
         x_past = input_layer_past
@@ -149,9 +170,7 @@ class InceptionTime:
         for d in range(self.depth):
             x_past = self._inception_module(x_past)
             if d % 3 == 2:
-                input_res_past = x_past = self._shortcut_layer(
-                    input_res_past, x_past
-                )
+                input_res_past = x_past = self._shortcut_layer(input_res_past, x_past)
 
         gap_layer_past = GlobalAveragePooling1D()(x_past)
 
@@ -178,26 +197,23 @@ class InceptionTime:
         #         )
         #
         # gap_layer_past_bias = GlobalAveragePooling1D()(x_past_bias)
-        
+
         if aux_shape is None:
-            concatenated = Concatenate()([gap_layer_past,
-                                          gap_layer_future])
+            concatenated = Concatenate()([gap_layer_past, gap_layer_future])
         else:
-            concatenated = Concatenate()([gap_layer_past,
-                                          gap_layer_future,
-                                          x_aux])
-        output_layer = Dense(100, activation='relu')(concatenated)
-        output_layer = Dense(self.output_dims, activation='linear')(output_layer)
+            concatenated = Concatenate()([gap_layer_past, gap_layer_future, x_aux])
+        output_layer = Dense(100, activation="relu")(concatenated)
+        output_layer = Dense(self.output_dims, activation="linear")(output_layer)
 
         if aux_shape:
-            self.model = Model(inputs=[input_layer_past,
-                                       input_layer_future,
-                                       input_aux],
-                               outputs=output_layer)
+            self.model = Model(
+                inputs=[input_layer_past, input_layer_future, input_aux],
+                outputs=output_layer,
+            )
         else:
-            self.model = Model(inputs=[input_layer_past,
-                                       input_layer_future],
-                               outputs=output_layer)
+            self.model = Model(
+                inputs=[input_layer_past, input_layer_future], outputs=output_layer
+            )
 
         logger.info(self.model.summary())
         self.model.compile(loss=self.loss, optimizer=self.optimizer)
@@ -214,26 +230,21 @@ class InceptionTime:
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=[self.callbacks]
+            callbacks=[self.callbacks],
         )
         return history
 
-    def predict(
-        self, 
-        X: pd.DataFrame,
-        filepath: Path = None
-    ) -> pd.DataFrame:
+    def predict(self, X: pd.DataFrame, filepath: Path = None) -> pd.DataFrame:
         y_hat = self.model.predict(self.reshape_data(X, test=True)[0])
         y_hat = pd.DataFrame(
-            y_hat, index=X.index, columns=list(range(1, self.output_dims + 1)))
+            y_hat, index=X.index, columns=list(range(1, self.output_dims + 1))
+        )
         if filepath is not None:
             y_hat.to_csv(filepath)
         return y_hat
 
     def reshape_data(
-        self, 
-        X: pd.DataFrame, 
-        test: bool = False
+        self, X: pd.DataFrame, test: bool = False
     ) -> Union[Tuple[pd.DataFrame], Tuple[List[pd.DataFrame]]]:
         attr_df = X.filter(regex="_attr$", axis=1)
         aux_df = X.filter(regex="_aux")
@@ -250,78 +261,77 @@ class InceptionTime:
 
         # Process temporal features. Including scaling ignoring timestep.
         past_df = X.filter(regex="forecast_-\d+$", axis=1)
-        past_df_bias = X.filter(regex='bias_-\d+$', axis=1)
-        n_time_steps = len(set(map(
-            lambda x: x.split("_")[-1], past_df_bias.columns
-        )))
+        past_df_bias = X.filter(regex="bias_-\d+$", axis=1)
+        n_time_steps = len(set(map(lambda x: x.split("_")[-1], past_df_bias.columns)))
         n_temporal_var = len(past_df_bias.columns) // n_time_steps
         past_bias_values = past_df_bias.values.reshape(
             (-1, n_time_steps, n_temporal_var)
         )
         past_bias_values = past_bias_values.reshape((-1, n_temporal_var))
         if test:
-            logger.debug("Air Quality variables have "
-                         "been scaled with fitted scaler.")
+            logger.debug(
+                "Air Quality variables have " "been scaled with fitted scaler."
+            )
             past_bias_values = self.aq_bias_scaler.transform(past_bias_values)
         else:
             logger.debug("Air Quality variables have been scaled.")
             past_bias_values = self.aq_bias_scaler.fit_transform(past_bias_values)
-        past_bias_values = past_bias_values.reshape(
-            (-1, n_time_steps, n_temporal_var)
-        )
+        past_bias_values = past_bias_values.reshape((-1, n_time_steps, n_temporal_var))
 
-        past_df_no_bias = past_df.loc[:,
-                          [column for column in past_df.columns
-                           if column not in past_df_bias.columns]
-                          ]
+        past_df_no_bias = past_df.loc[
+            :,
+            [
+                column
+                for column in past_df.columns
+                if column not in past_df_bias.columns
+            ],
+        ]
         future_df = X.filter(regex="forecast_\d+$", axis=1)
-        temporal_dfs = {
-            'past': past_df_no_bias,
-            'future': future_df
-        }
-        temporal_values = {
-            'past': None,
-            'future': None
-        }
+        temporal_dfs = {"past": past_df_no_bias, "future": future_df}
+        temporal_values = {"past": None, "future": None}
         for key, temporal_df in temporal_dfs.items():
-            n_time_steps = len(set(map(
-                lambda x: x.split("_")[-1], temporal_df.columns
-            )))
-            n_temporal_var = len(temporal_df.columns) // n_time_steps
-            temp_values = temporal_df.values.reshape(
-                (-1, n_time_steps, n_temporal_var)
+            n_time_steps = len(
+                set(map(lambda x: x.split("_")[-1], temporal_df.columns))
             )
+            n_temporal_var = len(temporal_df.columns) // n_time_steps
+            temp_values = temporal_df.values.reshape((-1, n_time_steps, n_temporal_var))
             temp_values = temp_values.reshape((-1, n_temporal_var))
-            if test or (key == 'future' and not test):
-                logger.debug("Air Quality variables have "
-                             "been scaled with fitted scaler.")
+            if test or (key == "future" and not test):
+                logger.debug(
+                    "Air Quality variables have " "been scaled with fitted scaler."
+                )
                 temp_values = self.aq_vars_scaler.transform(temp_values)
-            elif key == 'past' and not test:
+            elif key == "past" and not test:
                 logger.debug("Air Quality variables have been scaled.")
                 temp_values = self.aq_vars_scaler.fit_transform(temp_values)
-            temp_values = temp_values.reshape(
-                (-1, n_time_steps, n_temporal_var)
-            )
+            temp_values = temp_values.reshape((-1, n_time_steps, n_temporal_var))
             temporal_values[key] = temp_values
 
         if aux_values.size:
-            logger.info("The input data is separated in temporal features (air quality"
-                        " variables) and auxiliary features.")
-            return (temporal_values['past'],
-                    temporal_values['future'],
-                    # past_bias_values,
-                    aux_values),\
-                   (temporal_values['past'].shape[1:],
-                    temporal_values['future'].shape[1:],
-                    # past_bias_values.shape[1:],
-                    aux_values.shape[1:])
+            logger.info(
+                "The input data is separated in temporal features (air quality"
+                " variables) and auxiliary features."
+            )
+            return (
+                temporal_values["past"],
+                temporal_values["future"],
+                # past_bias_values,
+                aux_values,
+            ), (
+                temporal_values["past"].shape[1:],
+                temporal_values["future"].shape[1:],
+                # past_bias_values.shape[1:],
+                aux_values.shape[1:],
+            )
         else:
-            logger.info("The input data contains only temporal features (air quality"
-                        " variables).")
-            return (temporal_values['past'],
-                    temporal_values['future']),\
-                   (temporal_values['past'].shape[1:],
-                    temporal_values['future'].shape[1:])
+            logger.info(
+                "The input data contains only temporal features (air quality"
+                " variables)."
+            )
+            return (temporal_values["past"], temporal_values["future"]), (
+                temporal_values["past"].shape[1:],
+                temporal_values["future"].shape[1:],
+            )
 
     def get_params(self, deep=True):
         return {
@@ -329,8 +339,8 @@ class InceptionTime:
             "bottleneck_size": self.bottleneck_size,
             "optimizer": self.optimizer,
             "loss": self.loss,
-            'batch_size': self.batch_size,
-            "n_epochs": self.n_epochs
+            "batch_size": self.batch_size,
+            "n_epochs": self.n_epochs,
         }
 
     def set_params(self, **parameters):
@@ -343,15 +353,15 @@ class InceptionTime:
         # Save model:
         self.model.save(model_path)
         # Save scalers:
-        dump(self.attr_scaler, open(scaler_paths["attr_scaler"], 'wb'))
-        dump(self.aq_vars_scaler, open(scaler_paths["aq_vars_scaler"], 'wb'))
-        dump(self.aq_bias_scaler, open(scaler_paths["aq_bias_scaler"], 'wb'))
+        dump(self.attr_scaler, open(scaler_paths["attr_scaler"], "wb"))
+        dump(self.aq_vars_scaler, open(scaler_paths["aq_vars_scaler"], "wb"))
+        dump(self.aq_bias_scaler, open(scaler_paths["aq_bias_scaler"], "wb"))
 
     def load(self, model_path: Path, scaler_paths: Dict) -> NoReturn:
         # Load model
         self.model = load_model(model_path)
         # Load scalers:
-        self.attr_scaler = load(open(scaler_paths["attr_scaler"], 'rb'))
-        self.aq_vars_scaler = load(open(scaler_paths["aq_vars_scaler"], 'rb'))
-        self.aq_bias_scaler = load(open(scaler_paths["aq_bias_scaler"], 'rb'))
+        self.attr_scaler = load(open(scaler_paths["attr_scaler"], "rb"))
+        self.aq_vars_scaler = load(open(scaler_paths["aq_vars_scaler"], "rb"))
+        self.aq_bias_scaler = load(open(scaler_paths["aq_bias_scaler"], "rb"))
         print(self.model.summary())

@@ -98,7 +98,7 @@ class Location:
         return loc
 
 
-@retry
+@retry()
 def get_elevation_for_location(latitude: float, longitude: float):
     """
     Function to get the elevation of a specific location given the latitude and
@@ -108,7 +108,7 @@ def get_elevation_for_location(latitude: float, longitude: float):
         f"https://api.open-elevation.com/api/v1/lookup?"
         f"locations={round(latitude, 4)},{round(longitude, 4)}"
     )
-    elevation = requests.get(url, timeout=30).json()["results"][0]["elevation"]
+    elevation = int(requests.get(url, timeout=30).json()["results"][0]["elevation"])
     return elevation
 
 
