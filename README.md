@@ -73,6 +73,27 @@ machine-learning / deep-learning techniques.
 <!-- PREREQUISITES -->
 <h2 id="prerequisites"> :pushpin: Prerequisites</h2>
 
+The software packages, needed for this software to be able to execute all the different
+methods, are defined in the requirements.txt file.
+
+For the environment installation:
+
+```
+conda create --name aq-biascorrection python
+```
+
+```
+conda activate aq-biascorrection
+```
+
+```
+python -m pip install -r requirements.txt
+```
+
+```
+pip install .
+```
+
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
