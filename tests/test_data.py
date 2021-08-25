@@ -1,6 +1,9 @@
 import pathlib
 
 import pytest
+import tempfile
+
+from mockito import ANY, mock, when
 
 from src.data.openaq_obs import OpenAQDownloader
 from src.data.utils import Location, get_elevation_for_location
@@ -20,10 +23,10 @@ class TestOpenAQDownload:
         )
         location = Location(**args)
         openaq_obj = OpenAQDownloader(
-            location,
-            pathlib.Path("/tmp"),
-            "no2",
-            dict(start="2019-06-01", end="2021-03-31"),
+            location=location,
+            output_dir=pathlib.Path("/tmp"),
+            variable="no2",
+            time_range=dict(start="2019-06-01", end="2021-03-31"),
         )
         return openaq_obj
 
@@ -33,6 +36,20 @@ class TestOpenAQDownload:
         )
         assert type(distance) == float
         assert round(distance) == 156
+
+    def test_openaq_station_download_when_path_already_exists(
+            self,
+            mocked_download_obj):
+        openaq_obj = mocked_download_obj
+        tempdir = tempfile.mkdtemp()
+        output_path = pathlib.PosixPath(tempdir + '/output_file.nc')
+        with open(output_path, 'w') as output_file:
+            output_file.write('Hi!')
+        when(Location).get_observations_path(
+            ANY(), ANY(), ANY()
+        ).thenReturn(output_path)
+        result = openaq_obj.run()
+        assert result == output_path
 
 
 
