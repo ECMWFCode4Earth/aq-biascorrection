@@ -9,18 +9,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from tensorflow.keras.layers import (
-    Activation,
-    Add,
-    BatchNormalization,
-    Concatenate,
-    Conv1D,
-    Dense,
-    GlobalAveragePooling1D,
-    Input,
-    MaxPool1D,
-)
+from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint,
+                                        ReduceLROnPlateau)
+from tensorflow.keras.layers import (Activation, Add, BatchNormalization,
+                                     Concatenate, Conv1D, Dense,
+                                     GlobalAveragePooling1D, Input, MaxPool1D)
 from tensorflow.keras.models import Model, load_model
 
 from src.constants import ROOT_DIR

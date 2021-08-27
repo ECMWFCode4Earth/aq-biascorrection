@@ -2,13 +2,9 @@ import datetime
 import glob
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-import xarray as xr
-from ipywidgets import interactive, widgets
 from matplotlib.dates import DateFormatter
 from pydantic.dataclasses import dataclass
 
@@ -204,7 +200,7 @@ if __name__ == "__main__":
         try:
             Validator(
                 "InceptionTime_ensemble",
-                "no2",
+                "pm25",
                 ROOT_DIR / "reports" / "figures" / "results",
                 ROOT_DIR / "reports" / "tables" / "results",
             ).run(station_id)

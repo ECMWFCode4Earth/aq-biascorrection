@@ -1,15 +1,12 @@
 import glob
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import xarray as xr
-from ipywidgets import interactive, widgets
 from matplotlib.dates import DateFormatter
-from pydantic.dataclasses import dataclass
 
 from src.constants import ROOT_DIR
 from src.data.utils import Location
@@ -21,13 +18,20 @@ date_form = DateFormatter("%-d %b %y")
 logger = get_logger("Validation Visualization")
 
 
-@dataclass
 class ValidationVisualization:
-    validation_datasets: list
-    varname: str
-    location: Location
-    class_on_train: str
-    output_dir: Path
+    def __init__(
+            self,
+            validation_datasets: list,
+            varname: str,
+            location: Location,
+            class_on_train: str,
+            output_dir: Path
+    ):
+        self.validation_datasets = validation_datasets
+        self.varname = varname
+        self.location = location
+        self.class_on_train = class_on_train
+        self.output_dir = output_dir
 
     def run(self):
         data = self.get_dataset_for_timeseries(self.validation_datasets)
