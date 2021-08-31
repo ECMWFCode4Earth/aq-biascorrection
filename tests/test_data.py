@@ -94,9 +94,10 @@ class TestOpenAQDownload:
         return openaq_obj
 
     @pytest.fixture()
-    def mocked_output_path(self):
-        tempdir = tempfile.mkdtemp()
-        output_path = pathlib.PosixPath(tempdir + "/output_file.nc")
+    def mocked_output_path(self, tmp_path):
+        tempdir = tmp_path / "sub"
+        tempdir.mkdir()
+        output_path = tempdir / "/output_file.nc"
         return output_path
 
     @pytest.fixture()
@@ -359,7 +360,7 @@ class TestOpenAQDownload:
         _mocked_dataframe_with_closest_stations,
         mocked_dataframe_with_closest_stations,
     ):
-        when(mocked_download_obj)._get_closest_stations_to_location().thenReturn(
+        when(OpenAQDownloader)._get_closest_stations_to_location().thenReturn(
             _mocked_dataframe_with_closest_stations
         )
         stations = mocked_download_obj.get_closest_stations_to_location()

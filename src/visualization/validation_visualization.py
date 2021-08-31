@@ -20,12 +20,12 @@ logger = get_logger("Validation Visualization")
 
 class ValidationVisualization:
     def __init__(
-            self,
-            validation_datasets: list,
-            varname: str,
-            location: Location,
-            class_on_train: str,
-            output_dir: Path
+        self,
+        validation_datasets: list,
+        varname: str,
+        location: Location,
+        class_on_train: str,
+        output_dir: Path,
     ):
         self.validation_datasets = validation_datasets
         self.varname = varname
@@ -34,20 +34,21 @@ class ValidationVisualization:
         self.output_dir = output_dir
 
     def run(self):
+        plot_paths = []
         data = self.get_dataset_for_timeseries(self.validation_datasets)
         logger.info('Plotting CDF Bias for "Hour", "Day" and "Month" aggregations')
-        self.plot_bias_cdf(data, self.location, "hour")
-        self.plot_bias_cdf(data, self.location, "day")
-        self.plot_bias_cdf(data, self.location, "month")
+        plot_paths.append(self.plot_bias_cdf(data, self.location, "hour"))
+        plot_paths.append(self.plot_bias_cdf(data, self.location, "day"))
+        plot_paths.append(self.plot_bias_cdf(data, self.location, "month"))
         logger.info("Plotting TimeSerie Plots")
-        self.time_serie_total(data, self.location)
+        plot_paths.append(self.time_serie_total(data, self.location))
         # logger.info('Plotting Scatter Plots')
         # self.scatter_plot_total(
         #     data,
         #     self.location)
         logger.info('Plotting "Hour" and "Month" aggregation ErrorBar Plots')
-        self.time_serie_time_agg(data, self.location, "hour")
-        self.time_serie_time_agg(data, self.location, "month")
+        plot_paths.append(self.time_serie_time_agg(data, self.location, "hour"))
+        plot_paths.append(self.time_serie_time_agg(data, self.location, "month"))
 
         data = self.get_dataset_for_boxplot(self.validation_datasets)
         logger.info(
@@ -55,10 +56,13 @@ class ValidationVisualization:
             "consideration training and test datasets"
         )
         if self.class_on_train == "all":
-            self.box_plot_time_agg(data, self.location, True, "hour")
-            self.box_plot_time_agg(data, self.location, True, "month")
-        self.box_plot_time_agg(data, self.location, False, "hour")
-        self.box_plot_time_agg(data, self.location, False, "month")
+            plot_paths.append(self.box_plot_time_agg(data, self.location, True, "hour"))
+            plot_paths.append(
+                self.box_plot_time_agg(data, self.location, True, "month")
+            )
+        plot_paths.append(self.box_plot_time_agg(data, self.location, False, "hour"))
+        plot_paths.append(self.box_plot_time_agg(data, self.location, False, "month"))
+        return plot_paths
 
     def get_dataset_for_boxplot(self, initialization_datasets) -> pd.DataFrame:
         """
@@ -181,6 +185,7 @@ class ValidationVisualization:
         plt.title(f"{location.city} ({location.country})", fontsize="xx-large")
         plt.savefig(plot_path, transparent=True, bbox_inches="tight", pad_inches=0)
         plt.close()
+        return plot_path
 
     def time_serie_time_agg(self, data, location: Location, agg_time: str = "hour"):
         """
@@ -231,6 +236,7 @@ class ValidationVisualization:
         plt.title(f"{location.city} ({location.country})", fontsize="xx-large")
         plt.savefig(plot_path, transparent=True, bbox_inches="tight", pad_inches=0)
         plt.close()
+        return plot_path
 
     def time_serie_total(self, data, location, xlim=None):
         """
@@ -272,6 +278,7 @@ class ValidationVisualization:
         plt.title(f"{location.city} ({location.country})", fontsize="xx-large")
         plt.savefig(plot_path, transparent=True, bbox_inches="tight", pad_inches=0)
         plt.close()
+        return plot_path
 
     def scatter_plot_total(self, data, location, xlim=None):
         """
@@ -313,6 +320,7 @@ class ValidationVisualization:
         plt.title(f"{location.city} ({location.country})", fontsize="xx-large")
         plt.savefig(plot_path, transparent=True, bbox_inches="tight", pad_inches=0)
         plt.close()
+        return plot_path
 
     def plot_bias_cdf(
         self, data: pd.DataFrame, location: Location, agg_time: str = None
@@ -383,17 +391,4 @@ class ValidationVisualization:
         )
         plt.savefig(plot_path, transparent=True, bbox_inches="tight", pad_inches=0)
         plt.close()
-
-
-# Methods for implementation of Jupyter Tool
-def get_all_locations() -> List[str]:
-    return list(df_stations.city.unique())
-
-
-def get_id_location(city: str) -> str:
-    return df_stations.loc[df_stations.city == city, "id"].values[0]
-
-
-def interactive_viz(varname: str, station: str, date_range: tuple):
-    plotter = ValidationVisualization("InceptionTime_ensemble", varname)
-    plotter.run(get_id_location(station), date_range)
+        return plot_path
