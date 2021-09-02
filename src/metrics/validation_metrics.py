@@ -18,10 +18,10 @@ class ValidationTables:
     """
 
     def __init__(
-            self,
-            validation_datasets: list,
-            location: Location,
-            output_dir: Path,
+        self,
+        validation_datasets: list,
+        location: Location,
+        output_dir: Path,
     ):
         self.validation_datasets = validation_datasets
         self.location = location
@@ -76,8 +76,7 @@ class ValidationTables:
         data_train = pd.concat(datasets_train)
         data_test = pd.concat(datasets_test)
         agg_metrics_dict = self.load_metrics_train_test_for_entire_set_aggregated(
-            data_train,
-            data_test
+            data_train, data_test
         )
         data_train_agg = pd.concat(agg_metrics_dict["train"])
         data_test_agg = pd.concat(agg_metrics_dict["test"])
@@ -194,9 +193,7 @@ class ValidationTables:
         return data_train, data_test
 
     def load_metrics_train_test_for_entire_set_aggregated(
-            self,
-            data_train: pd.DataFrame,
-            data_test: pd.DataFrame
+        self, data_train: pd.DataFrame, data_test: pd.DataFrame
     ) -> dict:
         resampling_options = [
             "H",

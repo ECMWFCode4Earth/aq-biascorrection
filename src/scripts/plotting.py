@@ -8,7 +8,7 @@ from pytz import NonExistentTimeError
 
 from src import constants
 from src.data import utils
-from src.visualization.data_visualizer import StationTemporalSeriesPlotter
+from src.visualization.data_visualization import StationTemporalSeriesPlotter
 
 PATH = click.Path(exists=True, path_type=Path)
 

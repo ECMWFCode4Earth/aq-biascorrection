@@ -4,7 +4,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 import pytest
-from mockito import ANY, mock, when
+from mockito import ANY, unstub, when
 
 from src.data.utils import Location
 from src.metrics.validation_metrics import ValidationTables
@@ -13,7 +13,6 @@ from src.visualization.validation_visualization import ValidationVisualization
 
 
 class TestValidation:
-
     @pytest.fixture()
     def mocked_validation_obj(self, tmp_path):
         tempdir = tmp_path / "sub"
@@ -54,9 +53,9 @@ class TestValidation:
         validation_datasets_list = []
         for i in range(500):
             if i % 3 == 0:
-                class_on_train = 'test'
+                class_on_train = "test"
             else:
-                class_on_train = 'train'
+                class_on_train = "train"
             cams = nprandom.randint(70, 100, 24)
             cams_corrected = nprandom.randint(50, 65, 24)
             observations = nprandom.randint(45, 60, 24)
@@ -82,118 +81,6 @@ class TestValidation:
             validation_datasets_list.append(val_ds)
         return validation_datasets_list
 
-    def test_validation_tables_load_metrics_train_test_for_every_run(
-            self, mocked_tables_obj
-    ):
-        train, test = mocked_tables_obj.load_metrics_train_test_for_every_run()
-        assert type(train) is list
-        assert type(test) is list
-        assert type(train[0]) is pd.DataFrame
-        assert type(test[0]) is pd.DataFrame
-        train_data = pd.concat(train)
-        test_data = pd.concat(test)
-        assert type(train_data) is pd.DataFrame
-        assert type(test_data) is pd.DataFrame
-        assert train_data.shape == (999, 5)
-        assert test_data.shape == (501, 5)
-        assert list(train_data.columns) == ['NMAE', 'BIAS', 'RMSE',
-                                            'De-Biased NMAE', 'Pearson Correlation']
-        assert list(test_data.columns) == ['NMAE', 'BIAS', 'RMSE',
-                                           'De-Biased NMAE', 'Pearson Correlation']
-
-    def test_validation_tables_load_data_train_test_for_entire_set(
-            self, mocked_tables_obj
-    ):
-        train, test = mocked_tables_obj.load_data_train_test_for_entire_set()
-        assert type(train) is list
-        assert type(test) is list
-        assert type(train[0]) is pd.DataFrame
-        assert type(test[0]) is pd.DataFrame
-        train_data = pd.concat(train)
-        test_data = pd.concat(test)
-        assert type(train_data) is pd.DataFrame
-        assert type(test_data) is pd.DataFrame
-        assert train_data.shape == (7992, 4)
-        assert test_data.shape == (4008, 4)
-        assert list(train_data.columns) == ['CAMS', 'Observations',
-                                            'Corrected CAMS', 'Persistence']
-        assert list(test_data.columns) == ['CAMS', 'Observations',
-                                           'Corrected CAMS', 'Persistence']
-
-    def test_validation_tables_load_metrics_train_test_for_entire_set_aggregated(
-            self, mocked_tables_obj
-    ):
-        train, test = mocked_tables_obj.load_data_train_test_for_entire_set()
-        train_data = pd.concat(train)
-        test_data = pd.concat(test)
-        dict_agg = mocked_tables_obj.load_metrics_train_test_for_entire_set_aggregated(
-            train_data, test_data
-        )
-        assert list(dict_agg.keys()) == ['train', 'test']
-        assert type(dict_agg['train']) is list
-        assert type(dict_agg['test']) is list
-        assert type(dict_agg['train'][0]) is pd.DataFrame
-        assert type(dict_agg['test'][0]) is pd.DataFrame
-        assert list(dict_agg['train'][0]) == ['NMAE', 'BIAS', 'RMSE',
-                                              'De-Biased NMAE', 'Pearson Correlation']
-        assert list(dict_agg['test'][0]) == ['NMAE', 'BIAS', 'RMSE',
-                                             'De-Biased NMAE', 'Pearson Correlation']
-
-    def test_validation_tables_run_for_every_prediction(
-            self, mocked_tables_obj
-    ):
-        output_paths = mocked_tables_obj.run_for_every_prediction()
-        assert len(output_paths)
-        for output_path in output_paths:
-            assert output_path.exists()
-
-    def test_validation_tables_run_for_the_complete_data(
-            self, mocked_tables_obj
-    ):
-        output_paths = mocked_tables_obj.run_for_the_complete_data()
-        assert len(output_paths)
-        for output_path in output_paths:
-            assert output_path.exists()
-
-    def test_validation_visualizations_get_dataset_for_timeseries(
-            self, mocked_visualization_obj
-    ):
-        data = mocked_visualization_obj.get_dataset_for_timeseries(
-            mocked_visualization_obj.validation_datasets
-        )
-        assert list(data.columns) == ['CAMS', 'Observations',
-                                      'Corrected CAMS', 'Persistence']
-        assert data.shape == (12000, 4)
-        assert type(data) is pd.DataFrame
-
-    def test_validation_visualization_get_dataset_for_boxplot(
-            self, mocked_visualization_obj
-    ):
-        data = mocked_visualization_obj.get_dataset_for_boxplot(
-            mocked_visualization_obj.validation_datasets
-        )
-        assert list(data.columns) == ['Class on train', 'Data Type',
-                                      'pm25 ($\\mu g / m^3$)', 'Data Kind']
-        assert data.shape == (48000, 4)
-        assert type(data) is pd.DataFrame
-        assert list(np.unique(data['Class on train'].values)) == ['test', 'train']
-        assert list(np.unique(data['Data Kind'].values)) == ['CAMS - (test)',
-                                                             'CAMS - (train)',
-                                                             'Corrected CAMS - (test)',
-                                                             'Corrected CAMS - (train)',
-                                                             'Observations - (test)',
-                                                             'Observations - (train)',
-                                                             'Persistence - (test)',
-                                                             'Persistence - (train)']
-
-    def test_validation_visualization_run(
-            self, mocked_visualization_obj
-    ):
-        output_paths = mocked_visualization_obj.run()
-        assert len(output_paths)
-        for output_path in output_paths:
-            assert output_path.exists()
-
     def test_validation_workflow(
         self, mocked_validation_obj, mocked_validation_datasets
     ):
@@ -207,3 +94,148 @@ class TestValidation:
         when(ValidationTables).run().thenReturn(None)
         result = mocked_validation_obj.run(station_id)
         assert result is None
+        unstub()
+
+    def test_validation_tables_load_metrics_train_test_for_every_run(
+        self, mocked_tables_obj
+    ):
+        train, test = mocked_tables_obj.load_metrics_train_test_for_every_run()
+        assert type(train) is list
+        assert type(test) is list
+        assert type(train[0]) is pd.DataFrame
+        assert type(test[0]) is pd.DataFrame
+        train_data = pd.concat(train)
+        test_data = pd.concat(test)
+        assert type(train_data) is pd.DataFrame
+        assert type(test_data) is pd.DataFrame
+        assert train_data.shape == (999, 5)
+        assert test_data.shape == (501, 5)
+        assert list(train_data.columns) == [
+            "NMAE",
+            "BIAS",
+            "RMSE",
+            "De-Biased NMAE",
+            "Pearson Correlation",
+        ]
+        assert list(test_data.columns) == [
+            "NMAE",
+            "BIAS",
+            "RMSE",
+            "De-Biased NMAE",
+            "Pearson Correlation",
+        ]
+
+    def test_validation_tables_load_data_train_test_for_entire_set(
+        self, mocked_tables_obj
+    ):
+        train, test = mocked_tables_obj.load_data_train_test_for_entire_set()
+        assert type(train) is list
+        assert type(test) is list
+        assert type(train[0]) is pd.DataFrame
+        assert type(test[0]) is pd.DataFrame
+        train_data = pd.concat(train)
+        test_data = pd.concat(test)
+        assert type(train_data) is pd.DataFrame
+        assert type(test_data) is pd.DataFrame
+        assert train_data.shape == (7992, 4)
+        assert test_data.shape == (4008, 4)
+        assert list(train_data.columns) == [
+            "CAMS",
+            "Observations",
+            "Corrected CAMS",
+            "Persistence",
+        ]
+        assert list(test_data.columns) == [
+            "CAMS",
+            "Observations",
+            "Corrected CAMS",
+            "Persistence",
+        ]
+
+    def test_validation_tables_load_metrics_train_test_for_entire_set_aggregated(
+        self, mocked_tables_obj
+    ):
+        train, test = mocked_tables_obj.load_data_train_test_for_entire_set()
+        train_data = pd.concat(train)
+        test_data = pd.concat(test)
+        dict_agg = mocked_tables_obj.load_metrics_train_test_for_entire_set_aggregated(
+            train_data, test_data
+        )
+        assert list(dict_agg.keys()) == ["train", "test"]
+        assert type(dict_agg["train"]) is list
+        assert type(dict_agg["test"]) is list
+        assert type(dict_agg["train"][0]) is pd.DataFrame
+        assert type(dict_agg["test"][0]) is pd.DataFrame
+        assert list(dict_agg["train"][0]) == [
+            "NMAE",
+            "BIAS",
+            "RMSE",
+            "De-Biased NMAE",
+            "Pearson Correlation",
+        ]
+        assert list(dict_agg["test"][0]) == [
+            "NMAE",
+            "BIAS",
+            "RMSE",
+            "De-Biased NMAE",
+            "Pearson Correlation",
+        ]
+
+    def test_validation_tables_run_for_every_prediction(self, mocked_tables_obj):
+        output_paths = mocked_tables_obj.run_for_every_prediction()
+        assert len(output_paths)
+        for output_path in output_paths:
+            assert output_path.exists()
+
+    def test_validation_tables_run_for_the_complete_data(self, mocked_tables_obj):
+        output_paths = mocked_tables_obj.run_for_the_complete_data()
+        assert len(output_paths)
+        for output_path in output_paths:
+            assert output_path.exists()
+
+    def test_validation_visualizations_get_dataset_for_timeseries(
+        self, mocked_visualization_obj
+    ):
+        data = mocked_visualization_obj.get_dataset_for_timeseries(
+            mocked_visualization_obj.validation_datasets
+        )
+        assert list(data.columns) == [
+            "CAMS",
+            "Observations",
+            "Corrected CAMS",
+            "Persistence",
+        ]
+        assert data.shape == (12000, 4)
+        assert type(data) is pd.DataFrame
+
+    def test_validation_visualization_get_dataset_for_boxplot(
+        self, mocked_visualization_obj
+    ):
+        data = mocked_visualization_obj.get_dataset_for_boxplot(
+            mocked_visualization_obj.validation_datasets
+        )
+        assert list(data.columns) == [
+            "Class on train",
+            "Data Type",
+            "pm25 ($\\mu g / m^3$)",
+            "Data Kind",
+        ]
+        assert data.shape == (48000, 4)
+        assert type(data) is pd.DataFrame
+        assert list(np.unique(data["Class on train"].values)) == ["test", "train"]
+        assert list(np.unique(data["Data Kind"].values)) == [
+            "CAMS - (test)",
+            "CAMS - (train)",
+            "Corrected CAMS - (test)",
+            "Corrected CAMS - (train)",
+            "Observations - (test)",
+            "Observations - (train)",
+            "Persistence - (test)",
+            "Persistence - (train)",
+        ]
+
+    def test_validation_visualization_run(self, mocked_visualization_obj):
+        output_paths = mocked_visualization_obj.run()
+        assert len(output_paths)
+        for output_path in output_paths:
+            assert output_path.exists()

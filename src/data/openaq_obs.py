@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 
 class OpenAQDownloader:
     """
-    Class to extraction data from the OpenAQ platform for a specific location
+    Class to extract data from the OpenAQ platform for a specific location
     of interest.
     It downloads the nearest station with the highest number of measurements
     in the time_range given by the user.

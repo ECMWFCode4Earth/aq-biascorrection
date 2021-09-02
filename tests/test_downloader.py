@@ -39,8 +39,8 @@ def test_cli_download_openaq(mocker: MockerFixture):
         assert ds.o3.attrs["units"] == "microgram / m^3"
 
 
-@pytest.skip("Prepare test ...")
-def test_cli_download_cams(mocker: MockerFixture):
-    runner = CliRunner()
-    result = runner.invoke(extraction_cams.main, [])
-    assert result.exit_code == 0
+# @pytest.skip("Prepare test ...")
+# def test_cli_download_cams(mocker: MockerFixture):
+#     runner = CliRunner()
+#     result = runner.invoke(extraction_cams.main, [])
+#     assert result.exit_code == 0

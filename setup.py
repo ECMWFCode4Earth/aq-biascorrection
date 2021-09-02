@@ -19,6 +19,8 @@ setup(
             "plot_station_hourly_bias = src.scripts.plotting:main_hourly_bias",
             "plot_station_monthly_bias = src.scripts.plotting:main_monthly_bias",
             "plot_station_cdf_bias = src.scripts.plotting:main_cdf_bias",
+            "model_train = src.scripts.train_model:main"
+            "model_validation = src.scripts.validation:main",
         ],
     },
 )
