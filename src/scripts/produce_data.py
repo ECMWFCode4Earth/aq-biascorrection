@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from src import constants
-from src.data.cams_forecast import CAMSProcessor
+from src.data.forecast import CAMSProcessor
 from src.data.transformation_data import DataTransformer
 from src.scripts.extraction_openaq import main
 

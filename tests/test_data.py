@@ -8,7 +8,7 @@ import pytest
 import xarray as xr
 from mockito import ANY, unstub, when
 
-from src.data.openaq_obs import OpenAQDownloader
+from src.data.observations import OpenAQDownloader
 from src.data.transformation_location import LocationTransformer
 from src.data.utils import (
     Location,
