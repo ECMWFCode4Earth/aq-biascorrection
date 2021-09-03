@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from src.constants import ROOT_DIR
-from src.models.train_model import ModelTrain
+from src.models.train import ModelTrain
 
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()

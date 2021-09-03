@@ -8,13 +8,12 @@ import xarray as xr
 from click.testing import CliRunner
 from pytest_mock import MockerFixture
 
-from src.scripts import extraction_cams, extraction_openaq
-from tests.file_provider import get_remote_file
+from src.scripts import extraction_forecast, extraction_observations
 
 
 def test_cli_download_openaq(mocker: MockerFixture):
     mocker.patch.object(
-        extraction_openaq.pd,
+        extraction_observations.pd,
         "read_csv",
         return_value=pd.DataFrame(
             {
@@ -30,7 +29,7 @@ def test_cli_download_openaq(mocker: MockerFixture):
     )
     tempdir = tempfile.mkdtemp()
     runner = CliRunner()
-    result = runner.invoke(extraction_openaq.main, ["o3", "-o", tempdir])
+    result = runner.invoke(extraction_observations.main, ["o3", "-o", tempdir])
     assert result.exit_code == 0
 
     # Check observations are converted to ug/m^3

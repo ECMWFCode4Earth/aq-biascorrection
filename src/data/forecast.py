@@ -133,7 +133,7 @@ class CAMSProcessor:
         """
         ext = ".nc"
         input_path_pattern = Path(
-            self.input_dir, f"z_cams_c_ecmf_{initialization_time}" f"_fc_*_*{ext}"
+            self.input_dir, f"z_cams_c_ecmf_{initialization_time}_fc_*_*{ext}"
         )
         input_path_match = str(input_path_pattern)
         paths = glob.glob(input_path_match)

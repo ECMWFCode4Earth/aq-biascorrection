@@ -5,17 +5,20 @@ import tempfile
 import numpy as np
 import pandas as pd
 import pytest
+import glob
 import xarray as xr
 from mockito import ANY, unstub, when
 
 from src.data.observations import OpenAQDownloader
-from src.data.transformation_location import LocationTransformer
+from src.data.forecast import CAMSProcessor
+from src.data.transformer import LocationTransformer
 from src.data.utils import (
     Location,
     get_elevation_for_location,
     write_netcdf,
     remove_intermediary_paths,
 )
+from src.constants import ROOT_DIR
 
 
 class TestUtils:
@@ -531,6 +534,133 @@ class TestOpenAQDownload:
         ).thenReturn(_mocked_dataframe_with_closest_stations)
         stations = mocked_download_obj._get_closest_stations_to_location()
         assert len(stations) >= 0
+        unstub()
+
+
+class TestCamsProcessor:
+    @pytest.fixture()
+    def mocked_processor_obj(self):
+        metadata_dict = {
+            "id": {28: "CA001", 29: "CA002", 30: "CA003"},
+            "city": {28: "Montreal", 29: "Toronto", 30: "Vancouver"},
+            "country": {28: "Canada", 29: "Canada", 30: "Canada"},
+            "latitude": {28: 45.50884, 29: 43.70011, 30: 49.24966},
+            "longitude": {28: -73.58781, 29: -79.4163, 30: -123.11934},
+            "timezone": {
+                28: "America/Toronto",
+                29: "America/Toronto",
+                30: "America/Vancouver",
+            },
+            "elevation": {28: 217, 29: 170, 30: 76},
+        }
+        stations_df = pd.DataFrame(metadata_dict)
+        when(pd).read_csv(ANY()).thenReturn(
+            stations_df
+        )
+        camsprocessor_obj = CAMSProcessor(
+            input_dir=pathlib.Path("/tmp"),
+            intermediary_dir=pathlib.Path("/tmp"),
+            locations_csv=ROOT_DIR / "data/external/stations.csv",
+            output_dir=pathlib.Path("/tmp"),
+            time_range=dict(start="2020-06-01", end="2020-06-05")
+        )
+        unstub()
+        return camsprocessor_obj
+
+    @pytest.fixture()
+    def mocked_variable_paths(self, tmp_path):
+        tempdir = tmp_path / "sub"
+        tempdir.mkdir()
+        variables = ['10u', '10v', '2d', '2t', 'blh', 'dsrp', 'go3conc', 'msl',
+                     'no2conc', 'pm10', 'pm2p5', 'so2conc', 'tcc', 'tp', 'uvb', 'z']
+        hours = ['000', '003', '006', '009', '012', '015', '018', '021']
+        paths = []
+        for variable in variables:
+            for hour in hours:
+                paths.append(
+                    f'{tempdir}/z_cams_c_ecmf_20200601_fc_{hour}_{variable}.nc'
+                )
+        return paths
+
+    @pytest.fixture
+    def mocked_dummy_dataset(self):
+        def _mocked_dummy_dataset(path: str):
+            nprandom = np.random.RandomState(42)
+            filename = path.split('/')[-1]
+            date = filename.split('_')[4]
+            hour = filename.split('_')[6]
+            time = [datetime.datetime(year=int(date[:4]),
+                                      month=int(date[4:6]),
+                                      day=int(date[6:8]),
+                                      hour=int(hour))]
+            variable_name = filename.split('_')[-1].split('.nc')[0]
+            variable = 273.15 + nprandom.rand(1, 451, 900)
+            longitude = nprandom.rand(900) * 360
+            latitude = nprandom.rand(451) * 180 - 90
+
+            ds = xr.Dataset(
+                {
+                    variable_name: (["time", "latitude", "longitude"], variable),
+                },
+                coords={
+                    "longitude": longitude,
+                    "latitude": latitude,
+                    "time": time
+                }
+            )
+            ds = ds.sortby('latitude')
+            ds = ds.sortby('longitude')
+            return ds
+        return _mocked_dummy_dataset
+
+    def test_cams_processor_method_get_initialization_times(
+            self, mocked_processor_obj
+    ):
+        initialization_times = mocked_processor_obj.get_initialization_times()
+        assert type(initialization_times) is list
+        assert len(initialization_times) == 5
+        assert initialization_times == ['20200601', '20200602', '20200603',
+                                        '20200604', '20200605']
+
+    def test_cams_processor_method_get_intermediary_path(
+            self, mocked_processor_obj
+    ):
+        init_time = '20200601'
+        inter_path = mocked_processor_obj.get_intermediary_path(init_time)
+        assert type(inter_path) == pathlib.PosixPath
+        assert inter_path == mocked_processor_obj.intermediary_dir / \
+               "cams_all_stations_20200601.nc"
+
+    def test_cams_processor_method_get_paths_for_forecasted_variables(
+            self, mocked_processor_obj, mocked_variable_paths
+    ):
+        when(glob).glob(ANY()).thenReturn(mocked_variable_paths)
+        paths = mocked_processor_obj.get_paths_for_forecasted_variables('20200601')
+        assert type(paths) == list
+        unstub()
+
+    def test_cams_processor_method_filter_location(
+            self, mocked_processor_obj, mocked_variable_paths, mocked_dummy_dataset
+    ):
+        dataset_complete = mocked_dummy_dataset(mocked_variable_paths[0])
+        data_of_stations = mocked_processor_obj.filter_location(dataset_complete)
+        assert type(data_of_stations) is xr.Dataset
+        assert len(
+            data_of_stations.station_id.values
+        ) == len(
+            mocked_processor_obj.locations_df['id'].values
+        )
+        unstub()
+
+    def test_cams_processor_method_get_data(
+            self, mocked_processor_obj, mocked_variable_paths, mocked_dummy_dataset
+    ):
+        for path in mocked_variable_paths:
+            mocked_dummy_dataset(path).to_netcdf(path)
+        data = mocked_processor_obj.get_data(mocked_variable_paths)
+        assert type(data) is xr.Dataset
+        assert len(data.time.values) > 1
+        assert len(list(data.data_vars)) == 16
         unstub()
 
 

@@ -1,8 +1,7 @@
-import logging
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Dict, NoReturn, Tuple, Union
+from typing import Dict, NoReturn, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,9 +12,9 @@ from tenacity import retry
 
 from src.constants import ROOT_DIR
 from src.features.load_dataset import DatasetLoader
-from src.models.gradient_boosting import GradientBoosting
-from src.models.inception_time import InceptionTime
-from src.models.regression import ElasticNetRegr
+from src.models.config.gradient_boosting import GradientBoosting
+from src.models.config.inception_time import InceptionTime
+from src.models.config.regression import ElasticNetRegr
 from src.models.utils import read_yaml
 
 warnings.filterwarnings("ignore")

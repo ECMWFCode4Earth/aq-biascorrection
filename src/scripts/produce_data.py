@@ -7,8 +7,8 @@ import click
 
 from src import constants
 from src.data.forecast import CAMSProcessor
-from src.data.transformation_data import DataTransformer
-from src.scripts.extraction_openaq import main
+from src.data.transformer import DataTransformer
+from src.scripts.extraction_observations import main
 
 
 @click.command()
