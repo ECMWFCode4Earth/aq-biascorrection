@@ -6,7 +6,7 @@ data:
   n_future: 24
   min_station_observations: 48
 models:
-  - name: InceptionTime
+  - name: InceptionTime_ensemble
     type: inception_time
     model_selection: False
     model_parameters:

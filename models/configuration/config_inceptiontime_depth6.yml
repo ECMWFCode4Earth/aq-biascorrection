@@ -6,17 +6,17 @@ data:
   n_future: 24
   min_station_observations: 240
 models:
-  - name: InceptionTime
+  - name: InceptionTime_ensemble
     type: inception_time
     model_ensemble: 5
     model_selection: False
     model_parameters:
       inception_kernels: [2, 4, 8]
       depth: 6
-      n_filters: 4
-      batch_size: 128
-      n_epochs: 150
-      bottleneck_size: 4
+      n_filters: 8
+      batch_size: 256
+      n_epochs: 100
+      bottleneck_size: 8
       verbose: 2
     training_method:
       cv: 4
