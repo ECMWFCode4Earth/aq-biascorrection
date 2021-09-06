@@ -12,7 +12,7 @@ from src.features.build_features import FeatureBuilder
 
 memory = Memory(cachedir="/tmp", verbose=0)
 
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Dataset Loader")
 

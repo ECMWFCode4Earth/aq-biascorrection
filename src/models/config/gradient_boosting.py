@@ -9,7 +9,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 from src.constants import ROOT_DIR
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Gradient Boosting")
 

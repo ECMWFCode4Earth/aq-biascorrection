@@ -571,8 +571,12 @@ class TestCamsProcessor:
     def mocked_variable_paths(self, tmp_path):
         tempdir = tmp_path / "sub"
         tempdir.mkdir()
-        variables = ['10u', '10v', '2d', '2t', 'blh', 'dsrp', 'go3conc', 'msl',
-                     'no2conc', 'pm10', 'pm2p5', 'so2conc', 'tcc', 'tp', 'uvb', 'z']
+        variables = [
+            '10u', '10v', '2d', '2t', 'blh',
+            'dsrp', 'go3conc', 'msl',
+            'no2conc', 'pm10', 'pm2p5',
+            'so2conc', 'tcc', 'tp', 'uvb', 'z'
+        ]
         hours = ['000', '003', '006', '009', '012', '015', '018', '021']
         paths = []
         for variable in variables:

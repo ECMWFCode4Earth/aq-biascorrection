@@ -10,7 +10,7 @@ from pydantic.dataclasses import dataclass
 
 from src.constants import ROOT_DIR
 from src.data.utils import Location
-from src.logging import get_logger
+from src.logger import get_logger
 from src.metrics.validation_metrics import ValidationTables
 from src.visualization.validation_visualization import ValidationVisualization
 

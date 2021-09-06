@@ -12,7 +12,7 @@ import pytz
 
 from src.constants import ROOT_DIR
 from src.data.utils import Location
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Data Transformer")
 
