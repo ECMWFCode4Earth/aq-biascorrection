@@ -1,0 +1,20 @@
+data:
+  variable: pm25
+  idir: data/processed/
+  odir: models/weights_storage/
+  n_prev_obs: 24
+  n_future: 24
+  min_station_observations: 48
+models:
+  - name: GradientBoosting
+    type: gradient_boosting
+    model_ensemble: 1
+    model_selection: False
+    model_parameters:
+      n_batches: 64
+      n_epochs: 100
+    training_method:
+      cv: 5
+      scoring: neg_mean_absolute_error
+      n_jobs: -1
+      verbose: 10

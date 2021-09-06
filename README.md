@@ -7,6 +7,7 @@
 
 </br>
 
+
 <p align="center"> 
   <img src="reports/images/esowc_logo.png" alt="ESoWC logo" width="90%" height="90%">
 </p>
@@ -91,6 +92,27 @@ python -m pip install -r requirements.txt
 
 ```
 pip install .
+```
+
+The software packages, needed for this software to be able to execute all the different
+methods, are defined in the requirements.txt file.
+
+For the environment installation:
+
+```
+conda create --name aq-biascorrection python
+```
+
+```
+conda activate aq-biascorrection
+```
+
+```
+python -m pip install -r requirements.txt
+```
+
+```
+pip install . -e
 ```
 
 
@@ -463,11 +485,99 @@ Gradient Boosting is a supervised algorithm that refers to the ensemble of sever
 
 Lastly, the models which prove to correct reasonably well the bias in the CAMS forecast will be aggregate together.
 
+For training a model succesfully is necessary a .yml file with the model/s configuration/s as follows:
+
+```buildoutcfg
+data:
+  variable: pm25
+  idir: data/processed/
+  odir: models/weights_storage/
+  n_prev_obs: 24
+  n_future: 24
+  min_station_observations: 240
+models:
+  - name: InceptionTime
+    type: inception_time
+    model_ensemble: 5
+    model_selection: False
+    model_parameters:
+      inception_kernels: [2, 4, 8]
+      depth: 6
+      n_filters: 4
+      batch_size: 128
+      n_epochs: 150
+      bottleneck_size: 4
+      verbose: 2
+    training_method:
+      cv: 4
+      scoring: neg_mean_absolute_error
+      n_jobs: 1
+      verbose: 2
+```
+
+This is the one that has been taken for our final results, but you can create your own one in 
+order to test other algorithms.
+
+- variable = name of the variable to train (pm25, no2, o3)
+- idir = directory where the data is stored
+- odir = directory where the user wants to store the model weights
+- n_prev_obs = number of previous hours taken
+- n_future = number of future hours taken
+
+In this case 48h are taken in total (from t-24 to t+24) of CAMS forecasting model to predict the
+t+24h errors.
+
+- min_station_observations = number of minimum observations gathered by an station to be considered as a valid one
+
+There are only three models implemented so far:
+```
+models_dict = {
+    "gradient_boosting": GradientBoosting,
+    "inception_time": InceptionTime,
+    "elasticnet_regressor": ElasticNetRegr,
+}
+```
+The keys of the dictionary shown above represent the different possibilities to use in the "type"
+field of the configuration file.
+
+For the model parameters, the user need to specify the same model parameters as 
+the selected model class has (for this, it will be necessary to drive through the code in
+src/models/*.py):
+
+```
+class InceptionTime:
+    output_dims: int = 1
+    depth: int = 6
+    n_filters: int = 32
+    batch_size: int = 64
+    n_epochs: int = 200
+    inception_kernels: List[int] = field(default_factory=lambda: [2, 4, 8])
+    bottleneck_size: int = 32
+    verbose: int = 2
+    optimizer: str = "rmsprop"
+    loss: str = "mae"
+    metrics: List[str] = field(default_factory=lambda: ["rmse"])
+```
+
+For training the model, run this command:
+```
+model_train -c models/configuration/config_inceptiontime_depth6.yml
+```
+
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 <!-- RESULTS -->
 <h2 id="results"> :trophy: Results</h2>
+
+For running the model validation, the following command is run:
+
+```
+model_validation pm25 InceptionTime -l data/external/stations.csv -ov reports/figures/results
+-or reports/tables/results
+```
+
+It will create figures and tables as part of the validation process.
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
@@ -498,8 +608,9 @@ Lastly, the models which prove to correct reasonably well the bias in the CAMS f
     ├── references           <- Data dictionaries, manuals, and all other explanatory materials.
     │
     ├── reports              <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures          <- Generated graphics and figures
+    │   └── figures          <- Generated figures with processed data as well as with the model results
     |   └── images           <- Generated images to use in the GitHub repository documentation. 
+    |   └── tables           <- Generated tables with the model results. 
     │
     ├── requirements.txt     <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
@@ -516,7 +627,7 @@ Lastly, the models which prove to correct reasonably well the bias in the CAMS f
     |   |   ├── extraction
     |   |   |   ├── __init__.py
     |   |   |   ├── cams_forecast.py
-    |   |   |   └── oepnaq_obs.py
+    |   |   |   └── openaq_obs.py
     |   |   |
     |   |   ├── load
     |   |   |   ├── __init__.py
@@ -586,7 +697,7 @@ Lastly, the models which prove to correct reasonably well the bias in the CAMS f
   <section>
     <ul style="list-style-type:none;" id="a">
       <li>
-          <img style="float: left" src="reports/images/mario.png" alt="" width=160px id="pic_mario">
+          <img style="float: left" src="reports/images/mario.png" align="left" width=160px id="pic_mario">
           <p>
             :man: <b> Mario Santa Cruz López</b> <br>
             BSc in <strong>Mathematics</strong> at Universidad de Cantabria <br>
@@ -602,7 +713,7 @@ Lastly, the models which prove to correct reasonably well the bias in the CAMS f
   <section>
     <ul style="list-style-type:none;" id="b">
       <li>
-          <img style="float: left" src="reports/images/antonio.jpg" alt="" width=160px id="pic_antonio">
+          <img style="float: left" src="reports/images/antonio.jpg" align="left" width=160px id="pic_antonio">
           <p>
             :man: <b> Antonio Pérez Velasco</b> <br>
             BSc in <strong>Physics</strong> at Universidad de Cantabria <br>
