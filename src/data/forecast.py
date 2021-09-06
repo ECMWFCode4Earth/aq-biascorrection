@@ -1,7 +1,6 @@
 import concurrent.futures
 import datetime
 import glob
-
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -77,7 +76,7 @@ class CAMSProcessor:
             data_location = total_data.sel(station_id=loc.location_id)
             logger.info(
                 f"Writing netcdf for the specific location with id: "
-                f'{loc.station_id}'
+                f"{loc.station_id}"
             )
             utils.write_netcdf(output_path_location, data_location)
         logger.info(f"Deleting intermediary data")
