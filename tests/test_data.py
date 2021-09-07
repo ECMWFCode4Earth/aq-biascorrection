@@ -185,6 +185,15 @@ class TestUtils:
         assert type(forecast_path) == pathlib.PosixPath
 
     def test_location_get_location_by_id(self, location_id="ES001"):
+        when(pd).read_csv(
+            ROOT_DIR / 'data' / 'external' / 'stations.csv',
+            index_col=ANY(int),
+            usecols=ANY(list),
+        ).thenReturn(
+            pd.read_csv(ROOT_DIR / 'tests' / 'data' / 'stations.csv'),
+            index_col=0,
+            usecols=list(range(1, 8))
+        )
         location = Location.get_location_by_id(location_id)
         assert type(location) == Location
         assert location.country == "Spain"

@@ -177,17 +177,3 @@ class Validator:
                 ValidationDataset(cams, obs, predictions, persistence, class_on_train)
             )
         return init_datasets
-
-
-if __name__ == "__main__":
-    stations = pd.read_csv(f"{ROOT_DIR}/data/external/stations.csv")
-    for station_id in stations["id"].values:
-        try:
-            Validator(
-                "InceptionTime_ensemble",
-                "pm25",
-                ROOT_DIR / "reports" / "figures" / "results",
-                ROOT_DIR / "reports" / "tables" / "results",
-            ).run(station_id)
-        except:
-            pass

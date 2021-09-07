@@ -1,0 +1,14 @@
+,id,city,country,latitude,longitude,timezone,elevation
+50,DZ001,Algiers,Algeria,36.73225,3.08746,Africa/Algiers,105
+51,EC001,Quito,Ecuador,-0.22985,-78.52495,America/Guayaquil,2849
+52,EC002,Guayaquil,Ecuador,-2.19616,-79.88621,America/Guayaquil,11
+53,EG001,Cairo,Egypt,30.06263,31.24967,Africa/Cairo,28
+54,ES001,Madrid,Spain,40.4165,-3.70256,Europe/Madrid,668
+55,ES002,Barcelona,Spain,41.38879,2.15899,Europe/Madrid,47
+56,ET001,Addis Abeba,Ethiopia,9.02497,38.74689,Africa/Addis_Ababa,2412
+57,FI001,Helsinki,Finland,60.16952,24.93545,Europe/Helsinki,139
+58,FR001,Paris,France,48.85341,2.3488,Europe/Paris,38
+59,GB001,London,United Kingdom,51.50853,-0.12574,Europe/London,25
+60,GB002,Glasgow,United Kingdom,55.86515,-4.25763,Europe/London,38
+61,GB003,Belfast,United Kingdom,54.59682,-5.92541,Europe/London,8
+
