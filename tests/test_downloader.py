@@ -5,26 +5,20 @@ import pandas as pd
 import pytest
 import xarray as xr
 from click.testing import CliRunner
-from pytest_mock import MockerFixture
+from mockito import ANY, when, unstub
 
-from src.scripts import extraction_forecast, extraction_observations
+from src.scripts import extraction_observations
+from src.constants import ROOT_DIR
 
 
-def test_cli_download_openaq(mocker: MockerFixture):
-    mocker.patch.object(
-        extraction_observations.pd,
-        "read_csv",
-        return_value=pd.DataFrame(
-            {
-                "id": ["AT001", "AU005"],
-                "city": ["Vienna", "Melbourne"],
-                "country": ["Austria", "Australia"],
-                "elevation": [189, 27],
-                "longitude": [16.37208, 144.96332],
-                "latitude": [48.20849, -37.814],
-                "timezone": ["Europe/Vienna", "Australia/Melbourne"],
-            }
-        ),
+def test_cli_download_openaq():
+    data_stations = pd.read_csv(
+        ROOT_DIR / 'tests' / 'data_test' / 'stations.csv',
+    )
+    when(pd).read_csv(
+        ANY(),
+    ).thenReturn(
+        data_stations
     )
     tempdir = tempfile.mkdtemp()
     runner = CliRunner()
@@ -35,6 +29,7 @@ def test_cli_download_openaq(mocker: MockerFixture):
     for file in glob.glob(tempdir + "/**/*.nc", recursive=True):
         ds = xr.open_dataset(file)
         assert ds.o3.attrs["units"] == "microgram / m^3"
+    unstub()
 
 
 # @pytest.skip("Prepare test ...")
