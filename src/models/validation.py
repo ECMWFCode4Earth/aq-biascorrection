@@ -14,7 +14,6 @@ from src.logger import get_logger
 from src.metrics.validation_metrics import ValidationTables
 from src.visualization.validation_visualization import ValidationVisualization
 
-df_stations = pd.read_csv(ROOT_DIR / "data" / "external" / "stations.csv", index_col=0)
 date_form = DateFormatter("%-d %b %y")
 
 logger = get_logger("Model Predictions Validation")
@@ -178,20 +177,6 @@ class Validator:
                 ValidationDataset(cams, obs, predictions, persistence, class_on_train)
             )
         return init_datasets
-
-
-# Methods for implementation of Jupyter Tool
-def get_all_locations() -> List[str]:
-    return list(df_stations.city.unique())
-
-
-def get_id_location(city: str) -> str:
-    return df_stations.loc[df_stations.city == city, "id"].values[0]
-
-
-def interactive_viz(varname: str, station: str, date_range: tuple):
-    plotter = ValidationVisualization("InceptionTime_ensemble", varname)
-    plotter.run(get_id_location(station), date_range)
 
 
 if __name__ == "__main__":
