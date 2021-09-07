@@ -1,16 +1,16 @@
-import logging
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple
 
 import click
-
-from src import constants
 from src.data.forecast import CAMSProcessor
 
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()
+
+from src.logger import get_logger
+
+logger = get_logger("CAMS Forecast Extraction")
 
 
 @click.command()
@@ -59,8 +59,6 @@ def main(
     """
     Script to process the CAMS forecasts.
     """
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
-
     CAMSProcessor(
         Path(input_dir),
         Path(intermediary_dir),
@@ -69,4 +67,4 @@ def main(
         dict(zip(["start", "end"], time_period) if time_period else time_period),
     ).run()
 
-    logging.info("Process finished!")
+    logger.info("Process finished!")

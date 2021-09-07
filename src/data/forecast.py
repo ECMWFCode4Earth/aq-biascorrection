@@ -76,7 +76,7 @@ class CAMSProcessor:
             data_location = total_data.sel(station_id=loc.location_id)
             logger.info(
                 f"Writing netcdf for the specific location with id: "
-                f"{loc.station_id}"
+                f"{loc.location_id}"
             )
             utils.write_netcdf(output_path_location, data_location)
         logger.info(f"Deleting intermediary data")
@@ -104,7 +104,7 @@ class CAMSProcessor:
         the locations of interest given in the .csv file concatenated
         """
         intermediary_paths = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future_to_entry = {
                 executor.submit(
                     self.get_data_for_initialization_time, init_time
@@ -163,7 +163,9 @@ class CAMSProcessor:
         .csv which gathers the locations of interest
         """
         data = xr.open_mfdataset(
-            paths_for_forecast, concat_dim="time", preprocess=self.filter_location
+            paths_for_forecast,
+            concat_dim="time",
+            preprocess=self.filter_location
         )
         return data
 

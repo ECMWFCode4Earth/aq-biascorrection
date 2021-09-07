@@ -198,8 +198,6 @@ class OpenAQDownloader:
                 parameter=self.variable,
                 limit=10000,
                 value_from=0,
-                date_from=self.time_range["start"],
-                date_to=self.time_range["end"],
                 index="utc",
                 df=True,
             )
@@ -208,7 +206,14 @@ class OpenAQDownloader:
                 "There is no data in the time range considered for"
                 " this location of interest"
             )
-
+        start_date = datetime.datetime.strptime(
+            self.time_range['start'], '%Y-%m-%d'
+        ).astimezone()
+        end_date = datetime.datetime.strptime(
+            self.time_range['end'], '%Y-%m-%d'
+        ).astimezone()
+        time_mask = (data.index > start_date) & (data.index <= end_date)
+        data = data.loc[time_mask]
         data = data.sort_index()
         xr_data = self.create_xarray_dataset_with_attrs(data, station)
         return xr_data
