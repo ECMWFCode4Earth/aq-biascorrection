@@ -13,12 +13,8 @@ from src.constants import ROOT_DIR
 from src.data.forecast import CAMSProcessor
 from src.data.observations import OpenAQDownloader
 from src.data.transformer import LocationTransformer
-from src.data.utils import (
-    Location,
-    get_elevation_for_location,
-    remove_intermediary_paths,
-    write_netcdf,
-)
+from src.data.utils import (Location, get_elevation_for_location,
+                            remove_intermediary_paths, write_netcdf)
 
 
 class TestUtils:

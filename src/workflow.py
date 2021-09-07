@@ -19,7 +19,6 @@ models_dict = {
 
 
 class NearRealTimeWorkflow:
-
     def __init__(
         self,
         date: datetime.datetime,  # Date to make the predictions
@@ -74,46 +73,46 @@ class NearRealTimeWorkflow:
 
     def download_date_and_previous_date(self):
         variables_to_abreviation = {
-            '10m_u_component_of_wind': '10u',
-            '10m_v_component_of_wind': '10v',
-            '2m_dewpoint_temperature': '2d',
-            '2m_temperature': '2t',
-            'boundary_layer_height': 'blh',
-            'direct_solar_radiation': 'dsrp',
-            'downward_uv_radiation_at_the_surface': 'uvb',
-            'mean_sea_level_pressure': 'msl',
-            'nitrogen_dioxide': 'no2conc',
-            'ozone': 'go3conc',
-            'particulate_matter_10um': 'pm10',
-            'particulate_matter_2.5um': 'pm2p5',
-            'sulphur_dioxide': 'so2conc',
-            'surface_geopotential': 'z',
-            'total_cloud_cover': 'tcc',
-            'total_precipitation': 'tp',
+            "10m_u_component_of_wind": "10u",
+            "10m_v_component_of_wind": "10v",
+            "2m_dewpoint_temperature": "2d",
+            "2m_temperature": "2t",
+            "boundary_layer_height": "blh",
+            "direct_solar_radiation": "dsrp",
+            "downward_uv_radiation_at_the_surface": "uvb",
+            "mean_sea_level_pressure": "msl",
+            "nitrogen_dioxide": "no2conc",
+            "ozone": "go3conc",
+            "particulate_matter_10um": "pm10",
+            "particulate_matter_2.5um": "pm2p5",
+            "sulphur_dioxide": "so2conc",
+            "surface_geopotential": "z",
+            "total_cloud_cover": "tcc",
+            "total_precipitation": "tp",
         }
         leadtimes = [str(x) for x in list(range(0, 24))]
-        for date in pd.date_range(self.time_range['start'],
-                                  self.time_range['end'],
-                                  freq='1D'):
-            date_str = datetime.datetime.strftime(date, '%Y-%m-%d')
+        for date in pd.date_range(
+            self.time_range["start"], self.time_range["end"], freq="1D"
+        ):
+            date_str = datetime.datetime.strftime(date, "%Y-%m-%d")
             for variable, abbreviation in variables_to_abreviation.items():
                 for leadtime in leadtimes:
-                    download_path = self.forecast_idir / \
-                                    f'z_cams_c_ecmf_' \
-                                    f'{date_str}_{leadtime}_{abbreviation}.nc'
-                    self.api_download_forecast.retrieve(
-                        'cams-global-atmospheric-composition-forecasts',
-                        {
-                            'variable': variable,
-                            'date': date_str,
-                            'time': '00:00',
-                            'leadtime_hour': leadtime,
-                            'type': 'forecast',
-                            'format': 'netcdf_zip',
-                        },
-                        download_path
+                    download_path = (
+                        self.forecast_idir / f"z_cams_c_ecmf_"
+                        f"{date_str}_{leadtime}_{abbreviation}.nc"
                     )
-
+                    self.api_download_forecast.retrieve(
+                        "cams-global-atmospheric-composition-forecasts",
+                        {
+                            "variable": variable,
+                            "date": date_str,
+                            "time": "00:00",
+                            "leadtime_hour": leadtime,
+                            "type": "forecast",
+                            "format": "netcdf_zip",
+                        },
+                        download_path,
+                    )
 
 
 if __name__ == "__main__":

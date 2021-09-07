@@ -36,3 +36,4 @@ datacleaner~=0.1.5
 tensorflow~=2.5.0
 mockito~=1.2.2
 distributed~=2021.9.0
+cdsapi~=0.5.1

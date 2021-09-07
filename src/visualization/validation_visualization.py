@@ -8,11 +8,9 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.dates import DateFormatter
 
-from src.constants import ROOT_DIR
 from src.data.utils import Location
 from src.logger import get_logger
 
-df_stations = pd.read_csv(ROOT_DIR / "data" / "external" / "stations.csv", index_col=0)
 date_form = DateFormatter("%-d %b %y")
 
 logger = get_logger("Validation Visualization")
