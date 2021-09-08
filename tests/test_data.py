@@ -640,13 +640,14 @@ class TestCamsProcessor:
     def test_cams_processor_method_get_initialization_times(self, mocked_processor_obj):
         initialization_times = mocked_processor_obj.get_initialization_times()
         assert type(initialization_times) is list
-        assert len(initialization_times) == 5
+        assert len(initialization_times) == 6
         assert initialization_times == [
             "20200601",
             "20200602",
             "20200603",
             "20200604",
             "20200605",
+            "20200606",
         ]
 
     def test_cams_processor_method_get_intermediary_path(self, mocked_processor_obj):
