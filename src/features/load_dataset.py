@@ -37,7 +37,7 @@ class DatasetLoader:
         n_future: int = 1,
         min_st_obs: int = 1,
         input_dir: Path = ROOT_DIR / "data" / "processed",
-        cached: bool = True
+        cached: bool = True,
     ):
         self.variable = variable
         self.n_prev_obs = n_prev_obs

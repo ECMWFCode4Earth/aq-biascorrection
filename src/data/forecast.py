@@ -91,12 +91,11 @@ class CAMSProcessor:
         initialization_times = pd.date_range(
             self.time_range["start"],
             datetime.datetime.strftime(
-                datetime.datetime.strptime(
-                    self.time_range["end"], '%Y-%m-%d'
-                ) + datetime.timedelta(days=1),
-                '%Y-%m-%d'
+                datetime.datetime.strptime(self.time_range["end"], "%Y-%m-%d")
+                + datetime.timedelta(days=1),
+                "%Y-%m-%d",
             ),
-            freq="1D"
+            freq="1D",
         )
         initialization_times = [
             datetime.datetime.strftime(time, "%Y%m%d") for time in initialization_times
@@ -170,9 +169,7 @@ class CAMSProcessor:
         .csv which gathers the locations of interest
         """
         data = xr.open_mfdataset(
-            paths_for_forecast,
-            concat_dim="time",
-            preprocess=self.filter_location
+            paths_for_forecast, concat_dim="time", preprocess=self.filter_location
         )
         return data
 

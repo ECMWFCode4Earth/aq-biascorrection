@@ -3,12 +3,13 @@ import os
 import zipfile
 from pathlib import Path, PosixPath
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
+import concurrent.futures
 from cdsapi.api import Client
+from matplotlib.dates import DateFormatter
 
 from src.constants import ROOT_DIR
 from src.data.forecast import CAMSProcessor
@@ -16,6 +17,7 @@ from src.data.transformer import LocationTransformer
 from src.data.utils import Location
 from src.models.predict import ModelPredict
 from src.models.validation import ValidationDataset
+
 
 class NearRealTimeWorkflow:
     def __init__(
@@ -40,14 +42,19 @@ class NearRealTimeWorkflow:
         self.time_range = dict(start=start_date, end=end_date)
         self.model = model
         self.data_dir = data_dir / end_date
-        self.download_dir = self.data_dir / 'download'
-        self.forecasts_dir = self.data_dir / 'forecasts'
-        self.observations_dir = self.data_dir / 'observations'
-        self.processed_dir = self.data_dir / 'processed'
-        self.predictions_dir = self.data_dir / 'predictions'
-        for dir in [self.data_dir, self.download_dir,
-                    self.forecasts_dir, self.observations_dir,
-                    self.processed_dir, self.predictions_dir]:
+        self.download_dir = self.data_dir / "download"
+        self.forecasts_dir = self.data_dir / "forecasts"
+        self.observations_dir = self.data_dir / "observations"
+        self.processed_dir = self.data_dir / "processed"
+        self.predictions_dir = self.data_dir / "predictions"
+        for dir in [
+            self.data_dir,
+            self.download_dir,
+            self.forecasts_dir,
+            self.observations_dir,
+            self.processed_dir,
+            self.predictions_dir,
+        ]:
             if not dir.exists():
                 os.makedirs(dir, exist_ok=True)
         stations = pd.read_csv(
@@ -65,15 +72,15 @@ class NearRealTimeWorkflow:
         )
         station = stations[stations["location_id"] == station_id]
         dict_to_location = station.iloc[0].to_dict()
-        for var in ['longitude', 'latitude', 'elevation']:
+        for var in ["longitude", "latitude", "elevation"]:
             dict_to_location[var] = float(dict_to_location[var])
         self.location = Location(**dict_to_location)
         self.stations_csv = stations_csv
         self.intermediary_dir = intermediary_dir
         self.output_dir = output_dir
         self.api_download_forecast = Client(
-            url='https://ads.atmosphere.copernicus.eu/api/v2',
-            key='6858:5edcc1e8-e2c6-463b-8b18-d4ea2bafa965'
+            url="https://ads.atmosphere.copernicus.eu/api/v2",
+            key="6858:5edcc1e8-e2c6-463b-8b18-d4ea2bafa965",
         )
 
     def run(self):
@@ -88,7 +95,7 @@ class NearRealTimeWorkflow:
         observations_path = self.location.get_observations_path(
             self.observations_dir,
             self.variable,
-            "_".join(self.time_range.values()).replace("-", "")
+            "_".join(self.time_range.values()).replace("-", ""),
         )
         if not observations_path.parent.exists():
             os.makedirs(observations_path.parent, exist_ok=True)
@@ -98,7 +105,7 @@ class NearRealTimeWorkflow:
             self.location,
             self.observations_dir,
             self.forecasts_dir,
-            self.time_range
+            self.time_range,
         ).run()
         processed_path = Path(
             self.processed_dir,
@@ -111,15 +118,14 @@ class NearRealTimeWorkflow:
         predictions_paths = ModelPredict(
             config_yml_filename=self.model,
             predictions_dir=self.predictions_dir,
-            input_data_dir=self.processed_dir
+            input_data_dir=self.processed_dir,
         ).run()
 
         predictions, cams_and_obs = self.load_dataset(predictions_paths)
         val_data = self.get_initialization_datasets(predictions, cams_and_obs)
         df_final = val_data.cams.join([val_data.predictions])
         df_final.to_csv(
-            self.data_dir /
-            f'{self.variable}_predictions_'
+            self.data_dir / f"{self.variable}_predictions_"
             f'{self.location.location_id}_{self.time_range["end"]}.csv'
         )
         self.plot_time_serie(df_final)
@@ -150,60 +156,82 @@ class NearRealTimeWorkflow:
         ):
             date_str = datetime.datetime.strftime(date, "%Y%m%d")
             for variable, abbreviation in variables_to_abreviation.items():
-                for leadtime in leadtimes:
-                    if len(leadtime) == 1:
-                        leadtime_str = f'00{leadtime}'
-                    elif len(leadtime) == 2:
-                        leadtime_str = f'0{leadtime}'
-                    else:
-                        leadtime_str = leadtime
-                    download_path = (
-                        self.download_dir / f"z_cams_c_ecmf_"
-                        f"{date_str}_fc_{leadtime_str}_{abbreviation}.zip"
-                    )
-                    download_path_nc = (
-                            self.download_dir / f"z_cams_c_ecmf_"
-                            f"{date_str}_fc_{leadtime_str}_{abbreviation}.nc"
-                    )
-                    if download_path_nc.exists():
-                        continue
-                    try:
-                        self.api_download_forecast.retrieve(
-                            "cams-global-atmospheric-composition-forecasts",
-                            {
-                                "variable": variable,
-                                "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
-                                "time": "00:00",
-                                "leadtime_hour": leadtime,
-                                "type": "forecast",
-                                "format": "netcdf_zip",
-                            },
-                            download_path,
-                        )
-                    except:
-                        self.api_download_forecast.retrieve(
-                            "cams-global-atmospheric-composition-forecasts",
-                            {
-                                "variable": variable,
-                                "model_level": "137",
-                                "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
-                                "time": "00:00",
-                                "leadtime_hour": leadtime,
-                                "type": "forecast",
-                                "format": "netcdf_zip",
-                            },
-                            download_path,
-                        )
-                    with zipfile.ZipFile(download_path, 'r') as zp:
-                        zp.extractall(download_path.parent)
-                        os.rename(download_path.parent / 'data.nc',
-                                  download_path_nc)
-                    os.remove(download_path)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future_to_entry = {
+                        executor.submit(
+                            self._download_forecast_data,
+                            leadtime,
+                            date_str,
+                            abbreviation,
+                            variable,
+                            date
+                        ): leadtime
+                        for leadtime in leadtimes
+                    }
+                    for future in concurrent.futures.as_completed(future_to_entry):
+                        result = future.result()
+
+    def _download_forecast_data(
+            self,
+            leadtime,
+            date_str,
+            abbreviation,
+            variable,
+            date
+    ):
+        if len(leadtime) == 1:
+            leadtime_str = f"00{leadtime}"
+        elif len(leadtime) == 2:
+            leadtime_str = f"0{leadtime}"
+        else:
+            leadtime_str = leadtime
+        download_path = (
+            self.download_dir / f"z_cams_c_ecmf_"
+            f"{date_str}_fc_{leadtime_str}_{abbreviation}.zip"
+        )
+        download_path_nc = (
+            self.download_dir / f"z_cams_c_ecmf_"
+            f"{date_str}_fc_{leadtime_str}_{abbreviation}.nc"
+        )
+        if not download_path_nc.exists():
+            try:
+                self.api_download_forecast.retrieve(
+                    "cams-global-atmospheric-composition-forecasts",
+                    {
+                        "variable": variable,
+                        "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
+                        "time": "00:00",
+                        "leadtime_hour": leadtime,
+                        "type": "forecast",
+                        "format": "netcdf_zip",
+                    },
+                    download_path,
+                )
+            except:
+                self.api_download_forecast.retrieve(
+                    "cams-global-atmospheric-composition-forecasts",
+                    {
+                        "variable": variable,
+                        "model_level": "137",
+                        "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
+                        "time": "00:00",
+                        "leadtime_hour": leadtime,
+                        "type": "forecast",
+                        "format": "netcdf_zip",
+                    },
+                    download_path,
+                )
+            with zipfile.ZipFile(download_path, "r") as zp:
+                zp.extractall(download_path.parent)
+                os.rename(download_path.parent / "data.nc", download_path_nc)
+            os.remove(download_path)
 
     def create_observations_fake_dataset(self, observations_path):
-        times = pd.date_range(f"{self.time_range['start']} 00:00",
-                              f"{self.time_range['end']} 23:59",
-                              freq='1H')
+        times = pd.date_range(
+            f"{self.time_range['start']} 00:00",
+            f"{self.time_range['end']} 23:59",
+            freq="1H",
+        )
         values = list(range(len(times)))
         ds_dict = {
             "coords": {
@@ -273,9 +301,7 @@ class NearRealTimeWorkflow:
                         "standard_name": "no2",
                         "long_name": "Nitrogen dioxide",
                     },
-                    "data": [
-                        values
-                    ],
+                    "data": [values],
                 }
             },
         }
@@ -284,9 +310,11 @@ class NearRealTimeWorkflow:
 
     def load_dataset(self, prediction_paths):
         # Load obs and cams:
-        data_file = list(self.processed_dir.rglob(
-            f"data_{self.variable}_{self.location.location_id}.csv"
-        ))[0]
+        data_file = list(
+            self.processed_dir.rglob(
+                f"data_{self.variable}_{self.location.location_id}.csv"
+            )
+        )[0]
         data = pd.read_csv(data_file, index_col=0)
         data["index"] = pd.to_datetime(data["index"])
         obs_and_cams = data.set_index("index")
@@ -317,9 +345,7 @@ class NearRealTimeWorkflow:
         for init_time, values in df.iterrows():
             indices = pd.date_range(start=init_time[0], periods=len(values), freq="H")
             # Perform the correction of the forecasts
-            predictions = (
-                data.loc[indices, f"{self.variable}_forecast"] - values.values
-            )
+            predictions = data.loc[indices, f"{self.variable}_forecast"] - values.values
             predictions = predictions.to_frame("Corrected CAMS").astype(float)
             cams = (
                 data[f"{self.variable}_forecast"]
@@ -342,7 +368,7 @@ class NearRealTimeWorkflow:
                 .astype(float)
             )
             init_datasets.append(
-                ValidationDataset(cams, obs, predictions, persistence, 'test')
+                ValidationDataset(cams, obs, predictions, persistence, "test")
             )
         return init_datasets[0]
 
@@ -350,8 +376,10 @@ class NearRealTimeWorkflow:
         city = "".join(self.location.city.split(" ")).lower()
         country = "".join(self.location.country.split(" ")).lower()
         station_code = "".join(self.location.location_id.split(" ")).lower()
-        filename = self.data_dir / \
-                   f"{self.variable}_timeserie_{station_code}_{city}_{country}.png"
+        filename = (
+            self.data_dir
+            / f"{self.variable}_timeserie_{station_code}_{city}_{country}.png"
+        )
         colors = ["k", "red"]
         date_form = DateFormatter("%-d %b %H:%M")
         plt.figure(figsize=(30, 15))
@@ -368,17 +396,18 @@ class NearRealTimeWorkflow:
         plt.xlabel("Date", fontsize="xx-large")
         ax = plt.gca()
         ax.xaxis.set_major_formatter(date_form)
-        plt.title(f"{self.location.city} ({self.location.country})", fontsize="xx-large")
-        plt.savefig(filename,
-                    bbox_inches="tight", pad_inches=0)
+        plt.title(
+            f"{self.location.city} ({self.location.country})", fontsize="xx-large"
+        )
+        plt.savefig(filename, bbox_inches="tight", pad_inches=0)
         plt.close()
 
 
 if __name__ == "__main__":
     time_0 = datetime.datetime.utcnow()
     NearRealTimeWorkflow(
-        variable='no2',
-        date=datetime.datetime(year=2021, month=8, day=15),
+        variable="no2",
+        date=datetime.datetime(year=2021, month=8, day=1),
         model=ROOT_DIR / "models" / "configuration" / "config_inceptiontime_depth6.yml",
         data_dir=Path("/home/pereza/datos/cams"),
         intermediary_dir=Path("/tmp"),

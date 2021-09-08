@@ -29,6 +29,7 @@ models_dict = {
     "elasticnet_regressor": ElasticNetRegr,
 }
 
+
 class ModelPredict:
     """Class that handles the model selection, training and validation of any set of
     models with a common structure (having methods: fit, model, predict, set_params,
@@ -49,7 +50,7 @@ class ModelPredict:
         self,
         config_yml_filename: str,
         input_data_dir: Path = ROOT_DIR / "data" / "processed",
-        predictions_dir: Path = Path("/tmp")
+        predictions_dir: Path = Path("/tmp"),
     ):
         config = read_yaml(config_yml_filename)
         self.variable = config["data"]["variable"]
@@ -68,7 +69,7 @@ class ModelPredict:
             self.n_future,
             self.min_st_obs,
             input_dir=self.input_dir,
-            cached=False
+            cached=False,
         )
         self.__build_datasets()
 
@@ -94,11 +95,10 @@ class ModelPredict:
                     mo, ensemble_number
                 )
                 mo.load(model_path, scaler_paths)
-                predictions_output_path = self.predictions_dir / \
-                                          f"predictions_{ensemble_number}.csv"
-                preds = mo.predict(
-                    self.X,
-                    filepath=predictions_output_path)
+                predictions_output_path = (
+                    self.predictions_dir / f"predictions_{ensemble_number}.csv"
+                )
+                preds = mo.predict(self.X, filepath=predictions_output_path)
                 predictions_paths.append(predictions_output_path)
         return predictions_paths
 
@@ -112,7 +112,6 @@ class ModelPredict:
         )
         os.makedirs(self.results_output_dir, exist_ok=True)
         os.makedirs(self.weights_output_dir, exist_ok=True)
-
 
     def get_model_and_scaler_output_path(
         self, model, ensemble_number: int
@@ -133,4 +132,3 @@ class ModelPredict:
             "aq_bias_scaler": self.weights_output_dir / f"{filename}_aqbiasscaler.pkl",
         }
         return model_path, scaler_paths
-

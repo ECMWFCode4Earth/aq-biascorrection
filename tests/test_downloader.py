@@ -5,21 +5,19 @@ import pandas as pd
 import pytest
 import xarray as xr
 from click.testing import CliRunner
-from mockito import ANY, when, unstub
+from mockito import ANY, unstub, when
 
-from src.scripts import extraction_observations
 from src.constants import ROOT_DIR
+from src.scripts import extraction_observations
 
 
 def test_cli_download_openaq():
     data_stations = pd.read_csv(
-        ROOT_DIR / 'tests' / 'data_test' / 'stations.csv',
+        ROOT_DIR / "tests" / "data_test" / "stations.csv",
     )
     when(pd).read_csv(
         ANY(),
-    ).thenReturn(
-        data_stations
-    )
+    ).thenReturn(data_stations)
     tempdir = tempfile.mkdtemp()
     runner = CliRunner()
     result = runner.invoke(extraction_observations.main, ["o3", "-o", tempdir])

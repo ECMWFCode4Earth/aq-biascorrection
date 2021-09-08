@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 import click
+
 from src.data.forecast import CAMSProcessor
 
 PATH = click.Path(exists=True, path_type=Path)

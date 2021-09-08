@@ -207,10 +207,10 @@ class OpenAQDownloader:
                 " this location of interest"
             )
         start_date = datetime.datetime.strptime(
-            self.time_range['start'], '%Y-%m-%d'
+            self.time_range["start"], "%Y-%m-%d"
         ).astimezone()
         end_date = datetime.datetime.strptime(
-            self.time_range['end'], '%Y-%m-%d'
+            self.time_range["end"], "%Y-%m-%d"
         ).astimezone()
         time_mask = (data.index > start_date) & (data.index <= end_date)
         data = data.loc[time_mask]

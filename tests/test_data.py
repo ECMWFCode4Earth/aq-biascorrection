@@ -186,17 +186,15 @@ class TestUtils:
 
     def test_location_get_location_by_id(self, location_id="ES001"):
         data_stations = pd.read_csv(
-            ROOT_DIR / 'tests' / 'data_test' / 'stations.csv',
+            ROOT_DIR / "tests" / "data_test" / "stations.csv",
             index_col=0,
-            usecols=list(range(1, 8))
+            usecols=list(range(1, 8)),
         )
         when(pd).read_csv(
             ANY(),
             index_col=ANY(int),
             usecols=ANY(list),
-        ).thenReturn(
-            data_stations
-        )
+        ).thenReturn(data_stations)
         location = Location.get_location_by_id(location_id)
         assert type(location) == Location
         assert location.country == "Spain"
