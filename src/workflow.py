@@ -26,8 +26,6 @@ class NearRealTimeWorkflow:
         date: datetime.datetime,  # Date to make the predictions
         model: Path,  # Model name
         data_dir: PosixPath,  # Input directory where all the steps will be performed
-        intermediary_dir: PosixPath,
-        output_dir: PosixPath,
         stations_csv: PosixPath,
         station_id: str,
     ):
@@ -76,8 +74,7 @@ class NearRealTimeWorkflow:
             dict_to_location[var] = float(dict_to_location[var])
         self.location = Location(**dict_to_location)
         self.stations_csv = stations_csv
-        self.intermediary_dir = intermediary_dir
-        self.output_dir = output_dir
+        self.intermediary_dir = Path('/tmp')
         self.api_download_forecast = Client(
             url="https://ads.atmosphere.copernicus.eu/api/v2",
             key="6858:5edcc1e8-e2c6-463b-8b18-d4ea2bafa965",
@@ -387,13 +384,13 @@ class NearRealTimeWorkflow:
             plt.plot(
                 data.index.values,
                 data[column].values,
-                linewidth=2,
+                linewidth=3,
                 color=colors[i],
                 label=column,
             )
         plt.legend()
         plt.ylabel(self.variable + r" ($\mu g / m^3$)", fontsize="xx-large")
-        plt.xlabel("Date", fontsize="xx-large")
+        plt.xlabel("Date", fontsize="x-large")
         ax = plt.gca()
         ax.xaxis.set_major_formatter(date_form)
         plt.title(
@@ -408,10 +405,8 @@ if __name__ == "__main__":
     NearRealTimeWorkflow(
         variable="no2",
         date=datetime.datetime(year=2021, month=8, day=1),
-        model=ROOT_DIR / "models" / "configuration" / "config_inceptiontime_depth6.yml",
+        model=Path("/home/pereza/datos/cams") / "config_inceptiontime_depth6.yml",
         data_dir=Path("/home/pereza/datos/cams"),
-        intermediary_dir=Path("/tmp"),
-        output_dir=Path("/tmp"),
         stations_csv=ROOT_DIR / "data/external/stations.csv",
         station_id="ES002",
     ).run()
