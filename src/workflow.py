@@ -19,14 +19,14 @@ from src.models.predict import ModelPredict
 from src.models.validation import ValidationDataset
 
 
-class NearRealTimeWorkflow:
+class Workflow:
     def __init__(
         self,
         variable: str,
         date: datetime.datetime,  # Date to make the predictions
         model: Path,  # Model name
-        data_dir: PosixPath,  # Input directory where all the steps will be performed
-        stations_csv: PosixPath,
+        data_dir: Path,  # Input directory where all the steps will be performed
+        stations_csv: Path,
         station_id: str,
     ):
         self.variable = variable
@@ -45,7 +45,7 @@ class NearRealTimeWorkflow:
         self.observations_dir = self.data_dir / "observations"
         self.processed_dir = self.data_dir / "processed"
         self.predictions_dir = self.data_dir / "predictions"
-        for dir in [
+        for directory in [
             self.data_dir,
             self.download_dir,
             self.forecasts_dir,
@@ -53,8 +53,8 @@ class NearRealTimeWorkflow:
             self.processed_dir,
             self.predictions_dir,
         ]:
-            if not dir.exists():
-                os.makedirs(dir, exist_ok=True)
+            if not directory.exists():
+                os.makedirs(directory, exist_ok=True)
         stations = pd.read_csv(
             stations_csv,
             index_col=0,
@@ -401,15 +401,16 @@ class NearRealTimeWorkflow:
 
 
 if __name__ == "__main__":
-    time_0 = datetime.datetime.utcnow()
-    NearRealTimeWorkflow(
-        variable="no2",
-        date=datetime.datetime(year=2021, month=8, day=1),
-        model=Path("/home/pereza/datos/cams") / "config_inceptiontime_depth6.yml",
-        data_dir=Path("/home/pereza/datos/cams"),
-        stations_csv=ROOT_DIR / "data/external/stations.csv",
-        station_id="ES002",
-    ).run()
-    time_1 = datetime.datetime.utcnow()
-    total_time = time_1 - time_0
-    print(total_time.total_seconds())
+    for day in range(1, 32):
+        time_0 = datetime.datetime.utcnow()
+        Workflow(
+            variable="no2",
+            date=datetime.datetime(year=2021, month=8, day=day),
+            model=Path("/home/pereza/datos/cams") / "config_inceptiontime_depth6.yml",
+            data_dir=Path("/home/pereza/datos/cams"),
+            stations_csv=ROOT_DIR / "data/external/stations.csv",
+            station_id="ES002",
+        ).run()
+        time_1 = datetime.datetime.utcnow()
+        total_time = time_1 - time_0
+        print(total_time.total_seconds())
