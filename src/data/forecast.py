@@ -89,7 +89,14 @@ class CAMSProcessor:
         time_range argument of the CAMSPreprocessor class
         """
         initialization_times = pd.date_range(
-            self.time_range["start"], self.time_range["end"], freq="1D"
+            self.time_range["start"],
+            datetime.datetime.strftime(
+                datetime.datetime.strptime(
+                    self.time_range["end"], '%Y-%m-%d'
+                ) + datetime.timedelta(days=1),
+                '%Y-%m-%d'
+            ),
+            freq="1D"
         )
         initialization_times = [
             datetime.datetime.strftime(time, "%Y%m%d") for time in initialization_times

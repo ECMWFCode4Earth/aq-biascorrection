@@ -6,31 +6,24 @@ from pathlib import Path, PosixPath
 import numpy as np
 import pandas as pd
 import xarray as xr
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
 from cdsapi.api import Client
 
 from src.constants import ROOT_DIR
 from src.data.forecast import CAMSProcessor
 from src.data.transformer import LocationTransformer
 from src.data.utils import Location
-from src.models.config.gradient_boosting import GradientBoosting
-from src.models.config.inception_time import InceptionTime
-from src.models.config.regression import ElasticNetRegr
-
-models_dict = {
-    "gradient_boosting": GradientBoosting,
-    "inception_time": InceptionTime,
-    "elasticnet_regressor": ElasticNetRegr,
-}
-
+from src.models.predict import ModelPredict
+from src.models.validation import ValidationDataset
 
 class NearRealTimeWorkflow:
     def __init__(
         self,
         variable: str,
         date: datetime.datetime,  # Date to make the predictions
-        model: str,  # Model name
-        forecast_idir: PosixPath,  # Input directory where the last day and following
-        # day data are available
+        model: Path,  # Model name
+        data_dir: PosixPath,  # Input directory where all the steps will be performed
         intermediary_dir: PosixPath,
         output_dir: PosixPath,
         stations_csv: PosixPath,
@@ -46,7 +39,17 @@ class NearRealTimeWorkflow:
         )
         self.time_range = dict(start=start_date, end=end_date)
         self.model = model
-        self.forecast_idir = forecast_idir
+        self.data_dir = data_dir / end_date
+        self.download_dir = self.data_dir / 'download'
+        self.forecasts_dir = self.data_dir / 'forecasts'
+        self.observations_dir = self.data_dir / 'observations'
+        self.processed_dir = self.data_dir / 'processed'
+        self.predictions_dir = self.data_dir / 'predictions'
+        for dir in [self.data_dir, self.download_dir,
+                    self.forecasts_dir, self.observations_dir,
+                    self.processed_dir, self.predictions_dir]:
+            if not dir.exists():
+                os.makedirs(dir, exist_ok=True)
         stations = pd.read_csv(
             stations_csv,
             index_col=0,
@@ -74,34 +77,55 @@ class NearRealTimeWorkflow:
         )
 
     def run(self):
-        self.download_date_and_previous_date()
+        self.download_forecast_data()
         CAMSProcessor(
-            input_dir=self.forecast_idir,
+            input_dir=self.download_dir,
             intermediary_dir=self.intermediary_dir,
             locations_csv=self.stations_csv,
-            output_dir=self.forecast_idir / 'forecasts',
+            output_dir=self.forecasts_dir,
             time_range=self.time_range,
         ).run_one_station(self.location)
-        forecast_path = self.location.get_forecast_path(
-            self.forecast_idir / 'forecasts',
-            "_".join(self.time_range.values()).replace("-", "")
-        )
         observations_path = self.location.get_observations_path(
-            self.forecast_idir / 'observations',
+            self.observations_dir,
             self.variable,
             "_".join(self.time_range.values()).replace("-", "")
         )
+        if not observations_path.parent.exists():
+            os.makedirs(observations_path.parent, exist_ok=True)
         self.create_observations_fake_dataset(observations_path)
         data = LocationTransformer(
             self.variable,
             self.location,
-            self.forecast_idir / 'observations',
-            self.forecast_idir / 'forecasts',
+            self.observations_dir,
+            self.forecasts_dir,
             self.time_range
         ).run()
-        return data
+        processed_path = Path(
+            self.processed_dir,
+            self.variable,
+            f"data_{self.variable}_{self.location.location_id}.csv",
+        )
+        if not processed_path.parent.exists():
+            os.makedirs(processed_path.parent, exist_ok=True)
+        data.to_csv(processed_path)
+        predictions_paths = ModelPredict(
+            config_yml_filename=self.model,
+            predictions_dir=self.predictions_dir,
+            input_data_dir=self.processed_dir
+        ).run()
 
-    def download_date_and_previous_date(self):
+        predictions, cams_and_obs = self.load_dataset(predictions_paths)
+        val_data = self.get_initialization_datasets(predictions, cams_and_obs)
+        df_final = val_data.cams.join([val_data.predictions])
+        df_final.to_csv(
+            self.data_dir /
+            f'{self.variable}_predictions_'
+            f'{self.location.location_id}_{self.time_range["end"]}.csv'
+        )
+        self.plot_time_serie(df_final)
+        return df_final
+
+    def download_forecast_data(self):
         variables_to_abreviation = {
             "10m_u_component_of_wind": "10u",
             "10m_v_component_of_wind": "10v",
@@ -134,11 +158,11 @@ class NearRealTimeWorkflow:
                     else:
                         leadtime_str = leadtime
                     download_path = (
-                        self.forecast_idir / f"z_cams_c_ecmf_"
+                        self.download_dir / f"z_cams_c_ecmf_"
                         f"{date_str}_fc_{leadtime_str}_{abbreviation}.zip"
                     )
                     download_path_nc = (
-                            self.forecast_idir / f"z_cams_c_ecmf_"
+                            self.download_dir / f"z_cams_c_ecmf_"
                             f"{date_str}_fc_{leadtime_str}_{abbreviation}.nc"
                     )
                     if download_path_nc.exists():
@@ -256,19 +280,112 @@ class NearRealTimeWorkflow:
             },
         }
         ds = xr.Dataset.from_dict(ds_dict)
-        if not observations_path.parent.exists():
-            os.makedirs(observations_path.parent, exist_ok=True)
         ds.to_netcdf(observations_path)
+
+    def load_dataset(self, prediction_paths):
+        # Load obs and cams:
+        data_file = list(self.processed_dir.rglob(
+            f"data_{self.variable}_{self.location.location_id}.csv"
+        ))[0]
+        data = pd.read_csv(data_file, index_col=0)
+        data["index"] = pd.to_datetime(data["index"])
+        obs_and_cams = data.set_index("index")
+
+        # Load predictions:
+        predictions, count = None, 0
+        for prediction_path in prediction_paths:
+            count += 1
+            df = pd.read_csv(prediction_path, index_col=[0, 1])
+            if predictions is not None:
+                predictions += df
+            else:
+                predictions = df
+        predictions /= count
+        return predictions, obs_and_cams
+
+    def get_initialization_datasets(
+        self, df: pd.DataFrame, data: pd.DataFrame
+    ) -> ValidationDataset:
+        """
+        Method to transform the 24 machine learning predictions columns into a single
+        column dataframe with the temporal data.
+        Args:
+            df: machine learning predictions for correcting the CAMS forecast
+            data: CAMS forecast data and observations
+        """
+        init_datasets = []
+        for init_time, values in df.iterrows():
+            indices = pd.date_range(start=init_time[0], periods=len(values), freq="H")
+            # Perform the correction of the forecasts
+            predictions = (
+                data.loc[indices, f"{self.variable}_forecast"] - values.values
+            )
+            predictions = predictions.to_frame("Corrected CAMS").astype(float)
+            cams = (
+                data[f"{self.variable}_forecast"]
+                .loc[predictions.index]
+                .to_frame("CAMS")
+                .astype(float)
+            )
+            obs = (
+                data[f"{self.variable}_observed"]
+                .loc[predictions.index]
+                .to_frame("Observations")
+                .astype(float)
+            )
+            persistence = (
+                data[f"{self.variable}_observed"]
+                .loc[predictions.index - datetime.timedelta(hours=24)]
+                .reset_index(drop=True)
+                .to_frame("Persistence")
+                .set_index(predictions.index)
+                .astype(float)
+            )
+            init_datasets.append(
+                ValidationDataset(cams, obs, predictions, persistence, 'test')
+            )
+        return init_datasets[0]
+
+    def plot_time_serie(self, data):
+        city = "".join(self.location.city.split(" ")).lower()
+        country = "".join(self.location.country.split(" ")).lower()
+        station_code = "".join(self.location.location_id.split(" ")).lower()
+        filename = self.data_dir / \
+                   f"{self.variable}_timeserie_{station_code}_{city}_{country}.png"
+        colors = ["k", "red"]
+        date_form = DateFormatter("%-d %b %H:%M")
+        plt.figure(figsize=(30, 15))
+        for i, column in enumerate(data.columns):
+            plt.plot(
+                data.index.values,
+                data[column].values,
+                linewidth=2,
+                color=colors[i],
+                label=column,
+            )
+        plt.legend()
+        plt.ylabel(self.variable + r" ($\mu g / m^3$)", fontsize="xx-large")
+        plt.xlabel("Date", fontsize="xx-large")
+        ax = plt.gca()
+        ax.xaxis.set_major_formatter(date_form)
+        plt.title(f"{self.location.city} ({self.location.country})", fontsize="xx-large")
+        plt.savefig(filename,
+                    bbox_inches="tight", pad_inches=0)
+        plt.close()
 
 
 if __name__ == "__main__":
+    time_0 = datetime.datetime.utcnow()
     NearRealTimeWorkflow(
         variable='no2',
-        date=datetime.datetime(year=2021, month=8, day=20),
-        model="inception_time",
-        forecast_idir=Path("/home/pereza/datos/cams"),
+        date=datetime.datetime(year=2021, month=8, day=15),
+        model=ROOT_DIR / "models" / "configuration" / "config_inceptiontime_depth6.yml",
+        data_dir=Path("/home/pereza/datos/cams"),
         intermediary_dir=Path("/tmp"),
         output_dir=Path("/tmp"),
         stations_csv=ROOT_DIR / "data/external/stations.csv",
         station_id="ES002",
     ).run()
+    time_1 = datetime.datetime.utcnow()
+    total_time = time_1 - time_0
+    print(total_time.total_seconds())

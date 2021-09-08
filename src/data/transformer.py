@@ -141,7 +141,7 @@ class LocationTransformer:
         # There are some stations which has 0s, which seems to be NaN, drop
         # them
         varname = f"{self.variable}_observed"
-        merged_pd[varname] = merged_pd[varname].where(merged_pd[varname] > 0)
+        merged_pd[varname] = merged_pd[varname].where(merged_pd[varname] >= 0)
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias

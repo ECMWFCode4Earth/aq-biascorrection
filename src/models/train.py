@@ -351,3 +351,8 @@ class ModelTrain:
         rmse = round(float(metrics.mean_squared_error(labels, preds, squared=False)), 3)
         r2 = round(float(metrics.r2_score(labels, preds)), 3)
         return exp_var, maxerr, mae, rmse, r2
+
+if __name__ == '__main__':
+    ModelTrain(
+        ROOT_DIR / "models" / "configuration" / "config_inceptiontime_depth6.yml"
+    ).run()
