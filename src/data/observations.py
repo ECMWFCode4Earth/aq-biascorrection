@@ -342,3 +342,30 @@ class OpenAQDownloader:
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         distance = R * c
         return distance
+
+
+if __name__ == '__main__':
+    from src.constants import ROOT_DIR
+    stations = pd.read_csv(
+        ROOT_DIR / "data" / "external" / "stations.csv",
+        index_col=0,
+        names=[
+            "location_id",
+            "city",
+            "country",
+            "latitude",
+            "longitude",
+            "timezone",
+            "elevation",
+        ],
+    )
+    station = stations[stations["location_id"] == "US007"]
+    dict_to_location = station.iloc[0].to_dict()
+    for var in ["longitude", "latitude", "elevation"]:
+        dict_to_location[var] = float(dict_to_location[var])
+    OpenAQDownloader(
+        Location(**dict_to_location),
+        Path('/home/pereza/datos/cams'),
+        'pm25',
+        dict(start='2021-08-01', end='2021-08-31')
+    ).run()

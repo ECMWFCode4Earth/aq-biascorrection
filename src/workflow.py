@@ -291,11 +291,11 @@ class Workflow:
             "attrs": {"featureType": "timeSeries", "Conventions": "CF-1.4"},
             "dims": {"station_id": 1, "time": len(times)},
             "data_vars": {
-                "no2": {
+                self.variable: {
                     "dims": ("station_id", "time"),
                     "attrs": {
                         "units": "microgram / m^3",
-                        "standard_name": "no2",
+                        "standard_name": self.variable,
                         "long_name": "Nitrogen dioxide",
                     },
                     "data": [values],
@@ -369,7 +369,7 @@ class Workflow:
             )
         return init_datasets[0]
 
-    def plot_time_serie(self, data):
+    def plot_time_serie(self, data, save=None):
         city = "".join(self.location.city.split(" ")).lower()
         country = "".join(self.location.country.split(" ")).lower()
         station_code = "".join(self.location.location_id.split(" ")).lower()
@@ -396,7 +396,8 @@ class Workflow:
         plt.title(
             f"{self.location.city} ({self.location.country})", fontsize="xx-large"
         )
-        plt.savefig(filename, bbox_inches="tight", pad_inches=0)
+        if save is not None:
+            plt.savefig(filename, bbox_inches="tight", pad_inches=0)
         plt.close()
 
 
@@ -404,12 +405,12 @@ if __name__ == "__main__":
     for day in range(1, 32):
         time_0 = datetime.datetime.utcnow()
         Workflow(
-            variable="no2",
+            variable="pm25",
             date=datetime.datetime(year=2021, month=8, day=day),
             model=Path("/home/pereza/datos/cams") / "config_inceptiontime_depth6.yml",
             data_dir=Path("/home/pereza/datos/cams"),
             stations_csv=ROOT_DIR / "data/external/stations.csv",
-            station_id="ES002",
+            station_id="US007",
         ).run()
         time_1 = datetime.datetime.utcnow()
         total_time = time_1 - time_0
