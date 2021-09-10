@@ -30,6 +30,26 @@ class TestValidation:
     def mocked_visualization_obj(
         self, mocked_validation_obj, mocked_validation_datasets
     ):
+        station_id = "ES002"
+        stations = pd.read_csv(
+            ROOT_DIR / "tests" / "data_test" / "stations.csv",
+            index_col=0,
+            names=[
+                "location_id",
+                "city",
+                "country",
+                "latitude",
+                "longitude",
+                "timezone",
+                "elevation",
+            ],
+        )
+        station = stations[stations["location_id"] == station_id]
+        dict_to_location = station.iloc[0].to_dict()
+        for var in ["longitude", "latitude", "elevation"]:
+            dict_to_location[var] = float(dict_to_location[var])
+        loc_obj = Location(**dict_to_location)
+        when(Location).get_location_by_id(ANY()).thenReturn(loc_obj)
         visual_obj = ValidationVisualization(
             mocked_validation_datasets,
             mocked_validation_obj.varname,
@@ -37,15 +57,37 @@ class TestValidation:
             "all",
             mocked_validation_obj.visualizations_output_dir,
         )
+        unstub()
         return visual_obj
 
     @pytest.fixture()
     def mocked_tables_obj(self, mocked_validation_obj, mocked_validation_datasets):
+        station_id = "ES002"
+        stations = pd.read_csv(
+            ROOT_DIR / "tests" / "data_test" / "stations.csv",
+            index_col=0,
+            names=[
+                "location_id",
+                "city",
+                "country",
+                "latitude",
+                "longitude",
+                "timezone",
+                "elevation",
+            ],
+        )
+        station = stations[stations["location_id"] == station_id]
+        dict_to_location = station.iloc[0].to_dict()
+        for var in ["longitude", "latitude", "elevation"]:
+            dict_to_location[var] = float(dict_to_location[var])
+        loc_obj = Location(**dict_to_location)
+        when(Location).get_location_by_id(ANY()).thenReturn(loc_obj)
         tables_obj = ValidationTables(
             mocked_validation_datasets,
             Location.get_location_by_id("ES002"),
             mocked_validation_obj.metrics_output_dir,
         )
+        unstub()
         return tables_obj
 
     @pytest.fixture()
