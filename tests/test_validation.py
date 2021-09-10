@@ -7,6 +7,7 @@ import pytest
 from mockito import ANY, unstub, when
 
 from src.data.utils import Location
+from src.constants import ROOT_DIR
 from src.metrics.validation_metrics import ValidationTables
 from src.models.validation import ValidationDataset, Validator
 from src.visualization.validation_visualization import ValidationVisualization
@@ -85,6 +86,15 @@ class TestValidation:
         self, mocked_validation_obj, mocked_validation_datasets
     ):
         station_id = "ES002"
+        stations = pd.read_csv(
+            ROOT_DIR / "tests" / "data_test" / "stations.csv",
+            index_col=0,
+            usecols=list(range(1, 8)),
+        )
+        station = stations[stations["location_id"] == station_id]
+        dict_to_location = station.iloc[0].to_dict()
+        loc_obj = Location(**dict_to_location)
+        when(Location).get_location_by_id(ANY()).thenReturn(loc_obj)
         when(Validator).load_model_predictions(ANY(), ANY()).thenReturn(None)
         when(Validator).load_obs_and_cams(ANY()).thenReturn(None)
         when(Validator).get_initialization_datasets(ANY(), ANY()).thenReturn(
