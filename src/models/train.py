@@ -19,7 +19,7 @@ from src.models.utils import read_yaml
 
 warnings.filterwarnings("ignore")
 
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Model trainer")
 
@@ -351,3 +351,9 @@ class ModelTrain:
         rmse = round(float(metrics.mean_squared_error(labels, preds, squared=False)), 3)
         r2 = round(float(metrics.r2_score(labels, preds)), 3)
         return exp_var, maxerr, mae, rmse, r2
+
+
+if __name__ == "__main__":
+    ModelTrain(
+        "config_inceptiontime_depth6.yml"
+    ).run()

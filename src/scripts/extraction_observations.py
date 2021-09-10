@@ -1,5 +1,3 @@
-import logging
-import sys
 from pathlib import Path
 
 import click
@@ -8,8 +6,11 @@ import pandas as pd
 from src import constants
 from src.data.observations import OpenAQDownloader
 from src.data.utils import Location
+from src.logger import get_logger
 
 PATH = click.Path(exists=True, path_type=Path)
+
+logger = get_logger("OpenAQ Observations Extraction")
 
 
 @click.command()
@@ -50,8 +51,6 @@ def main(
 
     VAR is the variable to extract from OpenAQ API.
     """
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=constants.log_fmt)
-    logger = logging.getLogger("OpenAQ download Pipeline")
 
     varnames = ["pm25", "no2", "o3"] if var == "all" else [var]
     for variable in varnames:

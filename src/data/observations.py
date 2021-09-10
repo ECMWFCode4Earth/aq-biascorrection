@@ -13,7 +13,7 @@ import xarray as xr
 from src.constants import units2str, var2longstr
 from src.data import utils
 from src.data.utils import Location
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("OpenAQ Downloader")
 warnings.filterwarnings("ignore")
@@ -198,8 +198,6 @@ class OpenAQDownloader:
                 parameter=self.variable,
                 limit=10000,
                 value_from=0,
-                date_from=self.time_range["start"],
-                date_to=self.time_range["end"],
                 index="utc",
                 df=True,
             )
@@ -208,7 +206,14 @@ class OpenAQDownloader:
                 "There is no data in the time range considered for"
                 " this location of interest"
             )
-
+        start_date = datetime.datetime.strptime(
+            self.time_range["start"], "%Y-%m-%d"
+        ).astimezone()
+        end_date = datetime.datetime.strptime(
+            self.time_range["end"], "%Y-%m-%d"
+        ).astimezone()
+        time_mask = (data.index > start_date) & (data.index <= end_date)
+        data = data.loc[time_mask]
         data = data.sort_index()
         xr_data = self.create_xarray_dataset_with_attrs(data, station)
         return xr_data
@@ -337,3 +342,30 @@ class OpenAQDownloader:
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         distance = R * c
         return distance
+
+
+if __name__ == '__main__':
+    from src.constants import ROOT_DIR
+    stations = pd.read_csv(
+        ROOT_DIR / "data" / "external" / "stations.csv",
+        index_col=0,
+        names=[
+            "location_id",
+            "city",
+            "country",
+            "latitude",
+            "longitude",
+            "timezone",
+            "elevation",
+        ],
+    )
+    station = stations[stations["location_id"] == "US007"]
+    dict_to_location = station.iloc[0].to_dict()
+    for var in ["longitude", "latitude", "elevation"]:
+        dict_to_location[var] = float(dict_to_location[var])
+    OpenAQDownloader(
+        Location(**dict_to_location),
+        Path('/home/pereza/datos/cams'),
+        'pm25',
+        dict(start='2021-08-01', end='2021-08-31')
+    ).run()

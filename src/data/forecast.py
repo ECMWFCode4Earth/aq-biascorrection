@@ -1,8 +1,6 @@
 import concurrent.futures
 import datetime
 import glob
-import logging
-import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -12,7 +10,7 @@ from dask import distributed
 
 from src.data import utils
 from src.data.utils import Location
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("CAMS Processor")
 
@@ -39,6 +37,7 @@ class CAMSProcessor:
 
         self.locations_df = pd.read_csv(locations_csv)
         self.output_dir = output_dir
+        self.specific_location = None
 
     def run(self) -> str:
         """
@@ -47,25 +46,37 @@ class CAMSProcessor:
         initialization_times = self.get_initialization_times()
         total_data, intermediary_paths = self.get_total_data(initialization_times)
         # We get the data for all initialization_times and locations
-        for i, location in enumerate(self.locations_df.iterrows()):
-            # Write one netcdf for each location of interest
-            loc = Location(
-                location[1]["id"],
-                location[1]["city"],
-                location[1]["country"],
-                location[1]["latitude"],
-                location[1]["longitude"],
-                location[1]["timezone"],
-                location[1]["elevation"],
-            )
+        if self.specific_location is None:
+            for i, location in enumerate(self.locations_df.iterrows()):
+                # Write one netcdf for each location of interest
+                loc = Location(
+                    location[1]["id"],
+                    location[1]["city"],
+                    location[1]["country"],
+                    location[1]["latitude"],
+                    location[1]["longitude"],
+                    location[1]["timezone"],
+                    location[1]["elevation"],
+                )
+                output_path_location = loc.get_forecast_path(
+                    self.output_dir, "_".join(self.time_range.values()).replace("-", "")
+                )
+                data_location = total_data.sel(station_id=loc.location_id)
+                logger.info(
+                    f"Writing netcdf for location {i} out of "
+                    f"{len(self.locations_df)} with id: "
+                    f'{location[1]["id"]}'
+                )
+                utils.write_netcdf(output_path_location, data_location)
+        else:
+            loc = self.specific_location
             output_path_location = loc.get_forecast_path(
                 self.output_dir, "_".join(self.time_range.values()).replace("-", "")
             )
             data_location = total_data.sel(station_id=loc.location_id)
             logger.info(
-                f"Writing netcdf for location {i} out of "
-                f"{len(self.locations_df)} with id: "
-                f'{location[1]["id"]}'
+                f"Writing netcdf for the specific location with id: "
+                f"{loc.location_id}"
             )
             utils.write_netcdf(output_path_location, data_location)
         logger.info(f"Deleting intermediary data")
@@ -78,7 +89,13 @@ class CAMSProcessor:
         time_range argument of the CAMSPreprocessor class
         """
         initialization_times = pd.date_range(
-            self.time_range["start"], self.time_range["end"], freq="1D"
+            self.time_range["start"],
+            datetime.datetime.strftime(
+                datetime.datetime.strptime(self.time_range["end"], "%Y-%m-%d")
+                + datetime.timedelta(days=1),
+                "%Y-%m-%d",
+            ),
+            freq="1D",
         )
         initialization_times = [
             datetime.datetime.strftime(time, "%Y%m%d") for time in initialization_times
@@ -93,7 +110,7 @@ class CAMSProcessor:
         the locations of interest given in the .csv file concatenated
         """
         intermediary_paths = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future_to_entry = {
                 executor.submit(
                     self.get_data_for_initialization_time, init_time
@@ -161,16 +178,26 @@ class CAMSProcessor:
         Filter method to use in xr.open_mfdataset
         """
         data_for_stations = []
-        for location in self.locations_df.iterrows():
-            loc = Location(
-                location[1]["id"],
-                location[1]["city"],
-                location[1]["country"],
-                location[1]["latitude"],
-                location[1]["longitude"],
-                location[1]["timezone"],
-                location[1]["elevation"],
-            )
+        if self.specific_location is None:
+            for location in self.locations_df.iterrows():
+                loc = Location(
+                    location[1]["id"],
+                    location[1]["city"],
+                    location[1]["country"],
+                    location[1]["latitude"],
+                    location[1]["longitude"],
+                    location[1]["timezone"],
+                    location[1]["elevation"],
+                )
+                data_location = data.sel(
+                    latitude=loc.latitude, longitude=loc.longitude, method="nearest"
+                )
+                data_location["station_id"] = loc.location_id
+                data_location = data_location.set_coords("station_id")
+                data_location = data_location.expand_dims("station_id")
+                data_for_stations.append(data_location)
+        else:
+            loc = self.specific_location
             data_location = data.sel(
                 latitude=loc.latitude, longitude=loc.longitude, method="nearest"
             )
@@ -187,3 +214,7 @@ class CAMSProcessor:
             self.intermediary_dir, f"cams_all_stations_{initialization_time}{ext}"
         )
         return intermediary_path
+
+    def run_one_station(self, location: Location):
+        self.specific_location = location
+        self.run()

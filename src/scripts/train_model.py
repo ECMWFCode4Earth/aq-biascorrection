@@ -8,7 +8,7 @@ from src.models.train import ModelTrain
 PATH = click.Path(exists=True, path_type=Path)
 DATE_TYPE = click.DateTime()
 
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Model trainer")
 

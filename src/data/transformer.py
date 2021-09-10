@@ -5,14 +5,14 @@ import pathlib
 from pathlib import Path
 from typing import Dict, List
 
-import pandas as pd
-import xarray as xr
 import numpy as np
+import pandas as pd
 import pytz
+import xarray as xr
 
 from src.constants import ROOT_DIR
 from src.data.utils import Location
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Data Transformer")
 
@@ -141,7 +141,7 @@ class LocationTransformer:
         # There are some stations which has 0s, which seems to be NaN, drop
         # them
         varname = f"{self.variable}_observed"
-        merged_pd[varname] = merged_pd[varname].where(merged_pd[varname] > 0)
+        merged_pd[varname] = merged_pd[varname].where(merged_pd[varname] >= 0)
         # There are sometimes where the observation is NaN, we drop these values
         merged_pd = merged_pd.dropna()
         # Calculation of the bias

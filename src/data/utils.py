@@ -1,4 +1,3 @@
-import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,7 +9,7 @@ import xarray as xr
 from tenacity import retry
 
 from src.constants import ROOT_DIR
-from src.logging import get_logger
+from src.logger import get_logger
 
 logger = get_logger("Data utilities")
 
