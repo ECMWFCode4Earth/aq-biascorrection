@@ -89,10 +89,20 @@ class TestValidation:
         stations = pd.read_csv(
             ROOT_DIR / "tests" / "data_test" / "stations.csv",
             index_col=0,
-            usecols=list(range(1, 8)),
+            names=[
+                "location_id",
+                "city",
+                "country",
+                "latitude",
+                "longitude",
+                "timezone",
+                "elevation",
+            ],
         )
         station = stations[stations["location_id"] == station_id]
         dict_to_location = station.iloc[0].to_dict()
+        for var in ["longitude", "latitude", "elevation"]:
+            dict_to_location[var] = float(dict_to_location[var])
         loc_obj = Location(**dict_to_location)
         when(Location).get_location_by_id(ANY()).thenReturn(loc_obj)
         when(Validator).load_model_predictions(ANY(), ANY()).thenReturn(None)
