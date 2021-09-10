@@ -34,4 +34,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run tox
       run: |
-        tox -- -x tests/test_data.py tests/test_validation.py tests/test_visualizations.py
+        tox -- -x tests/test_*.py
