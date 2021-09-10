@@ -355,5 +355,5 @@ class ModelTrain:
 
 if __name__ == "__main__":
     ModelTrain(
-        ROOT_DIR / "models" / "configuration" / "config_inceptiontime_depth6.yml"
+        "config_inceptiontime_depth6.yml"
     ).run()
