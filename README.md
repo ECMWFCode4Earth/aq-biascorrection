@@ -73,6 +73,14 @@ machine-learning / deep-learning techniques.
 <!-- PREREQUISITES -->
 <h2 id="prerequisites"> :pushpin: Prerequisites</h2>
 
+To clone the project:
+
+git clone https://github.com/esowc/aq-biascorrection.git
+
+To download the extra information (data and models) used during the experimental phase:
+
+wget https://cloud.predictia.es/s/gR2menicTwW9nxK/download
+
 The software packages, needed for this software to be able to execute all the different
 methods, are defined in the requirements.txt file.
 
