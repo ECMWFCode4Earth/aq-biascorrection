@@ -568,7 +568,8 @@ model_validation pm25 InceptionTime -l data/external/stations.csv -ov reports/fi
 -or reports/tables/results
 ```
 
-It will create figures and tables as part of the validation process.
+It will create figures and tables as part of the validation process. For instance, these are the figures generated
+for the case of the station located at Glasgow for the O3 variable:
 
 <img id="boxplot_hour_init" src="reports/images/hour_o3_boxplot_gb002_glasgow_unitedkingdom.png" alt="Initializations Boxplots">
 
