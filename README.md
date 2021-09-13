@@ -570,6 +570,8 @@ model_validation pm25 InceptionTime -l data/external/stations.csv -ov reports/fi
 
 It will create figures and tables as part of the validation process.
 
+<img id="cdf-bias-results" src="reports/images/hour_o3_cdf-bias_gb002_glasgow_unitedkingdom.png" alt="CDF bias results">
+
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
 
 
