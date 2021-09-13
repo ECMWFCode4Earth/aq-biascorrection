@@ -574,7 +574,7 @@ It will create figures and tables as part of the validation process.
 
 <img id="cdf-bias-results" src="reports/images/hour_o3_cdf-bias_gb002_glasgow_unitedkingdom.png" alt="CDF bias results">
 
-<img id="cdf-bias-results" src="reports/images/hour_o3_cdf-bias_gb002_glasgow_unitedkingdom.png" alt="CDF bias results">
+<img id="timeserie-results" src="reports/images/o3_timeserie_gb002_glasgow_unitedkingdom.png" alt="Results Timeserie">
 
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
