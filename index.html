@@ -1,0 +1,820 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="canonical" href="https://esowc.github.io/aq-biascorrection/">
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.2.6">
+    
+    
+      
+        <title>Bias correction of CAMS model forecasts for air quality variables by using in-situ observations</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.802231af.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.3f5d1f46.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#757575">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Raleway";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="grey" data-md-color-accent="">
+  
+    
+    <script>function __prefix(e){return new URL(".",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Bias correction of CAMS model forecasts for air quality variables by using in-situ observations" class="md-header__button md-logo" aria-label="Bias correction of CAMS model forecasts for air quality variables by using in-situ observations" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bias correction of CAMS model forecasts for air quality variables by using in-situ observations
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7 1.62-4.33L19.12 17h-3.24z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="<your-site>/es/" hreflang="es" class="md-select__link">
+                    Spanish
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/esowc/aq-biascorrection/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Bias correction of CAMS model forecasts for air quality variables by using in-situ observations" class="md-nav__button md-logo" aria-label="Bias correction of CAMS model forecasts for air quality variables by using in-situ observations" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Bias correction of CAMS model forecasts for air quality variables by using in-situ observations
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/esowc/aq-biascorrection/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        Home
+      </a>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/esowc/aq-biascorrection/edit/master/docs/index.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 align="center"> AQ-BiasCorrection </h1>
+<h3 align="center"> Bias correction of CAMS model forecasts for air quality variables by using in-situ observations. The bias correction algorithm will mainly be based on ML / DL techniques. </h3>
+
+<p></br></p>
+<p align="center"> 
+  <img src="reports/images/esowc_logo.png" alt="ESoWC logo" width="90%" height="90%">
+</p>
+
+<!-- TABLE OF CONTENTS -->
+<h2 id="table-of-contents"> :book: Table of Contents</h2>
+
+<details open="open">
+  <summary>Table of Contents</summary>
+  <ol>
+    <li><a href="#about-the-project">  About The Project</a></li>
+    <li><a href="#prerequisites">  Prerequisites</a></li>
+    <li><a href="#milestones">  Milestones</a></li>
+    <li><a href="#data">  Data</a></li>
+    <li>
+      <a href="#visualizations">  Visualizations </a>
+      <ul>
+        <li><a href="#line-plot"> Observed vs forecasted air quality variables </a></li>
+        <li><a href="#correlations"> Features correlation</a></li>
+        <li><a href="#cdf-bias"> Bias distribution by station</a></li>
+        <li><a href="#hourly-bias"> Bias distribution by hour</a></li>
+      </ul>
+    </li>
+    <li><a href="#modelling"> Modelling</a></li>
+    <li><a href="#results"> Results </a></li>
+    <li><a href="#project-organization"> Project Organization </a></li>
+    <li><a href="#faq">  FAQ</a></li>
+    <li><a href="#references"> References</a></li>
+    <li><a href="#authors"> Authors</a></li>
+  </ol>
+</details>
+
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- ABOUT THE PROJECT -->
+<h2 id="about-the-project"> :blue_book: About the project</h2>
+
+<p>Bias correction of CAMS model forecasts for air quality variables by using 
+in-situ observations. The bias correction algorithm will mainly be based on
+machine-learning / deep-learning techniques.</p>
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- PREREQUISITES -->
+<h2 id="prerequisites"> :pushpin: Prerequisites</h2>
+
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- MILESTONES -->
+<h2 id="milestones"> :bookmark: Milestones </h2>
+
+<p>This section is intended to propose a breakdown of the work in a set of weekly milestones, detailing as much as possible the features studied at each level (this schema could be redesigned during the development stage due to technical problems, commented on following sections).</p>
+<p>• <strong>Milestone 1</strong> (<em>Week 1</em>): Download of data and analysis of data quality.</p>
+<p>• <strong>Milestone 2</strong> (<em>Week 3</em>): Preprocess of model predictions, observations and other variables of interest.</p>
+<p>• <strong>Milestone 3</strong> (<em>Week 6</em>): Initial research about bias distribution. The spatial and temporal distribution will be studied as well as the importance of the variables of interest to differentiate between stations with similar biases.</p>
+<p>• <strong>Milestone 4</strong> (<em>Week 7</em>): Specification of the model architecture, the selected features and the hyperparameters to tune.</p>
+<p>• <strong>Milestone 5</strong> (<em>Week 8</em>): Hyperparameter tuning and model training.</p>
+<p>• <strong>Milestone 6</strong> (<em>Week 11</em>): Validation of trained model and extraction of main insights regarding model ability to correct the bias at each station. A study of the distribution of the errors in the bias prediction.</p>
+<p>• <strong>Milestone 7</strong> (<em>Week 14</em>): Improvements on model architecture or features
+selected based on the insights obtained during the validation stage.</p>
+<p>• <strong>Milestone 8</strong> (<em>Week 16</em>): Final analysis of the model predictions with the proposed improvements.</p>
+<p>• <strong>Milestone 9</strong> (<em>Week 17</em>): Final release.</p>
+<p><img alt="" src="reports/images/milestones.png" title="Milestones" /></p>
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- DATA -->
+<h2 id="data"> :1234: Data</h2>
+
+<p>The data used in this project comes from two different sources.
+Firstly, the observations from <a href="https://openaq.org/#/">OpenAQ</a> stations have
+been downloaded for the three variables of interest at a set of interesting 
+locations / cities</p>
+<pre><code>extraction_openaq pm25 -l data/external/stations.csv -o data/interim
+</code></pre>
+<p>The stations.csv file must follow the structure:</p>
+<pre><code>,id,city,country,latitude,longitude,timezone,elevation
+</code></pre>
+<p>For instance:</p>
+<pre><code>,id,city,country,latitude,longitude,timezone,elevation
+0,AE001,Dubai,United Arab Emirates,25.0657,55.17128,Asia/Dubai,2
+1,AE002,Abu Dhabi,United Arab Emirates,24.46667,54.36667,Asia/Dubai,3
+</code></pre>
+<p>In case that there are no available stations in a radius of 100 kilometeres to
+the location of interest in the time range selected by the user 
+(default: 1-6-2019 to 31-3-2021), no data is downloaded, and an exception
+is raised with the message: </p>
+<pre><code>- 'There is no data in the time range considered for this location of interest'
+- 'There are no stations next to this location in OpenAQ for the variable of interest'
+</code></pre>
+<p>In case of successful retrieval, the data for every location / variable
+is processed and stored in netcdf format:</p>
+<pre><code>netcdf pm25_spain_madrid_es001_20190601_20210331 {
+dimensions:
+        time = 8885 ;
+        station_id = 5 ;
+variables:
+        int64 time(time) ;
+                time:units = &quot;hours since 2019-06-01 08:00:00&quot; ;
+                time:calendar = &quot;proleptic_gregorian&quot; ;
+        double pm25(station_id, time) ;
+                pm25:_FillValue = NaN ;
+                string pm25:units = &quot;µg/m³&quot; ;
+                pm25:standard_name = &quot;pm25&quot; ;
+                pm25:long_name = &quot;Particulate matter (PM2.5)&quot; ;
+                pm25:coordinates = &quot;y x _x _y distance&quot; ;
+        int64 station_id(station_id) ;
+                station_id:long_name = &quot;station name&quot; ;
+                station_id:cf_role = &quot;timeseries_id&quot; ;
+        double x(station_id) ;
+                x:_FillValue = NaN ;
+                x:units = &quot;degrees_east&quot; ;
+                x:long_name = &quot;Longitude&quot; ;
+                x:standard_name = &quot;longitude&quot; ;
+        double y(station_id) ;
+                y:_FillValue = NaN ;
+                y:units = &quot;degrees_north&quot; ;
+                y:long_name = &quot;Latitude&quot; ;
+                y:standard_name = &quot;latitude&quot; ;
+        double _x ;
+                _x:_FillValue = NaN ;
+                _x:units = &quot;degrees_east&quot; ;
+                _x:long_name = &quot;Longitude of the location of interest&quot; ;
+                _x:standard_name = &quot;longitude_interest&quot; ;
+        double _y ;
+                _y:_FillValue = NaN ;
+                _y:units = &quot;degrees_north&quot; ;
+                _y:long_name = &quot;Latitude of the location of interest&quot; ;
+                _y:standard_name = &quot;latitude_interest&quot; ;
+        double distance(station_id) ;
+                distance:_FillValue = NaN ;
+                distance:units = &quot;km&quot; ;
+                distance:long_name = &quot;Distance&quot; ;
+                distance:standard_name = &quot;distance&quot; ;
+
+// global attributes:
+                :featureType = &quot;timeSeries&quot; ;
+                :Conventions = &quot;CF-1.4&quot; ;
+}
+</code></pre>
+<p>where (_x, _y) are the coordinates of the location of interest as given in the 
+stations.csv file, and (x, y) are the coordinates of the closest stations
+downloaded from the <a href="https://openaq.org/#/">OpenAQ</a> platform 
+(taking a maximum of 5 stations). In addition, information about the distance
+from the OpenAQ station to the location of interest is provided in kilometers.</p>
+<p>For the five stations shown in the file befores, these distances are:</p>
+<pre><code> distance = 1.81559141220802, 2.45376657682221, 2.78449016534016, 
+ 3.2173204331241, 3.7871094512231 ;
+</code></pre>
+<p>On the other hand, the forecasts are provided by the CAMS model, 
+which we would like to correct. The files have been processed and offered as
+part of the project by the ECMWF team. The structure followed was: one file per
+variable and initialization time step (3 hour frequency).</p>
+<pre><code>extraction_cams -i data1/cams_model -intermediary data/interim -l data/external/stations.csv -o data/interim
+</code></pre>
+<p>The processed and stored data follows the consequent pattern:</p>
+<pre><code>netcdf cams_spain_madrid_es001_20190601_20210331 {
+dimensions:
+        time = 5360 ;
+variables:
+        int64 time(time) ;
+                time:long_name = &quot;time&quot; ;
+                time:units = &quot;hours since 2019-06-01 00:00:00&quot; ;
+                time:calendar = &quot;proleptic_gregorian&quot; ;
+        float longitude ;
+                longitude:_FillValue = NaNf ;
+                longitude:units = &quot;degrees_east&quot; ;
+                longitude:long_name = &quot;longitude&quot; ;
+        float latitude ;
+                latitude:_FillValue = NaNf ;
+                latitude:units = &quot;degrees_north&quot; ;
+                latitude:long_name = &quot;latitude&quot; ;
+        float blh(time) ;
+                blh:_FillValue = NaNf ;
+                blh:units = &quot;m&quot; ;
+                blh:long_name = &quot;Boundary layer height&quot; ;
+                blh:coordinates = &quot;latitude station_id longitude&quot; ;
+        string station_id ;
+        float d2m(time) ;
+                d2m:_FillValue = NaNf ;
+                d2m:units = &quot;K&quot; ;
+                d2m:long_name = &quot;2 metre dewpoint temperature&quot; ;
+                d2m:coordinates = &quot;latitude station_id longitude&quot; ;
+        float dsrp(time) ;
+                dsrp:_FillValue = NaNf ;
+                dsrp:units = &quot;J m**-2&quot; ;
+                dsrp:long_name = &quot;Direct solar radiation&quot; ;
+                dsrp:coordinates = &quot;latitude station_id longitude&quot; ;
+        float go3(time) ;
+                go3:_FillValue = NaNf ;
+                go3:units = &quot;kg kg**-1&quot; ;
+                go3:long_name = &quot;GEMS Ozone&quot; ;
+                go3:coordinates = &quot;longitude latitude&quot; ;
+        float msl(time) ;
+                msl:_FillValue = NaNf ;
+                msl:units = &quot;Pa&quot; ;
+                msl:long_name = &quot;Mean sea level pressure&quot; ;
+                msl:standard_name = &quot;air_pressure_at_mean_sea_level&quot; ;
+                msl:coordinates = &quot;latitude station_id longitude&quot; ;
+        float no2(time) ;
+                no2:_FillValue = NaNf ;
+                no2:units = &quot;kg kg**-1&quot; ;
+                no2:long_name = &quot;Nitrogen dioxide&quot; ;
+                no2:coordinates = &quot;longitude latitude&quot; ;
+        float pm10(time) ;
+                pm10:_FillValue = NaNf ;
+                pm10:units = &quot;kg m**-3&quot; ;
+                pm10:long_name = &quot;Particulate matter d &lt; 10 um&quot; ;
+                pm10:coordinates = &quot;latitude station_id longitude&quot; ;
+        float pm2p5(time) ;
+                pm2p5:_FillValue = NaNf ;
+                pm2p5:units = &quot;kg m**-3&quot; ;
+                pm2p5:long_name = &quot;Particulate matter d &lt; 2.5 um&quot; ;
+                pm2p5:coordinates = &quot;latitude station_id longitude&quot; ;
+        float so2(time) ;
+                so2:_FillValue = NaNf ;
+                so2:units = &quot;kg kg**-1&quot; ;
+                so2:long_name = &quot;Sulphur dioxide&quot; ;
+                so2:coordinates = &quot;longitude latitude&quot; ;
+        float t2m(time) ;
+                t2m:_FillValue = NaNf ;
+                t2m:units = &quot;K&quot; ;
+                t2m:long_name = &quot;2 metre temperature&quot; ;
+                t2m:coordinates = &quot;latitude station_id longitude&quot; ;
+        float tcc(time) ;
+                tcc:_FillValue = NaNf ;
+                tcc:units = &quot;(0 - 1)&quot; ;
+                tcc:long_name = &quot;Total cloud cover&quot; ;
+                tcc:standard_name = &quot;cloud_area_fraction&quot; ;
+                tcc:coordinates = &quot;latitude station_id longitude&quot; ;
+        float tp(time) ;
+                tp:_FillValue = NaNf ;
+                tp:units = &quot;m&quot; ;
+                tp:long_name = &quot;Total precipitation&quot; ;
+                tp:coordinates = &quot;latitude station_id longitude&quot; ;
+        float u10(time) ;
+                u10:_FillValue = NaNf ;
+                u10:units = &quot;m s**-1&quot; ;
+                u10:long_name = &quot;10 metre U wind component&quot; ;
+                u10:coordinates = &quot;latitude station_id longitude&quot; ;
+        float uvb(time) ;
+                uvb:_FillValue = NaNf ;
+                uvb:units = &quot;J m**-2&quot; ;
+                uvb:long_name = &quot;Downward UV radiation at the surface&quot; ;
+                uvb:coordinates = &quot;latitude station_id longitude&quot; ;
+        float v10(time) ;
+                v10:_FillValue = NaNf ;
+                v10:units = &quot;m s**-1&quot; ;
+                v10:long_name = &quot;10 metre V wind component&quot; ;
+                v10:coordinates = &quot;latitude station_id longitude&quot; ;
+        float z(time) ;
+                z:_FillValue = NaNf ;
+                z:units = &quot;m**2 s**-2&quot; ;
+                z:long_name = &quot;Geopotential&quot; ;
+                z:standard_name = &quot;geopotential&quot; ;
+                z:coordinates = &quot;latitude station_id longitude&quot; ;
+
+// global attributes:
+                :Conventions = &quot;CF-1.6&quot; ;
+                :history = &quot;2021-05-13 16:28:04 GMT by grib_to_netcdf-2.19.1: grib_to_netcdf -D NC_FLOAT -k3 -o ./input_data/hcn9/z_cams_c_ecmf_20190601_hcn9_fc_ml137_000_blh.nc.tmp ./input_data/hcn9/z_cams_c_ecmf_20190601_hcn9_fc_ml137_000_blh.grib&quot; ;
+}
+
+</code></pre>
+<p>Once the data from the forecasts and observations is steady in place, they
+are merged into a unique pd.DataFrame for each location of interest in which 
+both of them are available.</p>
+<pre><code>transform_data pm25 -l data/external/stations.csv -o data/processed
+</code></pre>
+<p>A .csv file is stored for each location of interest with the following name:
+<code>data/processed/{variable}/data_{variable}_{location_id}.csv</code></p>
+<p>and the following pattern:</p>
+<pre><code>,index,blh_forecast,d2m_forecast,dsrp_forecast,o3_forecast,msl_forecast,no2_forecast,pm10_forecast,pm25_forecast,so2_forecast,t2m_forecast,tcc_forecast,tp_forecast,u10_forecast,uvb_forecast,v10_forecast,z_forecast,pm25_observed,local_time_hour,pm25_bias
+0,2019-08-20 09:00:00,607.5200805664062,295.787353515625,2751658.666666666,92.31901583552234,100358.6875,46.60620273757936,96.03606479780699,45.14446319682656,14.990726261869126,310.6859436035156,0.00030517578125,0.0,2.1806488037109375,329045.3333333334,1.7370452880859375,57955.546875,46.0,13,-0.8555368031734432
+1,2019-08-20 10:00:00,553.0756632486979,296.65240478515625,2710528.0,100.0631568771554,100300.45833333333,59.867852416089804,95.6658838697942,45.18626472314821,16.8662672354812,310.4251200358073,0.0003560384114583333,0.0,2.716400146484375,304298.66666666674,-0.005783081054687722,57927.919270833336,89.0,14,-43.81373527685179
+2,2019-08-20 11:00:00,498.63124593098956,297.5174560546875,2710528.0,107.81134804645772,100242.22916666667,73.13640423978323,95.29553961138413,45.228101565972075,18.74278688256282,310.16429646809894,0.00040690104166666663,0.0,3.2521514892578125,304298.6666666666,-1.748611450195313,57900.291666666664,65.0,15,-19.771898434027925
+</code></pre>
+<p>Some interesting highlights to mention about this transformation section:</p>
+<ul>
+<li>
+<p>Time interpolation has been performed to the forecast (3 hourly) data in order
+  to have 1h frequency data. For the same purpose, a resampling has been 
+  performed to the observations (average of the available observations over an
+  hour).</p>
+</li>
+<li>
+<p>For the observations with more than one stations available (maximum of five), 
+  a weighted average has been performed as a function of the distance to the 
+  location of interest.</p>
+</li>
+<li>
+<p>The units are in different format for the observations (μg / m³) and 
+  the forecast (kg / kg). In order to take the best approach: elevation,
+  temperature and mean sea level pressure have been used with the ideal
+  gas equation to obtain the air density at a given time step and transform the 
+  corresponding kg / kg to μg / m³. This process has been taken into 
+  consideration for <code>pm25</code> and <code>no2</code> variables, due to the fact that <code>o3</code>
+  observations are given in <code>ppm</code> by the OpenAQ platform. Similar approach is 
+  driven.</p>
+</li>
+<li>
+<p>Some variables [<code>dsrp</code>, <code>tp</code>, <code>uvb</code>] are accumulated during the day 
+  (i.e, the precipitation at the 24h is the sum of the other 
+  23 hours + the 24th hour), so they have been disaggregated during the process.</p>
+</li>
+</ul>
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- VISUALIZATION -->
+<h2 id="visualizations"> :art: Visualizations </h2>
+
+<p>Below, several examples of how to generate the different visualizations provided by the repository are shown. All visualizations generated can be accesed from <a href="http://185.226.253.38/">http://185.226.253.38/</a>.</p>
+<p>Firstly, a visualization for comparing the observed and predicted values for any given city is presented.</p>
+<pre><code>plot_station_data pm25 Spain -s Madrid -d data/processed -o reports/figures
+</code></pre>
+<p><img id="line-plot" src="reports/images/pm25_bias_madrid_spain.png" alt="Station Data"></p>
+<p>There is also the possibility to show the correlation between the feature variables and the bias in one heatmap. The values can be aggregated by its daily mean using the option <strong>-a</strong> or <strong>--agg_by</strong>.</p>
+<pre><code>plot_station_corrs no2 Spain -s Madrid -d data/processed -o reports/figures -a daily
+</code></pre>
+<p><img id="correlations" src="reports/images/daily_corrs_no2_bias_madrid_spain.png" alt="Correlations Daily data"></p>
+<p>Addionally, the cumulative distribution function of the bias at each station can be compared for each country, which can also be aggregated daily if desired. The number days with observations is provided in the legend in order to represent  the representativeness of each station sample.</p>
+<pre><code>plot_station_cdf_bias pm25 Madrid -d data/processed -o reports/figures
+</code></pre>
+<p><img id="cdf-bias" src="reports/images/bias_cdf_pm25_bias_spain.png" alt="CDF bias"></p>
+<p>Lastly, the distribution of the bias by the local time can also be presented as follows.</p>
+<pre><code>plot_station_hourly_bias pm25 Spain -d data/processed -o reports/figures
+</code></pre>
+<p><img id="hourly-bias" src="reports/images/hourly_pm25_bias_spain.png" alt="Hourly bias"></p>
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- MODELLING -->
+<h2 id="modelling"> Modelling</h2>
+
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- RESULTS -->
+<h2 id="results"> :trophy: Results</h2>
+
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- PROJECT ORGANIZATION -->
+<h2 id="project-organization"> :open_file_folder: Project Organization</h2>
+
+<pre><code>├── LICENSE
+├── Makefile             &lt;- Makefile with commands like `make data` or `make train`
+├── README.md            &lt;- The top-level README for developers using this project.
+├── data
+│   ├── external         &lt;- Data from third party sources.
+│   ├── interim          &lt;- Intermediate data that has been transformed.
+│   ├── processed        &lt;- The final, canonical data sets for modeling.
+│   └── raw              &lt;- The original, immutable data dump.
+│
+├── docs                 &lt;- A default Sphinx project; see sphinx-doc.org for details
+│
+├── models               &lt;- Trained and serialized models, model predictions, or model summaries
+│
+├── notebooks            &lt;- Jupyter notebooks. Naming convention is a number (for ordering),
+│                         the creator's initials, and a short `-` delimited description, e.g.
+│                         `1.0-jqp-initial-data-exploration`.
+│
+├── references           &lt;- Data dictionaries, manuals, and all other explanatory materials.
+│
+├── reports              &lt;- Generated analysis as HTML, PDF, LaTeX, etc.
+│   └── figures          &lt;- Generated graphics and figures
+|   └── images           &lt;- Generated images to use in the GitHub repository documentation. 
+│
+├── requirements.txt     &lt;- The requirements file for reproducing the analysis environment, e.g.
+│                         generated with `pip freeze &gt; requirements.txt`
+│
+├── setup.py             &lt;- makes project pip installable (pip install -e .) so src can be imported
+├── src                  &lt;- Source code for use in this project.
+│   ├── __init__.py      &lt;- Makes src a Python module
+|   ├── constants.py     &lt;- Constant values used in the project
+│   │
+│   ├── data             &lt;- Scripts to download or generate data
+|   |   ├── __init__.py
+|   |   ├── utils.py
+|   |   |
+|   |   ├── extraction
+|   |   |   ├── __init__.py
+|   |   |   ├── cams_forecast.py
+|   |   |   └── oepnaq_obs.py
+|   |   |
+|   |   ├── load
+|   |   |   ├── __init__.py
+|   |   |   └── load_data.py
+|   |   |
+│   │   └── transformation
+|   |       ├── __init__.py
+|   |       ├── transformation_data.py
+|   |       └── transformation_location.py
+|   | 
+|   ├── metrics          &lt;- Metrics for model performance evaluation
+|   |   ├── __init__.py
+|   |   ├── utils.py
+│   │   ├── metrics.py
+│   │
+│   ├── models           &lt;- Scripts to train models and then use trained models to make
+│   │   │                   predictions
+|   |   ├── __init__.py
+|   |   ├── utils.py
+│   │   ├── predict_model.py
+│   │   └── train_model.py
+│   │
+│   ├── visualization    &lt;- Scripts to create exploratory and results oriented visualizations
+|   |   ├── __init__.py
+│   |   └── visualize.py
+|   |
+│   └── scripts          &lt;- Scripts create entrypoints for CLI
+|       ├── __init__.py
+|       ├── extraction_cams.py
+|       ├── extraction_openaq.py
+|       ├── plotting.py
+|       ├── transformation_data.py
+│       └── produce_data.py
+│
+├── tests
+|   ├── __init__.py
+|   |
+|   ├── data                   &lt;- Data used to test package functionalities
+|   |
+|   ├── file_provider.py       &lt;- File handling the provision of test files
+|   |
+|   ├── test_downloader.py     &lt;- Tests of the data acquisition module
+|   |
+|   └── test_visualizations.py &lt;- Test of the visualizations module
+|
+└── tox.ini            &lt;- tox file with settings for running pytest and flake8
+</code></pre>
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- FAQ -->
+<h2 id="faq"> :question: FAQ</h2>
+
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- REFERENCES -->
+<h2 id="references"> :books: References</h2>
+
+<p><img alt="-----------------------------------------------------" src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" /></p>
+<!-- AUTHORS -->
+<h2 id="authors"> :bust_in_silhouette: Authors</h2>
+
+<div>
+  <section>
+    <ul style="list-style-type:none;" id="a">
+      <li>
+          <img style="float: left" src="reports/images/mario.png" alt="" width=160px id="pic_mario">
+          <p>
+            :man: <b> Mario Santa Cruz López</b> <br>
+            BSc in <strong>Mathematics</strong> at Universidad de Cantabria <br>
+            MSc in <strong>Statistics</strong> at Imperial College London <br>
+            GitHub: <a href="https://github.com/jpxkqx">@jpxkqx</a> <br>
+            LinkedIn: <a href="https://www.linkedin.com/in/mariosanta-cruz/">@mariosanta-cruz</a> <br>
+            Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a> 
+          </p>
+      </li>
+    </ul>
+  </section>
+  <br>
+  <section>
+    <ul style="list-style-type:none;" id="b">
+      <li>
+          <img style="float: left" src="reports/images/antonio.jpg" alt="" width=160px id="pic_antonio">
+          <p>
+            :man: <b> Antonio Pérez Velasco</b> <br>
+            BSc in <strong>Physics</strong> at Universidad de Cantabria <br>
+            MSc in <strong>Data Science</strong> at Universidad de Cantabria <br>
+            Industrial PhD at Universidad de Cantabria <br>
+            GitHub: <a href="https://github.com/aperezvelasco">@aperezvelasco</a> <br>
+            LinkedIn: <a href="https://www.linkedin.com/in/antonio-perez-velasco/">@antonio-perez-velasco</a> <br>
+            Software developer at <a href="https://predictia.es/"> Predictia Intelligent Data Solutions </a>
+         </p>
+      </li>
+    </ul>
+  </section>
+</div>
+                
+                  
+                    
+
+<hr>
+<div class="md-source-date">
+  <small>
+    
+      Last update: 2021-09-13
+    
+  </small>
+</div>
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2021 Mario Santa Cruz López & Antonio Pérez Velasco
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+      <a href="mailto:santacruzm@predictia.es" target="_blank" rel="noopener" title="" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M476 3.2 12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 52.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://twitter.com/mariosanta98" target="_blank" rel="noopener" title="twitter.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://www.linkedin.com/in/mariosanta-cruz/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/JPXKQX" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+      </a>
+    
+      
+      
+      <a href="mailto:pereza@predictia.es" target="_blank" rel="noopener" title="" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M476 3.2 12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 52.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://twitter.com/antonioperez_97" target="_blank" rel="noopener" title="twitter.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://www.linkedin.com/in/antonio-perez-velasco/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/aperezvelasco" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.409db549.min.js", "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.756773cc.min.js"></script>
+      
+    
+  </body>
+</html>
