@@ -13,6 +13,7 @@ from pathlib import Path
 variable = "no2"
 station_id = "US007"
 
+# Get CAMS forecast and Corrected CAMS Forecast into predictions dataframe
 for day in range(1, 32):
     time_0 = datetime.datetime.utcnow()
     w = Workflow(
@@ -28,6 +29,15 @@ for day in range(1, 32):
     total_time = time_1 - time_0
     print(total_time.total_seconds())
 
+files = glob.glob(f'/home/pereza/datos/cams/*/{variable}_*_{station_id}_*.csv')
+predictions = []
+for file in files:
+    predictions.append(pd.read_csv(file, index_col=0))
+predictions_df = pd.concat(predictions)
+predictions_df.index = pd.to_datetime(predictions_df.index)
+predictions_df = predictions_df.sort_index()
+
+# Get observations for the same time period into obs dataframe
 stations = pd.read_csv(
     ROOT_DIR / "data" / "external" / "stations.csv",
     index_col=0,
@@ -46,29 +56,15 @@ dict_to_location = station.iloc[0].to_dict()
 for var in ["longitude", "latitude", "elevation"]:
     dict_to_location[var] = float(dict_to_location[var])
 location_obj = Location(**dict_to_location)
-city = "".join(location_obj.city.replace(" ", "-")).lower()
-country = "".join(location_obj.country.replace(" ", "-")).lower()
-OpenAQDownloader(
+
+obs_path = OpenAQDownloader(
     location_obj,
     Path('/home/pereza/datos/cams'),
     variable,
     dict(start='2021-08-01', end='2021-08-31')
 ).run()
 
-files = glob.glob(f'/home/pereza/datos/cams/*/{variable}_*_{station_id}_*.csv')
-predictions = []
-for file in files:
-    predictions.append(pd.read_csv(file, index_col=0))
-predictions_df = pd.concat(predictions)
-predictions_df.index = pd.to_datetime(predictions_df.index)
-predictions_df = predictions_df.sort_index()
-
-obs = xr.open_dataset(f'/home/pereza/datos/cams/'
-                      f'{country}/{city}/'
-                      f'{station_id.lower()}/{variable}/'
-                      f'{variable}_{country}_'
-                      f'{city}_{station_id.lower()}_'
-                      f'20210801_20210831.nc')
+obs = xr.open_dataset(obs_path)
 obs = obs.mean('station_id').to_dataframe()
 obs = obs.rename(columns={variable: 'Observations'})
 del obs['_x']
@@ -77,8 +73,8 @@ obs.index = pd.to_datetime(obs.index)
 obs = obs.resample('1H').mean()
 obs = obs.sort_index()
 
+# Join both Predictions and Observations into a single dataframe which is used to plot
 data = predictions_df.join([obs])
-
 colors = ["k", "red", 'green']
 plt.figure(figsize=(30, 15))
 for i, column in enumerate(data.columns):
