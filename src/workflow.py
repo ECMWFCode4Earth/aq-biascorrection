@@ -11,7 +11,7 @@ import concurrent.futures
 from cdsapi.api import Client
 from matplotlib.dates import DateFormatter
 
-from src.constants import ROOT_DIR
+from src.constants import ROOT_DIR, ADS_API_KEY
 from src.data.forecast import CAMSProcessor
 from src.data.transformer import LocationTransformer
 from src.data.utils import Location
@@ -77,7 +77,7 @@ class Workflow:
         self.intermediary_dir = Path('/tmp')
         self.api_download_forecast = Client(
             url="https://ads.atmosphere.copernicus.eu/api/v2",
-            key="6858:5edcc1e8-e2c6-463b-8b18-d4ea2bafa965",
+            key=ADS_API_KEY,
         )
 
     def run(self):
