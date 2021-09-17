@@ -85,6 +85,25 @@ To download the extra information (data and models) used during the experimental
 wget https://cloud.predictia.es/s/gR2menicTwW9nxK/download
 ```
 
+Create a ".env" file at the same height as "README.md" following the pattern:
+```
+# Environment variables go here, can be read by `python-dotenv` package:
+#
+#   `src/script.py`
+#   ----------------------------------------------------------------
+#    import dotenv
+#
+#    project_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+#    dotenv_path = os.path.join(project_dir, '.env')
+#    dotenv.load_dotenv(dotenv_path)
+#   ----------------------------------------------------------------
+#
+# DO NOT ADD THIS FILE TO VERSION CONTROL!
+
+ROOT_DIR = "/XXXXXXXXX/aq-biascorrection"
+ADS_API_KEY = "UID:KEY"
+```
+
 The software packages, needed for this software to be able to execute all the different
 methods, are defined in the requirements.txt file.
 
