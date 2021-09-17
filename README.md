@@ -85,7 +85,8 @@ To download the extra information (data and models) used during the experimental
 wget https://cloud.predictia.es/s/gR2menicTwW9nxK/download
 ```
 
-Create a ".env" file at the same height as "README.md" following the pattern:
+Create a ".env" file (where the root directory and the credentials for login into the 
+Atmosphere Data Store) at the same height as "README.md" following the pattern:
 ```
 # Environment variables go here, can be read by `python-dotenv` package:
 #
